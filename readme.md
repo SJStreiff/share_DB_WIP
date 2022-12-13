@@ -1,7 +1,10 @@
 # PIPELINE for standardising data
 
-
-
+The code can be called as
+'''{python}
+python record_cleaner.py -h
+'''
+and all information is given.
 
 ## TODO
 
