@@ -2,7 +2,22 @@
 # -*- coding: utf-8 -*-
 
 '''
-All the functions called from the main script
+All the functions called from the main script for basic format changes, subsetting, ...
+
+2022-12-13 sjs
+
+CHANGELOG:
+    2022-12-13: created
+
+
+CONTAINS:
+    column_standardiser():
+        reads dataframe and subsets columns, adds empty columns for standardised format
+    column_cleaning():
+        takes columns and puts the content into standard/exchangeable format
+    collector_names():
+        takes collector names column ("recordedBy") and rearranges it into the format
+        Surname, F (firstname just as initials)
 '''
 
 import pandas as pd
@@ -12,14 +27,14 @@ import os
 import regex as re
 
 #custom dependencies
-import z_dependencies as x_1_cols # can be replaced at some point, but later...
+import z_dependencies # can be replaced at some point, but later...
 
 
 
 
 
 
-def col_standardiser(importfile, data_source_type, verbose=True):
+def column_standardiser(importfile, data_source_type, verbose=True):
     ''' reads a file, checks the columns and subsets and adds columns where
     necessary to be workable later down the line.'''
 
@@ -36,8 +51,8 @@ def col_standardiser(importfile, data_source_type, verbose=True):
         if verbose:
             print('\n','data type P')
         occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
-        occs = occs.rename(columns = x_1_cols.herbo_key) # rename columns
-        occs = occs[x_1_cols.herbo_subset_cols] # subset just required columns
+        occs = occs.rename(columns = z_dependencies.herbo_key) # rename columns
+        occs = occs[z_dependencies.herbo_subset_cols] # subset just required columns
         if verbose:
  	          print('Just taking the Philippines for now!')
         occs = occs[occs['country'] == 'Philippines']
@@ -50,8 +65,8 @@ def col_standardiser(importfile, data_source_type, verbose=True):
         occs = occs[occs['basisOfRecord'] == "PRESERVED_SPECIMEN"] # remove potential iNaturalist data....
         occs = occs[occs['occurrenceStatus'] == 'PRESENT'] # loose absence data from surveys
         # here we a column species-tobesplit, as there is no single species columns with only epithet
-        occs = occs.rename(columns = x_1_cols.gbif_key) # rename
-        occs = occs[x_1_cols.gbif_subset_cols] # and subset
+        occs = occs.rename(columns = z_dependencies.gbif_key) # rename
+        occs = occs[z_dependencies.gbif_subset_cols] # and subset
 
     else:
         if verbose:
@@ -65,7 +80,7 @@ def col_standardiser(importfile, data_source_type, verbose=True):
     # add all final columns as empty columns
     # check for missing columns, and then add these, as well as some specific trimming
     # splitting etc...
-    miss_col = [i for i in x_1_cols.final_cols if i not in occs.columns]
+    miss_col = [i for i in z_dependencies.final_cols if i not in occs.columns]
 
 
     if verbose:
@@ -75,13 +90,13 @@ def col_standardiser(importfile, data_source_type, verbose=True):
     if verbose:
  	      print('These columns are missing in the data being handled: ', miss_col)
     occs[miss_col] = '0'
-    occs = occs.astype(dtype = x_1_cols.final_col_type)
+    occs = occs.astype(dtype = z_dependencies.final_col_type)
     #print(occs.dtypes)
 
     return occs
 
 
-def column_cleaning(occs, data_source_type, out_dir, verbose=True):
+def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=True):
     '''
     Cleaning up the columns to all be the same...
     '''
@@ -267,9 +282,9 @@ def column_cleaning(occs, data_source_type, out_dir, verbose=True):
             if verbose:
                 print('I couldn\'t standardise the barcodes of some records.')
             na_bc = occs[occs['st_barcode'].isna()]
-            na_bc.to_csv(out_dir + 'NA_barcodes.csv', index = False, sep = ';', mode = 'x')
+            na_bc.to_csv(working_directory + prefix + 'NA_barcodes.csv', index = False, sep = ';', )
             if verbose:
-                print('I have saved', len(na_bc), 'occurences to the file', out_dir+'NA_barcodes.csv for corrections')
+                print('I have saved', len(na_bc), 'occurences to the file', working_directory+'NA_barcodes.csv for corrections')
             if verbose:
                 print('I am continuing without these.')
             occs = occs[occs['st_barcode'].notna()]
@@ -364,7 +379,7 @@ def column_cleaning(occs, data_source_type, out_dir, verbose=True):
      and later on searching for collectorID (ORCID or other IDs??)
     """
 
-    occs = occs.astype(dtype = x_1_cols.final_col_type) # check data type
+    occs = occs.astype(dtype = z_dependencies.final_col_type) # check data type
     #print(occs.dtypes)
     if verbose:
         print('\n','Data has been standardised to conform to the columns we need later on.') #\n It has been saved to: ', out_file)
@@ -374,7 +389,7 @@ def column_cleaning(occs, data_source_type, out_dir, verbose=True):
     if verbose:
         print(occs.columns)
     #occs = occs.replace('nan', '')
-    #occs = occs.astype(dtype = x_1_cols.final_col_type)
+    #occs = occs.astype(dtype = z_dependencies.final_col_type)
     if verbose:
         print('Shape of the final file is: ', occs.shape )
 
@@ -384,7 +399,7 @@ def column_cleaning(occs, data_source_type, out_dir, verbose=True):
 
     return occs
 
-def collector_names(occs, out_dir, verbose=True, debugging=False):
+def collector_names(occs, working_directory, prefix, verbose=True, debugging=False):
     pd.options.mode.chained_assignment = None  # default='warn'
     # this removes this warning. I am aware that we are overwriting stuff with this function.
     # the column in question is backed up
@@ -474,8 +489,8 @@ def collector_names(occs, out_dir, verbose=True, debugging=False):
 
     # debugging dataframe: every column corresponds to a regex query
     if debugging:
-        names_WIP.to_csv('1a_n_regex_debug.csv', index = False, sep =';', mode = 'x')
-        print('debugging dataframe printed to ./1a_n_regex_debug.csv!')
+        names_WIP.to_csv(working_directory + prefix + 'DEBUG_regex.csv', index = False, sep =';', )
+        print('debugging dataframe printed to', working_directory + prefix + 'DEBUG_regex.csv')
 
     #####
     # Now i need to just merge the columns from the right and bobs-your-uncle we have beautiful collector names...
@@ -493,9 +508,9 @@ def collector_names(occs, out_dir, verbose=True, debugging=False):
 
     # output so I can go through and check manually
     if len(TC_occs)!= 0:
-        TC_occs.to_csv(out_dir + 'to_check_names.csv', index = False, sep = ';', mode = 'x')
+        TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'names.csv', index = False, sep = ';', )
         print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
-        '\n Please double check these in the separate file saved at: \n', out_dir+'to_check_names.csv')
+        '\n Please double check these in the separate file saved at: \n', working_directory+'to_check_names.csv')
     #-------------------------------------------------------------------------------
 
 
@@ -534,15 +549,15 @@ def collector_names(occs, out_dir, verbose=True, debugging=False):
     print('I have saved', len(occs_newnames), ' to the specified file (originally I read', len(occs), 'points)' )
     print('\n Don\'t worry about the warnings above, it works as it should and i don\'t understand python enough to make them go away')
 
-    occs_newnames = occs_newnames.astype(x_1_cols.final_col_type)
+    occs_newnames = occs_newnames.astype(z_dependencies.final_col_type)
     # save to file
-    occs_newnames.to_csv(out_dir+'names_standardised.csv', index = False, sep = ';', mode = 'x')
+    occs_newnames.to_csv(working_directory+prefix+'names_standardised.csv', index = False, sep = ';', )
 
     if debugging:
         unique_names = occs_newnames['recordedBy'].unique()
         unique_names = pd.DataFrame(unique_names)
-        unique_names.to_csv(out_dir + 'collector_un_tmp.csv', index = False, sep =';', mode = 'x')
-        print('I have saved', len(unique_names), 'Collector names to the file \"collector_un_tmp.csv\".')
+        unique_names.to_csv(working_directory + prefix+'collectors_unique.csv', index = False, sep =';', )
+        print('I have saved', len(unique_names), 'Collector names to the file', working_directory + prefix+'collectors_unique.csv.')
 
     # done
     return occs_newnames
