@@ -2,9 +2,11 @@
 
 ---
 
-# PIPELINE for standardising data
+# Record cleaner
 
+## The/A PIPELINE for standardising occurrence records
 
+![There would be a funny picture here normally](TMP_titleimage.png "")
 
 The code can be called as
 
