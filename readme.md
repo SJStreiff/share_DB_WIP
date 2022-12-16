@@ -33,9 +33,8 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -nc NOCOLLECTORS, --nocollectors NOCOLLECTORS
-                        if specified, collector names are expected in the format <Surname>, <F>irstname, or if deviating standardised to be
-                        identical across all datasets.
+--nonamecln NONAMECLN
+                       if specified, collector names are expected in the format <Surname>, <F>irstname, or if deviating standardised to be identical across all datasets.
 
 If it doesn't work, or you would like to chat, feel free to contact serafin.streiff@ird.fr
 ```
@@ -77,7 +76,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 
 ## TODO
 
-* Write readme
+* Keep readme uptodate with new developments and changes
 * add overwrite protection in case script is called multiple times, at least for time intensive steps (removed for debugging!!) --> done as mode='x' for example within pd.to_csv()
 * Barcodes error in GBIF input! (issue dealing with "-" within barcode.)
 * implement problem name output and reinsertion, optionally pausing execution
@@ -86,7 +85,6 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 * Implement background files:
   * indets and similar
   * master distribution database for integration.
-
 
 
 

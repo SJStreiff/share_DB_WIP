@@ -39,7 +39,7 @@ def duplicate_stats(occs, verbose=True, debugging=False):
     #-------------------------------------------------------------------------------
     # these columns are used to identify duplicates (i.e. if a value of both these column is shared
     # for a row, then we flag the records as duplicates)
-    dup_cols = ['colNum_full', 'colYear'] # the columns by which duplicates are identified
+    dup_cols = ['coll_surname', 'colNum', 'colYear'] # the columns by which duplicates are identified
     #-------------------------------------------------------------------------------
 
 
@@ -110,6 +110,8 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
     print(occs.dtypes)
     occs.replace('nan', pd.NA, inplace=True)
 
+
+    dup_cols = ['colNum_full', 'colYear'] # the columns by which duplicates are identified
 
     #-------------------------------------------------------------------------------
     # MISSING collector information and number

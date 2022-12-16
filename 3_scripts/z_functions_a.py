@@ -552,6 +552,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     occs_newnames = occs_newnames.astype(z_dependencies.final_col_type)
     # save to file
     occs_newnames.to_csv(working_directory+prefix+'names_standardised.csv', index = False, sep = ';', )
+    occs_newnames['coll_surname'] = occs_newnames['recordedBy'].str.split(',', expand=True)[0]
 
     if debugging:
         unique_names = occs_newnames['recordedBy'].unique()
@@ -561,3 +562,32 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
     # done
     return occs_newnames
+
+
+
+def reinsertion(occs_already_in_program, names_to_reinsert, verbose=True):
+    '''
+    Quickly read in data for reinsertion, test that nothing went too wrong, and append to the data already in the system.
+    '''
+
+    imp = codecs.open(names_to_reinsert,'r','utf-8') #open for reading with "universal" type set
+    re_occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
+    if verbose:
+        print('Reinsertion data read successfully')
+
+    occs_merged = pd.concat[occs_already_in_program, re_occs]
+    if len(occs_merged) == len(occs_already_in_program) + len(re_occs):
+        if verbose:
+            print('Data reinserted successfully.')
+    else:
+        raise Exception("Something weird happened, please check input and code.")
+
+    return occs_merged
+
+
+
+
+
+
+
+#

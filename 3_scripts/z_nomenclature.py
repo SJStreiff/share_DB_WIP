@@ -37,7 +37,7 @@ def powo_query(gen, sp, distribution=False):
     '''
     #print('Checking uptodate-ness of nomenclature in your dataset...')
     query = {Name.genus: gen, Name.species: sp}
-    res = powo.search(query , filters = [Filters.species])
+    res = powo.search(query)  # , filters = [Filters.accepted])
     print('Checking the taxon', gen, sp)
     #print(res.size()) # for debugging
     try:
@@ -61,6 +61,8 @@ def powo_query(gen, sp, distribution=False):
                 except:
                     status = 'EXTINCT'
                     native_to = [d['name'] for d in res2['distribution']['extinct']]
+            else:
+                native_to = pd.NA
 
         else:
             status = 'ACCEPTED'
@@ -95,17 +97,43 @@ def powo_query(gen, sp, distribution=False):
             if 'name' in r:
                 r['name']
         ipni_pubYr = r['publicationYear']
+        print('IPNI publication year found.')
     except:
         ipni_pubYr = pd.NA
-        print('IPNI publication year NOT found.')
-
 
 
     return status, scientificName, ipni_no, ipni_pubYr, native_to
 
 
-def kew_query(occs, working_directory):
-    
+
+def kew_query(occs, working_directory, verbose=False):
+    ''' This function wraps the function above to query all the interesting stuff from Kew.
+    Note I have verbose=False here, as this function does a load of output, which is not strictly necessary.
+    '''
+
+    occs = occs.dropna(how='all', subset=['genus', 'specificEpithet']) # these are really bad for the query ;-)
+
+    occs[['status','accepted_name', 'ipni_no', 'ipni_pubYr', 'native_to']] = occs.apply(lambda row: powo_query(row['genus'], row['specificEpithet']), axis = 1, result_type='expand')
+    # now drop some of the columns we really do not need here...
+    occs = occs.drop(['ipni_pubYr', 'native_to'])
+
+
+    print('I started with', len(occs), 'records. \n')
+
+    occs.to_csv(out_dir + 'no_subset.csv', index = False, sep=';')
+
+    issue_occs = occs[occs['status'].isna()]
+    occs = occs[occs['status'].notna()]
+
+    # some stats
+    print(len(occs), 'records had an ACCEPTED name in the end. \n')
+    print(len(issue_occs), 'records had an ISSUE in their name and could not be assigned an accepted name. \n',
+    'These are saved to a separate output, please check these, and either rerun them or look for duplicates with a determination.')
+    #occs.to_csv(out_dir + 'taxonomy_checked.csv', index = False, sep=';')
+    issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')
+
+
+    return occs
 
 
 #

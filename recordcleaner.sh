@@ -6,22 +6,21 @@
 # VARIABLES TO MODIFY, REQUIRED!!
 
 
-INPUT='/in_directory/'
-DAT_FORM='P'
-WDIR='/working_directory/'
-OUT_DIR='/out_directory/'
-PREFIX='prefix_'
+INPUT='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/1_data_raw/TEST_DATA.csv' # path to your input file
+DAT_FORM='P'           # format of your input file
+WDIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/1a_WIP/' # directory where intermediate files will be written to
+OUT_DIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/' # directory where final file is written to
+PREFIX='TEST_'          # prefix for all intermediate and final files
 
 # OPTIONAL VARIABLES, FACULTATIVE!
 
-VERBOSE='-v' #
+VERBOSE='-v 1' # prints intermediate information to STDOUT, which might be helpful for debugging in case of issues.
+               # -v 2 also outputs debugging information
 NOCOLLECTOR='' # if '-nc', the name standardisation step is skipped! Use with caution!
-......
-WIP
 
 
 # AND NOW LETS LAUNCH RECORDCLEANER
 
-python ./3_scripts/recordcleaner.py -h
-or
-python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $VERBOSE $NOCOLLECTOR
+#python ./3_scripts/recordcleaner.py -h
+#or
+python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
