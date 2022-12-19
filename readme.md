@@ -63,21 +63,25 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 * Step A:
   * A1: Standardise column names, remove unwanted columns and add empty columns we need later
   * A2: Standardise data within some columns, e.g. separate all dates into separate columns day, month and year, make sure all barcodes have the institution leading before the number, have the first collector in a separate column,
-  * A3: Standardise collector names to e.g. *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record.
+  * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record.
 
 * Step B:
   * B1: run some statistics on duplicates in the dataset.
   * B2 remove said duplicates.
 
-* Somewhere Step X:
-  * Check taxonomy for accuracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily. With other families this is not guaranteed, but changes can always be pushed by making the curators of powo aware of taxonomic changes that were published.
+* Step C:
+  * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily. With other familiesthe situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
   * Check coordinates. Probably we just check for country centroids and points in the water. This will be done with already available packages, and issues flagged for potential correction in e.g. QGIS (qgis.org)
+
+* Step D:
+  * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and?
 
 
 ## TODO
 
 * Keep readme uptodate with new developments and changes
 * add overwrite protection in case script is called multiple times, at least for time intensive steps (removed for debugging!!) --> done as mode='x' for example within pd.to_csv()
+* RETURN interactive input(), removed for scripting...
 * Barcodes error in GBIF input! (issue dealing with "-" within barcode.)
 * implement problem name output and reinsertion, optionally pausing execution
 * when do we query POWO/IPNI??

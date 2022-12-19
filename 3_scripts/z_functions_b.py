@@ -39,14 +39,14 @@ def duplicate_stats(occs, verbose=True, debugging=False):
     #-------------------------------------------------------------------------------
     # these columns are used to identify duplicates (i.e. if a value of both these column is shared
     # for a row, then we flag the records as duplicates)
-    dup_cols = ['coll_surname', 'colNum', 'colYear'] # the columns by which duplicates are identified
+    dup_cols = ['coll_surname', 'colNum', 'sufix', 'colYear'] # the columns by which duplicates are identified
     #-------------------------------------------------------------------------------
 
 
     # data types can be annoying
     occs = occs.astype(z_dependencies.final_col_type) # double checking
     print(occs.dtypes)
-    occs.replace('nan', pd.NA, inplace=True)
+    #occs[['recordedBy', 'colNum_full']] = occs[['recordedBy', 'colNum_full']].replace('nan', pd.NA)
 
 
     #-------------------------------------------------------------------------------
@@ -92,6 +92,7 @@ def duplicate_stats(occs, verbose=True, debugging=False):
     print('\n By SURNAME and COLLECTION NUMBER', occs_colNum.duplicated([ 'coll_surname', 'colNum' ], keep=False).sum())
     print('\n By SURNAME and FULL COLLECTION NUMBER', occs_colNum.duplicated([ 'coll_surname', 'colNum_full' ], keep=False).sum())
     print('\n By SURNAME and COLLECTION NUMBER and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colNum', 'colYear' ], keep=False).sum())
+    print('\n By SURNAME and COLLECTION NUMBER, SUFIX and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colNum', 'sufix', 'colYear' ], keep=False).sum())
     print('\n ................................................. \n ')
 
 
@@ -108,15 +109,15 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
 
     occs = occs.astype(z_dependencies.final_col_type) # double checking
     print(occs.dtypes)
-    occs.replace('nan', pd.NA, inplace=True)
+    #occs.replace('nan', pd.NA, inplace=True)
 
 
-    dup_cols = ['colNum_full', 'colYear'] # the columns by which duplicates are identified
+    dup_cols = ['coll_surname', 'colNum', 'sufix', 'colYear'] # the columns by which duplicates are identified
 
     #-------------------------------------------------------------------------------
     # MISSING collector information and number
     # remove empty collector and coll num
-    occs1 = occs.dropna(how='all', subset = ['recordedBy', 'colNum_full'])
+    occs1 = occs.dropna(how='all', subset = ['recordedBy', 'colNum'])
 
 
     subset_col = ['colNum_full']
@@ -301,36 +302,31 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
     # database!!!
 
     # de-duplicated duplicates sorting to get them ready for merging
-    occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True))
+    occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
 
     print('\n There were', len(occs_dup_col), 'duplicated specimens')
     print('\n There are', len(occs_merged), 'unique records after merging.')
 
     print('\n \n FINAL DUPLICATE STATS:')
     print('-------------------------------------------------------------------------')
-    print('\n Input data:', len(dat), '; \n De-duplicated duplicates:', len(occs_merged),
+    print('\n Input data:', len(occs), '; \n De-duplicated duplicates:', len(occs_merged),
     '; \n Non-duplicate data:', len(occs_unique),
      '; \n No collection number. (This is not included in output for now!) :', len(occs_nocolNum),
      ';\n total data written:', len(occs_merged) + len(occs_unique) ,
      '; \n Datapoints removed: ',
-    len(dat) - (len(occs_nocolNum) + len(occs_merged) + len(occs_unique)))
+    len(occs) - (len(occs_nocolNum) + len(occs_merged) + len(occs_unique)))
     print('-------------------------------------------------------------------------')
 
 
-    occs_cleaned = pd.merge(pd.merge(occs_merged,occs_unique,how='outer'),occs_nocolNum ,how='outer')
-    occs_cleaned = occs_cleaned.sort_values(dup_cols, ascending = (True, True))
+    #    occs_cleaned = pd.merge(pd.merge(occs_merged,occs_unique,how='outer'))#,occs_nocolNum ,how='outer')
+    occs_cleaned = pd.concat([occs_merged, occs_unique])
+    occs_cleaned = occs_cleaned.sort_values(dup_cols, ascending = (True, True, False, False))
     #print(occs_cleaned.head(50))
 
     occs_cleaned.to_csv(working_directory+prefix+'deduplicated.csv', index = False, sep = ';', )
     print('\n The output was saved to', working_directory+prefix+'deduplicated.csv', '\n')
 
     return occs_cleaned
-
-
-
-
-
-
 
 
 #

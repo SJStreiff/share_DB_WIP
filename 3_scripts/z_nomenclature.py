@@ -37,7 +37,7 @@ def powo_query(gen, sp, distribution=False):
     '''
     #print('Checking uptodate-ness of nomenclature in your dataset...')
     query = {Name.genus: gen, Name.species: sp}
-    res = powo.search(query)  # , filters = [Filters.accepted])
+    res = powo.search(query, filters=Filters.specific)  # , filters = [Filters.accepted])
     print('Checking the taxon', gen, sp)
     #print(res.size()) # for debugging
     try:

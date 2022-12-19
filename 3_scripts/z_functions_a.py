@@ -389,7 +389,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
     if verbose:
         print(occs.columns)
     #occs = occs.replace('nan', '')
-    #occs = occs.astype(dtype = z_dependencies.final_col_type)
+    #
+    occs = occs.astype(dtype = z_dependencies.final_col_type)
     if verbose:
         print('Shape of the final file is: ', occs.shape )
 
@@ -409,7 +410,8 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
     #print(occs.dtypes) # if you want to double check types again
-    occs.replace('nan', pd.NA, inplace=True)
+    occs = occs.astype(dtype = z_dependencies.final_col_type)
+    occs['recordedBy'] = occs['recordedBy'].replace('nan', pd.NA)
     #print(occs.head)
     # -------------------------------------------------------------------------------
     #print('MINUS FIRST TRY \n', occs.info())
