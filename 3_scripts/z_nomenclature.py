@@ -23,7 +23,7 @@ from pykew.powo_terms import Name, Filters
 import pandas as pd
 
 
-def powo_query(gen, sp, distribution=False):
+def powo_query(gen, sp, distribution=False, verbose=True):
     ''' This function takes genus species and crosschecks it to POWO. If the name is
     accepted, it is copied into the output, if it is a synonym, the accepted name is
     copied into the output. In the end the accepted names are returned.
@@ -37,59 +37,66 @@ def powo_query(gen, sp, distribution=False):
     '''
     #print('Checking uptodate-ness of nomenclature in your dataset...')
     query = {Name.genus: gen, Name.species: sp}
-    res = powo.search(query, filters=Filters.specific)  # , filters = [Filters.accepted])
-    print('Checking the taxon', gen, sp)
+    res = powo.search(query, filters=Filters.species)  # , filters = [Filters.accepted])
+    if verbose:
+        print('Checking the taxon', gen, sp)
+        # print('checking distribution', distribution)
     #print(res.size()) # for debugging
     try:
         for r in res:
             if 'name' in r:
                 r['name']
 
-        print('Input taxon accepted:', r['accepted'])
+        if verbose:
+            print('Input taxon accepted:', r['accepted'])
 
         if r['accepted'] == False:
             status = 'SYNONYM'
             acc_taxon = r['synonymOf']
             qID = acc_taxon['fqId']
             ipni_no = r['url'].split(':', )[-1]
-            print('Accepted taxon name:', acc_taxon['name']) #TODO: add taxon author
+            if verbose:
+                print('Accepted taxon name:', acc_taxon['name']) #TODO: add taxon author
             scientificName = acc_taxon['name']
-            if distribution:
-                res2 = powo.lookup(qID, include=['distribution'])
-                try:
-                    native_to = [d['name'] for d in res2['distribution']['natives']]
-                except:
-                    status = 'EXTINCT'
-                    native_to = [d['name'] for d in res2['distribution']['extinct']]
-            else:
-                native_to = pd.NA
+            # if distribution:
+            #     res2 = powo.lookup(qID, include=['distribution'])
+            #     try:
+            #         native_to = [d['name'] for d in res2['distribution']['natives']]
+            #     except:
+            #         status = 'EXTINCT'
+            #         native_to = [d['name'] for d in res2['distribution']['extinct']]
+            # else:
+            #     native_to = pd.NA
 
         else:
             status = 'ACCEPTED'
             qID = r['fqId']
             ipni_no = r['url'].split(':', )[-1]
             scientificName = gen + ' ' + sp
-            if distribution:
-                res2 = powo.lookup(qID, include=['distribution'])
-                #print(res2)
-                try:
-                    native_to = [d['name'] for d in res2['distribution']['natives']]
-                except:
-                    status = 'EXTINCT'
-                    native_to = [d['name'] for d in res2['distribution']['extinct']]
+            # if distribution:
+            #     res2 = powo.lookup(qID, include=['distribution'])
+            #     #print(res2)
+            #     try:
+            #         native_to = [d['name'] for d in res2['distribution']['natives']]
+            #     except:
+            #         status = 'EXTINCT'
+            #         native_to = [d['name'] for d in res2['distribution']['extinct']]
         ipni_no = 'https://ipni.org/n/' + ipni_no
 
     except:
         # there are issues when the function is presented the string 'sp.' or 'indet.' etc
-        print('The species', gen, sp, 'is not registered in POWO...\n',
+        if verbose:
+            print('The species', gen, sp, 'is not registered in POWO...\n',
               ' I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
         status = pd.NA
         scientificName = pd.NA
-        native_to = pd.NA
+        # native_to = pd.NA
         ipni_no = pd.NA
 
-    print(status)
-    print(scientificName)
+    if verbose:
+        print(status)
+        print(scientificName)
+        #print(native_to)
 
     res = ipni.search(query)  # , filters = [Filters.accepted])
     try:
@@ -97,30 +104,35 @@ def powo_query(gen, sp, distribution=False):
             if 'name' in r:
                 r['name']
         ipni_pubYr = r['publicationYear']
-        print('IPNI publication year found.')
+        if verbose:
+            print('IPNI publication year found.')
     except:
         ipni_pubYr = pd.NA
 
 
-    return status, scientificName, ipni_no, ipni_pubYr, native_to
+    return status, scientificName, ipni_no, ipni_pubYr#, native_to
 
 
 
-def kew_query(occs, working_directory, verbose=False):
+def kew_query(occs, working_directory, verbose=True):
     ''' This function wraps the function above to query all the interesting stuff from Kew.
     Note I have verbose=False here, as this function does a load of output, which is not strictly necessary.
     '''
 
+    occs[['genus', 'specificEpithet']] = occs[['genus', 'specificEpithet']].astype(str)
+    occs[['genus', 'specificEpithet']] = occs[['genus', 'specificEpithet']].replace('nan', pd.NA)
     occs = occs.dropna(how='all', subset=['genus', 'specificEpithet']) # these are really bad for the query ;-)
-
-    occs[['status','accepted_name', 'ipni_no', 'ipni_pubYr', 'native_to']] = occs.apply(lambda row: powo_query(row['genus'], row['specificEpithet']), axis = 1, result_type='expand')
+    print(occs[['genus', 'specificEpithet']])
+    occs[['status','accepted_name', 'ipni_no', 'ipni_pub']] = occs.apply(lambda row: powo_query(row['genus'], row['specificEpithet'], distribution=False, verbose=True), axis = 1, result_type='expand')
     # now drop some of the columns we really do not need here...
-    occs = occs.drop(['ipni_pubYr', 'native_to'])
+    print(occs)
+    occs = occs.drop(['ipni_pub'], axis=1)
 
 
-    print('I started with', len(occs), 'records. \n')
+    if verbose:
+        print('I started with', len(occs), 'records. \n')
 
-    occs.to_csv(out_dir + 'no_subset.csv', index = False, sep=';')
+    #occs.to_csv(out_dir + 'no_subset.csv', index = False, sep=';')
 
     issue_occs = occs[occs['status'].isna()]
     occs = occs[occs['status'].notna()]

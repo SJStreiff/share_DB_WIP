@@ -16,6 +16,7 @@ import z_dependencies
 
 import argparse, os, pathlib, codecs
 import pandas as pd
+import numpy as np
 
 
 print(os.getcwd())
@@ -61,6 +62,7 @@ if __name__ == "__main__":
 
     tmp_occs_2 = stepA.column_cleaning(tmp_occs, args.data_type, args.working_directory, args.prefix, verbose=False)
 
+
     print(tmp_occs_2.columns)
 
     # do we check the nomenclature here?
@@ -91,6 +93,8 @@ if __name__ == "__main__":
 
     # # option of including a fuzzy matching step here. I haven't implemented this yet...
     print('STEP A complete.')
+    print(tmp_occs_3.columns)
+
 
     #---------------------------------------------------------------------------
     # step B:
@@ -104,9 +108,10 @@ if __name__ == "__main__":
 
     stepB.duplicate_stats(tmp_occs_4)
 
-    #stop
+    print(tmp_occs_4.columns)
+
     # write csv to file, next step is time intensive
-    tmp_occs_4.to_csv(args.working_directory + 'pre_taxon_check.csv', index=False, sep=';')
+    #tmp_occs_4.to_csv(args.working_directory + 'pre_taxon_check.csv', index=False, sep=';')
 
     #---------------------------------------------------------------------------
 
@@ -115,12 +120,18 @@ if __name__ == "__main__":
     print('Checking the taxonomy now. This takes a moment!')
     print('Do you want to do this now? [y]/[n]')
     goahead=input()
-    if reinsert == 'y':
-        tmp_occs_5 = stepC.kew_query(tmp_occs_4, args.working_directory, verbose=False)
+    if goahead == 'y':
+        tmp_occs_5 = stepC.kew_query(tmp_occs_4, args.working_directory, verbose=True)
 
     else:
         print('Nomenclature remains unchecked!!')
+        miss_col = [i for i in z_dependencies.final_cols_for_import if i not in tmp_occs_4.columns]
+        if args.verbose:
+            print('These columns are missing as a result, I will fill them with <NA>:', miss_col)
+        tmp_occs_4[miss_col] = pd.NA
+        tmp_occs_4 = tmp_occs_4.astype(dtype = z_dependencies.final_col_for_import_type)
         tmp_occs_5 = tmp_occs_4
+        # print(tmp_occs_5.dtypes)
 
     tmp_occs_5.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
     #depends.1a_columns()
@@ -130,7 +141,7 @@ if __name__ == "__main__":
 
     # would be nice to have an option to again merge in some data that is known as clean, e.g. other data that was cleaned manually
 
-
+    #print(tmp_occs_5.columns)
     print('Thanks for cleaning your records ;-)')
 
     #---------------------------------------------------------------------------
@@ -139,18 +150,26 @@ if __name__ == "__main__":
     print('\t - Merge them into the master database')
 
     mdb_op = codecs.open(args.MasterDB,'r','utf-8')
+    mdb = pd.read_csv(mdb_op, sep = ';',  dtype = z_dependencies.final_col_for_import_type)
+    mdb = mdb.replace('nan', pd.NA)
+    #tmp_occs_5 = tmp_occs_5.replace('nan', pd.NA)
 
-    mdb = pd.read_csv(mdb_op, sep = ';',  dtype = str)
-    print(mdb)
     print('Master database read successfully!', len(mdb))
 
     mn_db = stepD.check_premerge(mdb, tmp_occs_5, verbose=True)
-    print(mn_db)
+    mn_db = mn_db.replace('nan', pd.NA)
+    mn_db = mn_db.replace(np.nan, pd.NA)
+
+
+    #print(mn_db)
     pref = args.prefix + 'main_C_'
-    print(pref)
-    mn_db_2 = stepB.duplicate_cleaner(mn_db, args.working_directory, pref, verbose=True)
-# Type error: my columns are different to the standard we used before. I need t change the reference type lib, so that it works i think.
-# this is annoying and will be attempted tomorrow.
+    print(pref, 'TEST')
+    print(mn_db)
+    print(tmp_occs_5)
+    mn_db_2 = stepB.duplicate_cleaner(mn_db, args.working_directory, pref, verbose=True, step='Master')
+
+    # Type error: my columns are different to the standard we used before. I need t change the reference type lib, so that it works i think.
+    # this is annoying and will be attempted tomorrow.
 
 
     print('so far so good??')

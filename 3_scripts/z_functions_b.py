@@ -102,12 +102,19 @@ def duplicate_stats(occs, verbose=True, debugging=False):
 
 
 
-def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=False):
+def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True, debugging=False):
     '''
     This one actually goes and cleans/merges duplicates.
+        > occs = occurrence data to de-duplicate
+        > working_directory = path to directory to output intermediate files
+        > prefix = filename prefix
+        > step = {raw, master} = reference for datatype checks
     '''
 
-    occs = occs.astype(z_dependencies.final_col_type) # double checking
+    if step=='Master':
+        occs=occs.astype(z_dependencies.final_col_for_import_type)
+    else:
+        occs = occs.astype(z_dependencies.final_col_type) # double checking
     print(occs.dtypes)
     #occs.replace('nan', pd.NA, inplace=True)
 
@@ -128,12 +135,11 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
     occs_colNum.ddlong.astype(float)
     occs_nocolNum['ddlong'].astype(float)
 
-    occs_colNum['coll_surname'] = occs_colNum['recordedBy'].str.split(',', expand=True)[0]
     #print(occs_colNum['coll_surname'])
 
     #-------------------------------------------------------------------------------
     occs_dup_col =  occs_colNum.loc[occs_colNum.duplicated(subset=dup_cols, keep=False)]
-    #print(occs_dup_col)
+    print('Run1', occs_dup_col)
     # get the NON-duplicated records
     occs_unique = occs_colNum.drop_duplicates(subset=dup_cols, keep=False)
 
@@ -155,15 +161,17 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
     convert_dict = {'ddlat': float,
                     'ddlong': float}
     occs_dup_col = occs_dup_col.astype(convert_dict)
+    print(occs_dup_col)
+
 
     if verbose:
         print('\n The duplicates subset, before cleaning dups has the shape: ', occs_dup_col.shape)
     # in this aggregation step we calculate the variance between the duplicates.
     test = occs_dup_col.groupby(dup_cols, as_index = False).agg(
         ddlong = pd.NamedAgg(column = 'ddlong', aggfunc='var'),
-        ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'),
-                              )
+        ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'))
 
+    print(test)
     # if this variance is above 0.1 degrees
     test.loc[test['ddlong'] >= 0.1, 'long bigger than 0.1'] = 'True'
     test.loc[test['ddlong'] < 0.1, 'long bigger than 0.1'] = 'False'
@@ -268,6 +276,9 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
     occs_dup_col = occs_dup_col.astype(z_dependencies.final_col_type)
     #print(occs_dup_col.dtypes)
 
+
+    # Here we can still modify which columns we take further, and how they are merged,
+    #   i.e. is it record1, record1duplicate or do we discard duplicate data and just take the first record.
     occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
         scientificName = pd.NamedAgg(column = 'scientificName', aggfunc = 'first'),
     	genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
@@ -275,6 +286,7 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
     	speciesAuthor = pd.NamedAgg(column = 'speciesAuthor', aggfunc = 'first' ),
     	collectorID = pd.NamedAgg(column = 'collectorID', aggfunc = 'first' ),
         recordedBy = pd.NamedAgg(column = 'recordedBy', aggfunc = 'first' ),
+        colNum_full = pd.NamedAgg(column = 'colNum_full', aggfunc=lambda x: ', '.join(x)),
     	prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
     	colNum = pd.NamedAgg(column = 'colNum', aggfunc = 'first' ),
     	sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
@@ -283,7 +295,7 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
         colMonth = pd.NamedAgg(column = 'colMonth', aggfunc = 'first' ),
         colYear = pd.NamedAgg(column = 'colYear', aggfunc = 'first' ),
     	detBy = pd.NamedAgg(column = 'detBy', aggfunc = lambda x: ', '.join(x) ),
-    	detByDate = pd.NamedAgg(column = 'detByDate', aggfunc = 'first' ),
+    	detDate = pd.NamedAgg(column = 'detDate', aggfunc = 'first' ),
         detDay = pd.NamedAgg(column = 'detDay', aggfunc = 'first' ),
         detMonth = pd.NamedAgg(column = 'detMonth', aggfunc = 'first' ),
         detYear = pd.NamedAgg(column = 'detYear', aggfunc = 'first' ),
@@ -296,7 +308,9 @@ def duplicate_cleaner(occs, working_directory, prefix, verbose=True, debugging=F
         ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
     	institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
         herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
-        barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)))
+        barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
+        orig_BC = pd.NamedAgg(column = 'orig_BC', aggfunc=lambda x: ', '.join(x)),
+        coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'))
     # here quite some data might get lost, so we need to check where we want to just join first,
     # and where we add all values, and then decide on the columns we really want in the final
     # database!!!

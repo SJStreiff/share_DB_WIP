@@ -44,7 +44,7 @@ If it doesn't work, or you would like to chat, feel free to contact serafin.stre
 ### Input files
 
 So far, the pipeline only takes input file in either the "darwin core format", as for example found in GBIF data, or the format used at P for their herbonautes metadata collection projects.
-GBIF raw data downloads are in tab-separated tables (csv), and herbonautes data is separated by semicolons ';'. For advanced users, or maybe for me further down the line, one might change the columns to subset. These are specified in the file "./3_scripts/z_dependencies.py".
+GBIF raw data downloads are in tab-separated tables (csv), and herbonautes data is separated by semicolons ';'. For advanced users, or maybe for me further down the line, one might change the columns to subset. These are specified in the file "./3_scripts/z_dependencies.py". **It is crucial that both the columns and their associated datatype are correctly specified there.** Failure to do so will create problems when working with the data.
 
 **more to come**
 

@@ -43,6 +43,7 @@ def check_premerge(mdb, occs, verbose=True):
 
     print(len(tmp_mast), 'combined')
 
+
     return tmp_mast
 
 
