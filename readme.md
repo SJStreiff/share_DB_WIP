@@ -2,7 +2,11 @@
 
 ---
 
-# Recordcleaner
+# Recordcleaner and Filer
+
+This pipeline consists (at the moment) of two more or less independent steps: 
+* RECORDCLEANER: This step takes raw occurrence records and cleans them to a somewhat acceptable standard. The main feature here is that we merge duplicate collections, while retaining all the information of the different iso-specimens.
+* RECORD-FILER: This step integrates the data cleaned in RECORDCLEANER into a specified database (might at some point be automatically into a postgres/SQL database).
 
 ## The/A PIPELINE for standardising occurrence records
 
@@ -12,7 +16,7 @@
 To launch recordcleaner, you can use the useful bash launcher, in terminal in your directory:
 
 ```
-chmod +x recordcleaner.sh
+# chmod +x recordcleaner.sh
 ./recordcleaner.sh
 ```
 
@@ -20,7 +24,7 @@ This handy script let's you specify your input and output options, as well as ot
 Alternatively, the script can be called directly in the command line with the '-h' flag, which lets a user know exactly which parameters are required and which are optional.
 
 ```
-python ./3_scripts/recordcleaner.py -h
+> python ./3_scripts/recordcleaner.py -h
 
 RECORDCLEANER takes your raw occurence records and compares them to an existing database if you have it, cleaning up column names, removing duplicates and making it more pleasing in general
 

@@ -450,28 +450,28 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
     extr_list = {
-        r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2 \3 \4',  # all full full names with sep = ' '
-        r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+': r'\1, \2 \3',  # all full names: 2 given names
+        r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4',  # all full full names with sep = ' '
+        r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+': r'\1, \2\3',  # all full names: 2 given names
         r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]{2,20}': r'\1, \2',  # just SURNAME, Firstname
-        r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\Z': r'\1, \2 \3 \4',  # Surname, F(.) M(.) M(.)
-        r'(^[A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W\,.+': r'\1, \2 \3 \4',  # Surname, F(.) M(.) M(.), other collectors
-        r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+\Z': r'\1, \2 \3',  # Surname, F(.) M(.)
-        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])([A-Z])': r'\1, \2 \3 \4',  # Surname FMM
-        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])([A-Z])': r'\1, \2 \3 \4',  # Surname FMM
-        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])\Z': r'\1, \2 \3',  # Surname FM
-        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])\Z': r'\1, \2 \3',  # Surname FM
+        r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\Z': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.)
+        r'(^[A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W\,.+': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.), other collectors
+        r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+\Z': r'\1, \2\3',  # Surname, F(.) M(.)
+        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])([A-Z])': r'\1, \2\3\4',  # Surname FMM
+        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])([A-Z])': r'\1, \2\3\4',  # Surname FMM
+        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])\Z': r'\1, \2\3',  # Surname FM
+        r'^([A-Z][a-z]+)\W+([A-Z])([A-Z])\Z': r'\1, \2 3',  # Surname FM
         r'^([A-Z][a-z]+)\W+([A-Z])\Z': r'\1, \2',  # Surname F
         r'^([A-Z][a-z]+)\W*\Z': r'\1',  # Surname without anything
         r'^([A-Z][a-z]+)\,\W+([A-Z])\W+': r'\1, \2',  # Surname, F(.)
-        r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z][a-z]+)': r'\4, \1 \2 \3', # Firstname Mid Nid Surname ...
-        r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z][a-z]+)': r'\3, \1 \2', # Firstname Mid Surname ...
-        r'^([A-Z])[a-z]+\s([A-Z])\W+([A-Z][a-z]+)': r'\3, \1 \2', # Firstname M. Surname ...
+        r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z][a-z]+)': r'\4, \1\2\3', # Firstname Mid Nid Surname ...
+        r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z][a-z]+)': r'\3, \1\2', # Firstname Mid Surname ...
+        r'^([A-Z])[a-z]+\s([A-Z])\W+([A-Z][a-z]+)': r'\3, \1\2', # Firstname M. Surname ...
         r'^([A-Z])[a-z]+\s([A-Z][a-z]+)': r'\2, \1', # Firstname Surname
         r'^([A-Z])\W+([A-Z][a-z]+)': r'\2, \1', # F. Surname ...
-        r'^([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\3, \1 \2', #F. M. Surname
+        r'^([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\3, \1\2', #F. M. Surname
         r'^([A-Z])\W+([A-Z][a-z]+)': r'\2, \1', #F Surname
-        r'^([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\3, \1 \2', #FM Surname
-        r'^([A-Z])([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\4, \1 \2 \3', #FMM Surname
+        r'^([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\3, \1\2', #FM Surname
+        r'^([A-Z])([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\4, \1\2\3', #FMM Surname
     }
     # The row within the extr_list corresponds to the column in the debugging dataframe printed below
 

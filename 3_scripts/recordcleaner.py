@@ -42,9 +42,6 @@ if __name__ == "__main__":
     parser.add_argument('prefix',
                         help = 'prefix for ouput filenames',
                         type = str)
-    parser.add_argument('MasterDB',
-                        help='The location of the master database file.',
-                        type=str)
     parser.add_argument('--nonamecln',
                         help = 'if specified, collector names are expected in the format <Surname>, <F>irstname, or if deviating standardised to be identical across all datasets. The collector names will not be standardised! Use with caution!',
                         type = int)
@@ -144,33 +141,7 @@ if __name__ == "__main__":
     #print(tmp_occs_5.columns)
     print('Thanks for cleaning your records ;-)')
 
-    #---------------------------------------------------------------------------
-    print('Now I would like to \n')
-    print('\t - Check your new records against indets and for duplicates \n')
-    print('\t - Merge them into the master database')
-
-    mdb_op = codecs.open(args.MasterDB,'r','utf-8')
-    mdb = pd.read_csv(mdb_op, sep = ';',  dtype = z_dependencies.final_col_for_import_type)
-    mdb = mdb.replace('nan', pd.NA)
-    #tmp_occs_5 = tmp_occs_5.replace('nan', pd.NA)
-
-    print('Master database read successfully!', len(mdb))
-
-    mn_db = stepD.check_premerge(mdb, tmp_occs_5, verbose=True)
-    mn_db = mn_db.replace('nan', pd.NA)
-    mn_db = mn_db.replace(np.nan, pd.NA)
-
-
-    #print(mn_db)
-    pref = args.prefix + 'main_C_'
-    print(pref, 'TEST')
-    print(mn_db)
-    print(tmp_occs_5)
-    mn_db_2 = stepB.duplicate_cleaner(mn_db, args.working_directory, pref, verbose=True, step='Master')
-
-    # Type error: my columns are different to the standard we used before. I need t change the reference type lib, so that it works i think.
-    # this is annoying and will be attempted tomorrow.
-
+    
 
     print('so far so good??')
 
