@@ -72,7 +72,7 @@ if __name__ == "__main__":
         'Would you like to reinsert the names I couldn\'t handle?',
         'Please take care of encoding (usually best is UTF-8) when opening (especially in Microsoft Excel!!)',
         'If you would like to reinsert your checked names, please indicate the path to your modified file. Otherwise type "n" or "no".')
-        reinsert='n' # make back to input()
+        reinsert=input() #'n' # make back to input()
 
         if reinsert == 'n' or 'no':
             print('Ok I will continue without any reinsertion')
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     #print(tmp_occs_5.columns)
     print('Thanks for cleaning your records ;-)')
 
-    
+
 
     print('so far so good??')
 
