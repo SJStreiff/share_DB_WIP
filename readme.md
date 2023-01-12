@@ -4,11 +4,11 @@
 
 # Recordcleaner and Filer
 
-This pipeline consists (at the moment) of two more or less independent steps: 
+This pipeline consists (at the moment) of two more or less independent steps:
 * RECORDCLEANER: This step takes raw occurrence records and cleans them to a somewhat acceptable standard. The main feature here is that we merge duplicate collections, while retaining all the information of the different iso-specimens.
 * RECORD-FILER: This step integrates the data cleaned in RECORDCLEANER into a specified database (might at some point be automatically into a postgres/SQL database).
 
-## The/A PIPELINE for standardising occurrence records
+## The/A PIPELINE for standardising occurrence records: RECORDCLEANER
 
 ![There would be a funny picture here normally](TMP_titleimage.png "")
 
@@ -81,6 +81,10 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
   * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and?
 
 
+* Unclear if possible:
+  * Check collector names against Harvard Univ. Herb. database of botanists... tests in *z_functions.py*... 
+
+
 ## TODO
 
 * Keep readme uptodate with new developments and changes
@@ -96,7 +100,9 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 
 
 
+# The/A pipeline for integrating cleaned data nicely into a postgres database: RECORDFILER
 
+Todo
 
 
 

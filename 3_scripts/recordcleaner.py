@@ -3,6 +3,8 @@
 
 '''This program takes your raw records and compares them to existing data if you have it,
 cleaning up column names, removing duplicates and making it more pleasing in general
+
+PREFIX "Z_" fopr scripts
 '''
 
 import z_functions_a as stepA

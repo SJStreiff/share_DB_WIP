@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''This program takes your CLEANED records, compares them to a masterdatabase, 
+'''This program takes your CLEANED records, compares them to a masterdatabase,
 and integrates the new data in to said masterdatabase.
+
+PREFIX "Y_" for scripts
 '''
 
 import z_functions_a as stepA
@@ -40,9 +42,27 @@ if __name__ == "__main__":
                         help = 'If true (default), I will print a lot of stuff that might or might not help...',
                         default = True)
     args = parser.parse_args()
-    # optional, but for debugging. Maybe make it prettier 
+    # optional, but for debugging. Maybe make it prettier
     print('Arguments:', args)
-    
+
+"""
+In record filer we want to implement the following steps.
+
+- download database subset that we need to integrate into (i.e. subset by genera or region?)
+
+- check input data for valid barcodes and other details?
+
+- see which are duplicates of already existing data.
+    reference to s.n. collection
+    reference to 'missing-coordinate' collection
+
+- integrate data.
+
+-reupload data into server.
+
+"""
+
+
 
     #---------------------------------------------------------------------------
     print('Now I would like to \n')
