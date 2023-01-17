@@ -108,6 +108,10 @@ if __name__ == "__main__":
     stepB.duplicate_stats(tmp_occs_4)
 
     print(tmp_occs_4.columns)
+    #---------------------------------------------------------------------------
+    # do the same with s.n.
+    
+
 
     # write csv to file, next step is time intensive
     #tmp_occs_4.to_csv(args.working_directory + 'pre_taxon_check.csv', index=False, sep=';')
