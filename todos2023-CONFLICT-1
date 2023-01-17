@@ -1,0 +1,14 @@
+# TODO for beginning 2023
+
+
+* HUH botanists query possible? that would be cool
+    https://realpython.com/api-integration-in-python/?
+
+  
+* Extend beyond Philippines --> Indonesia, Papua, New Caledonia, ....country by country works quite well here...
+* Georeference data for species with nothing so far... Local databases, protologues/treatments
+
+
+## Split cleaning step from merging step 
+
+i.e. first clean data within one step, then second one to compare and merge with main database

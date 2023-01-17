@@ -99,19 +99,25 @@ if __name__ == "__main__":
     # step B:
 
     #make this optional? No probably just force people to read this mess.
-    stepB.duplicate_stats(tmp_occs_3)
+    tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
 
     tmp_occs_4 = stepB.duplicate_cleaner(tmp_occs_3, args.working_directory, args.prefix, verbose=False)
 
     print(len(tmp_occs_4))
 
-    stepB.duplicate_stats(tmp_occs_4)
+    stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix)
 
     print(tmp_occs_4.columns)
+
+
     #---------------------------------------------------------------------------
     # do the same with s.n.
-    
 
+    tmp_s_n_1 = stepB.duplicate_cleaner_s_n(tmp_s_n, args.working_directory, args.prefix, verbose=True)
+    print('S.N.:', len(tmp_s_n_1))
+
+    # now recombine numbered and s.n. data
+    tmp_occs_5 = pd.concat([tmp_occs_4, tmp_s_n_1])
 
     # write csv to file, next step is time intensive
     #tmp_occs_4.to_csv(args.working_directory + 'pre_taxon_check.csv', index=False, sep=';')
@@ -124,19 +130,24 @@ if __name__ == "__main__":
     print('Do you want to do this now? [y]/[n]')
     goahead=input()
     if goahead == 'y':
-        tmp_occs_5 = stepC.kew_query(tmp_occs_4, args.working_directory, verbose=True)
+        tmp_occs_6 = stepC.kew_query(tmp_occs_5, args.working_directory, verbose=True)
 
     else:
         print('Nomenclature remains unchecked!!')
         miss_col = [i for i in z_dependencies.final_cols_for_import if i not in tmp_occs_4.columns]
         if args.verbose:
-            print('These columns are missing as a result, I will fill them with <NA>:', miss_col)
-        tmp_occs_4[miss_col] = pd.NA
-        tmp_occs_4 = tmp_occs_4.astype(dtype = z_dependencies.final_col_for_import_type)
-        tmp_occs_5 = tmp_occs_4
+            print('As you do not want to chack your taxonomy (although this is strongly recommended), these columns are missing: \n',
+            miss_col, '\n I will fill them with <NA>')
+        tmp_occs_5[miss_col] = pd.NA
+        tmp_occs_5 = tmp_occs_5.astype(dtype = z_dependencies.final_col_for_import_type)
+        tmp_occs_6 = tmp_occs_5
         # print(tmp_occs_5.dtypes)
 
-    tmp_occs_5.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
+    tmp_occs_6.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
+    print("\n\n--------------------------------------\n",
+    "The output of this first processing is saved to:",
+    args.output_directory+args.prefix+'cleaned.csv',
+    '\n---------------------------------------------\n')
     #depends.1a_columns()
     # check coordinates --> R package gridder????
 

@@ -71,7 +71,8 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 
 * Step B:
   * B1: run some statistics on duplicates in the dataset.
-  * B2 remove said duplicates.
+  * B2 remove said duplicates. The duplicates are at the moment identified by the following criteria: If the collector surname, number, number sufix and year are identical, they are flagged as duplicates.
+  Note that records with no collection number (i.e. *s.n.*) are treated separately. Here the combination of Surname, Collection Year, Month and Day and Genus + specific_epithet are used to identify duplicates. This leads to errors, but in my humble opinion it's better than nothing.
 
 * Step C:
   * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily. With other familiesthe situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
@@ -82,7 +83,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 
 
 * Unclear if possible:
-  * Check collector names against Harvard Univ. Herb. database of botanists... tests in *z_functions.py*... 
+  * Check collector names against Harvard Univ. Herb. database of botanists... tests in *z_functions.py*...
 
 
 ## TODO

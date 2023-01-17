@@ -199,6 +199,11 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs['colNum']  = occs['colNum_full'].astype(str).str.extract('(' + '|'.join(regex_list_digits) + ')')
 
         occs['colNum'] = occs['colNum'].str.strip()
+
+
+        # for completeness we need this
+        occs['orig_BC'] = occs['barcode']
+
         occs = occs.replace('nan', pd.NA) # remove NAs that aren't proper
 
         #print(occs.head(5))
