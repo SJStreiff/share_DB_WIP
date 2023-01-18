@@ -1,4 +1,4 @@
-coll_surname;colNum;sufix;colYear;ddlong;ddlat;long bigger than 0.1;lat bigger than 0.1
+coll_surname;colnum;sufix;col_year;ddlong;ddlat;long bigger than 0.1;lat bigger than 0.1
 Amdjah;1912;;1912;0.3874574606838449;12.030891963178233;True;True
 Balgooy;5326;;1986;0.2253335066667023;0.0;True;False
 Balgooy;5328;;1986;0.22535066700000012;0.0;True;False

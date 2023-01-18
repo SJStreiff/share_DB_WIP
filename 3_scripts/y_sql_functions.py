@@ -62,7 +62,7 @@ def fetch_master_db(database, host, tablename, schema):  #subset????
     'Please type the PASSWORD used to connect to the database for user', username)
     password=getpass() #'n' # make back to input()
     print('\n ................................\n',
-    'NOT REQUIRED RIGHT NOW: Please type the PORT required to connect to the database:')
+    'Please type the PORT required to connect to the database:')
     port=input() #'n' # make back to input()
 
     url_obj = URL.create(
@@ -86,10 +86,10 @@ def fetch_master_db(database, host, tablename, schema):  #subset????
     print(master_db_test.head())
 
     return master_db_test
-
-print('Hostname?')
-hostname=input()
-test = fetch_master_db('GLOBAL', hostname, 'phil_test_221209', 'serafin_test')
+#
+# print('Hostname?')
+# hostname=input()
+# test = fetch_master_db('GLOBAL', hostname, 'phil_test_221209', 'serafin_test')
 
 
 #

@@ -66,6 +66,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 
 * Step A:
   * A1: Standardise column names, remove unwanted columns and add empty columns we need later
+    Note that as I think the database columns make all capital letters to small, I have changed this accordingly in the preprocessing
   * A2: Standardise data within some columns, e.g. separate all dates into separate columns day, month and year, make sure all barcodes have the institution leading before the number, have the first collector in a separate column,
   * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record.
 
@@ -77,6 +78,9 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 * Step C:
   * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily. With other familiesthe situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
   * Check coordinates. Probably we just check for country centroids and points in the water. This will be done with already available packages, and issues flagged for potential correction in e.g. QGIS (qgis.org)
+  This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe).
+
+RECORD-FILER then goes and takes freshly (or even old) cleaned data
 
 * Step D:
   * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and?
@@ -84,6 +88,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 
 * Unclear if possible:
   * Check collector names against Harvard Univ. Herb. database of botanists... tests in *z_functions.py*...
+  So far my efforts have been limited, although I'm able to communicate with the HUH database, just the output is not what i was hoping for...
 
 
 ## TODO

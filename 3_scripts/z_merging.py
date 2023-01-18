@@ -35,10 +35,13 @@ def check_premerge(mdb, occs, verbose=True):
 
 
     print('\n \n Some stats about potential duplicates being integrated: \n .................................................\n')
-    print('\n By surname, number, sufix and collyear', tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colNum', 'sufix', 'colYear' ], keep=False)].shape)
+    print('\n By surname, number, sufix and collyear & country ID', tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colNum', 'sufix', 'colYear', 'countryID' ], keep=False)].shape)
+    print('\n By surname, number, sufix and collyear & country ID', tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colNum_full' ], keep=False)].shape)
+    print('\n By surname, number, genus & specific epithet', tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colNum', 'genus', 'specificEpithet' ], keep=False)].shape)
+
     print('\n .................................................\n')
 
-    print(len(mdb), 'the non-cleaned reference')
+    print(len(mdb), 'the master_db download')
     print(len(occs), 'cleaned occurences')
 
     print(len(tmp_mast), 'combined')

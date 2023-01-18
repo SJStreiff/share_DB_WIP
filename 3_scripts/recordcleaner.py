@@ -4,13 +4,13 @@
 '''This program takes your raw records and compares them to existing data if you have it,
 cleaning up column names, removing duplicates and making it more pleasing in general
 
-PREFIX "Z_" fopr scripts
+PREFIX "Z_" for scripts
 '''
 
 import z_functions_a as stepA
 import z_functions_b as stepB
 import z_nomenclature as stepC
-import z_merging as stepD
+#import z_merging as stepD
 
 import z_dependencies
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
 
 
-    tmp_occs_2 = stepA.column_cleaning(tmp_occs, args.data_type, args.working_directory, args.prefix, verbose=False)
+    tmp_occs_2 = stepA.column_cleaning(tmp_occs, args.data_type, args.working_directory, args.prefix, verbose=True)
 
 
     print(tmp_occs_2.columns)
@@ -93,6 +93,14 @@ if __name__ == "__main__":
     # # option of including a fuzzy matching step here. I haven't implemented this yet...
     print('STEP A complete.')
     print(tmp_occs_3.columns)
+    #---------------------------------------------------------------------------
+    # Here I am blacklisting some herbaria, as I cannot work with their data. (no proper barcodes, mixed up columns)
+    # For now this is not much data loss
+    HERB_TO_RM = [['AAU']]
+    print('Before removing dataproblematic institutions:', tmp_occs_3.shape)
+    drop_ind = tmp_occs_3[(tmp_occs_3['institute'] == 'AAU')].index
+    tmp_occs_3.drop(drop_ind, inplace = True)
+    print('After removing dataproblematic institutions:',tmp_occs_3.shape)
 
 
     #---------------------------------------------------------------------------
@@ -100,31 +108,22 @@ if __name__ == "__main__":
 
     #make this optional? No probably just force people to read this mess.
     tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
-
     tmp_occs_4 = stepB.duplicate_cleaner(tmp_occs_3, args.working_directory, args.prefix, verbose=False)
-
     print(len(tmp_occs_4))
-
     stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix)
-
     print(tmp_occs_4.columns)
-
 
     #---------------------------------------------------------------------------
     # do the same with s.n.
-
     tmp_s_n_1 = stepB.duplicate_cleaner_s_n(tmp_s_n, args.working_directory, args.prefix, verbose=True)
     print('S.N.:', len(tmp_s_n_1))
 
     # now recombine numbered and s.n. data
     tmp_occs_5 = pd.concat([tmp_occs_4, tmp_s_n_1])
 
-    # write csv to file, next step is time intensive
-    #tmp_occs_4.to_csv(args.working_directory + 'pre_taxon_check.csv', index=False, sep=';')
-
     #---------------------------------------------------------------------------
 
-    # step C?, nomenclature check??
+    # step C1, nomenclature check??
     print('\n.........................................\n')
     print('Checking the taxonomy now. This takes a moment!')
     print('Do you want to do this now? [y]/[n]')
@@ -148,14 +147,15 @@ if __name__ == "__main__":
     "The output of this first processing is saved to:",
     args.output_directory+args.prefix+'cleaned.csv',
     '\n---------------------------------------------\n')
-    #depends.1a_columns()
+
     # check coordinates --> R package gridder????
 
-    #coordinate checks???
+    #coordinate checks
+    #---------------------------------------------------------------------------
+    # this happens in R, as I have not found an alternative in python. There are known reliable (albeit somewhat problematic) packages available in R.
+    print('Note I think that I will clean the coordinates in a separate step just after this. In R.')
 
     # would be nice to have an option to again merge in some data that is known as clean, e.g. other data that was cleaned manually
-
-    #print(tmp_occs_5.columns)
     print('Thanks for cleaning your records ;-)')
 
 

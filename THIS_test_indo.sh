@@ -24,7 +24,10 @@ NOCOLLECTOR='' # if '-nc', the name standardisation step is skipped! Use with ca
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Step 2 RECORDFILER
 INPUT_2=$(echo $OUT_DIR$PREFIX'cleaned.csv')
-MASTERDB='the database'
+MASTERDB='GLOBAL'
+HOSTNAME='10.4.91.57'
+TABLE='phil_test_221209'
+SCHEMA='serafin_test'
 
 
 
@@ -32,7 +35,17 @@ MASTERDB='the database'
 
 #python ./3_scripts/recordcleaner.py -h
 #or
+# working for now, commented out...
 python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
 
-# if STEP2ASWELL='YES' do
-  # python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB
+echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
+echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+#if STEP2ASWELL='YES' do
+#python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+#done
+
+
+
+
+
+# see if this works

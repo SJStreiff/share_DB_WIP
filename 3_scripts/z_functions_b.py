@@ -39,20 +39,20 @@ def duplicate_stats(occs, working_directory, prefix, verbose=True, debugging=Fal
     #-------------------------------------------------------------------------------
     # these columns are used to identify duplicates (i.e. if a value of both these column is shared
     # for a row, then we flag the records as duplicates)
-    dup_cols = ['coll_surname', 'colNum', 'sufix', 'colYear'] # the columns by which duplicates are identified
+    dup_cols = ['coll_surname', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
     #-------------------------------------------------------------------------------
 
 
     # data types can be annoying
     occs = occs.astype(z_dependencies.final_col_type) # double checking
     print(occs.dtypes)
-    #occs[['recordedBy', 'colNum_full']] = occs[['recordedBy', 'colNum_full']].replace('nan', pd.NA)
+    #occs[['recorded_by', 'colnum_full']] = occs[['recorded_by', 'colnum_full']].replace('nan', pd.NA)
 
 
     #-------------------------------------------------------------------------------
     # MISSING collector information and number
     # remove empty collector and coll num
-    occs1 = occs.dropna(how='all', subset = ['recordedBy']) # no collector information is impossible.
+    occs1 = occs.dropna(how='all', subset = ['recorded_by']) # no collector information is impossible.
     print('Deleted', len(occs.index) - len(occs1.index),
      'rows with no collector and no number; \n',
      len(occs1.index), 'records left')
@@ -61,18 +61,18 @@ def duplicate_stats(occs, working_directory, prefix, verbose=True, debugging=Fal
     #-------------------------------------------------------------------------------
     # MISSING col num
     # these are removed, and added later after processing(?)
-    subset_col = ['colNum_full']
+    subset_col = ['colnum_full']
 
     occs_colNum = occs1.dropna(how='all', subset=subset_col)
-    occs_nocolNum = occs1[occs1['colNum_full'].isna()]
+    occs_nocolNum = occs1[occs1['colnum_full'].isna()]
 
     occs_colNum.ddlong.astype(float)
     occs_nocolNum['ddlong'].astype(float)
     occs_colNum.ddlat.astype(float)
     occs_nocolNum['ddlat'].astype(float)
 
-
-    occs_colNum['coll_surname'] = occs_colNum['recordedBy'].str.split(',', expand=True)[0]
+    print('1TEST', occs_colNum)
+    occs_colNum['coll_surname'] = occs_colNum['recorded_by'].str.split(',', expand=True)[0]
     print(occs_colNum['coll_surname'])
 
     if len(occs_nocolNum)>0:
@@ -82,24 +82,24 @@ def duplicate_stats(occs, working_directory, prefix, verbose=True, debugging=Fal
     #-------------------------------------------------------------------------------
     # Perform some nice stats, just to get an idea what we have
 
-    occs_colNum.colNum_full.astype(str)
+    occs_colNum.colnum_full.astype(str)
     print('Total records:', len(occs),';\n Records with colNum_full:', len(occs_colNum),';\n Records with no colNum_full:', len(occs_nocolNum))
 
     print('\n \n Some stats about potential duplicates: \n .................................................\n')
-    print('\n By Collector-name and FULL collector number', occs_colNum[occs_colNum.duplicated(subset=['recordedBy', 'colNum_full'], keep=False)].shape)
-    print('\n By NON-STANDARD Collector-name and FULL collector number', occs_colNum[occs_colNum.duplicated(subset=['ORIG_recBy', 'colNum_full'], keep=False)].shape)
-    print('\n By Collector-name and FULL collector number, and coordinates', occs_colNum.duplicated(['recordedBy', 'colNum_full', 'ddlat', 'ddlong'], keep=False).sum())
-    print('\n By Collector-name and FULL collector number, genus and specific epithet', occs_colNum.duplicated(['recordedBy', 'colNum_full', 'genus' , 'specificEpithet'], keep=False).sum())
-    print('\n By FULL collector number, genus and specific epithet', occs_colNum.duplicated([ 'colNum_full', 'genus' , 'specificEpithet'], keep=False).sum())
-    print('\n By FULL collector number and genus', occs_colNum.duplicated([ 'colNum_full', 'genus' ], keep=False).sum())
-    print('\n By FULL collector number, collection Year and country', occs_colNum.duplicated([ 'colNum_full', 'colYear' , 'country'], keep=False).sum())
-    print('\n By collection Year and FULL collection number (checking for directionality)', occs_colNum.duplicated([ 'colYear' , 'colNum_full'], keep=False).sum())
-    print('\n By REDUCED collection number and collection Yeear', occs_colNum.duplicated([ 'colNum', 'colYear' ], keep=False).sum())
-    print('\n By locality, REDUCED collection number and collection Year', occs_colNum.duplicated([ 'locality', 'colNum', 'colYear' ], keep=False).sum())
-    print('\n By SURNAME and COLLECTION NUMBER', occs_colNum.duplicated([ 'coll_surname', 'colNum' ], keep=False).sum())
-    print('\n By SURNAME and FULL COLLECTION NUMBER', occs_colNum.duplicated([ 'coll_surname', 'colNum_full' ], keep=False).sum())
-    print('\n By SURNAME and COLLECTION NUMBER and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colNum', 'colYear' ], keep=False).sum())
-    print('\n By SURNAME and COLLECTION NUMBER, SUFIX and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colNum', 'sufix', 'colYear' ], keep=False).sum())
+    print('\n By Collector-name and FULL collector number', occs_colNum[occs_colNum.duplicated(subset=['recorded_by', 'colnum_full'], keep=False)].shape)
+    print('\n By NON-STANDARD Collector-name and FULL collector number', occs_colNum[occs_colNum.duplicated(subset=['orig_recby', 'colnum_full'], keep=False)].shape)
+    print('\n By Collector-name and FULL collector number, and coordinates', occs_colNum.duplicated(['recorded_by', 'colnum_full', 'ddlat', 'ddlong'], keep=False).sum())
+    print('\n By Collector-name and FULL collector number, genus and specific epithet', occs_colNum.duplicated(['recorded_by', 'colnum_full', 'genus' , 'specific_epithet'], keep=False).sum())
+    print('\n By FULL collector number, genus and specific epithet', occs_colNum.duplicated([ 'colnum_full', 'genus' , 'specific_epithet'], keep=False).sum())
+    print('\n By FULL collector number and genus', occs_colNum.duplicated([ 'colnum_full', 'genus' ], keep=False).sum())
+    print('\n By FULL collector number, collection Year and country', occs_colNum.duplicated([ 'colnum_full', 'col_year' , 'country'], keep=False).sum())
+    print('\n By collection Year and FULL collection number (checking for directionality)', occs_colNum.duplicated([ 'col_year' , 'colnum_full'], keep=False).sum())
+    print('\n By REDUCED collection number and collection Yeear', occs_colNum.duplicated([ 'colnum', 'col_year' ], keep=False).sum())
+    print('\n By locality, REDUCED collection number and collection Year', occs_colNum.duplicated([ 'locality', 'colnum', 'col_year' ], keep=False).sum())
+    print('\n By SURNAME and COLLECTION NUMBER', occs_colNum.duplicated([ 'coll_surname', 'colnum' ], keep=False).sum())
+    print('\n By SURNAME and FULL COLLECTION NUMBER', occs_colNum.duplicated([ 'coll_surname', 'colnum_full' ], keep=False).sum())
+    print('\n By SURNAME and COLLECTION NUMBER and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colnum', 'col_year' ], keep=False).sum())
+    print('\n By SURNAME and COLLECTION NUMBER, SUFIX and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colnum', 'sufix', 'col_year' ], keep=False).sum())
     print('\n ................................................. \n ')
 
 
@@ -126,18 +126,18 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
     print(occs.dtypes)
     #occs = occs.replace('nan', pd.NA)
 
-    dup_cols = ['coll_surname', 'colNum', 'sufix', 'colYear'] # the columns by which duplicates are identified
+    dup_cols = ['coll_surname', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
 
     #-------------------------------------------------------------------------------
     # MISSING collector information and number
     # remove empty collector and coll num
-    occs1 = occs.dropna(how='all', subset = ['recordedBy', 'colNum', 'colNum_full'])
+    occs1 = occs.dropna(how='all', subset = ['recorded_by', 'colnum', 'colnum_full'])
 
 
-    subset_col = ['colNum_full']
+    subset_col = ['colnum_full']
 
     occs_colNum = occs1.dropna(how='all', subset=subset_col)
-    occs_nocolNum = occs1[occs1['colNum_full'].isna()]
+    occs_nocolNum = occs1[occs1['colnum_full'].isna()]
 
     occs_colNum.ddlong.astype(float)
     occs_nocolNum['ddlong'].astype(float)
@@ -209,8 +209,8 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
         '\n If you want to check them, I saved them to', working_directory + 'TO_CHECK_'+prefix+ 'coordinate_issues.csv')
 
     # for smaller differences, take the mean value...
-    occs_dup_col['ddlat'] = occs_dup_col.groupby(['colYear', 'colNum_full'])['ddlat'].transform('mean')
-    occs_dup_col['ddlong'] = occs_dup_col.groupby(['colYear', 'colNum_full'])['ddlong'].transform('mean')
+    occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlat'].transform('mean')
+    occs_dup_col['ddlong'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlong'].transform('mean')
     #print(occs_dup_col.shape)
 
 
@@ -225,8 +225,8 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
     # to  use them to force through dets? Does that make sense? We do update the
     # taxonomy at a later date, so dets to earlier concepts might not be a massive issue?
 
-    dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['colYear','colNum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recordedBy','colNum_full','specificEpithet','genus'],keep=False)]
-    dups_diff_species = dups_diff_species.sort_values(['colYear','colNum_full'], ascending = (True, True))
+    dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year','colnum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','specific_epithet','genus'],keep=False)]
+    dups_diff_species = dups_diff_species.sort_values(['col_year','colnum_full'], ascending = (True, True))
 
     if verbose:
         print('\n We have', len(dups_diff_species),
@@ -235,12 +235,12 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
     #-------------------------------------------------------------------------------
     # i think this just is nice for visual confirmation we didn't reverse an identification
     # by replacing it with 'sp.'
-    # check which speciimens have no specificEpithet, or 'sp./indet.'
-    # # occs_dup_col['sE-sp'] = occs_dup_col['specificEpithet']
+    # check which speciimens have no specific_epithet, or 'sp./indet.'
+    # # occs_dup_col['sE-sp'] = occs_dup_col['specific_epithet']
     # occs_dup_col['sE-sp'] = occs_dup_col['sE-sp'].str.replace(r'^(.(?<!sp\.))*?$', '')
-    # #[dups_diff_species['specificEpithet'] == 'sp.']
+    # #[dups_diff_species['specific_epithet'] == 'sp.']
     # print('HA')
-    # occs_dup_col['sE-indet'] = occs_dup_col['specificEpithet']
+    # occs_dup_col['sE-indet'] = occs_dup_col['specific_epithet']
     # #.str.replace(r"^(.(?<!Grass))*?$", "Turf")
     # occs_dup_col['sE-indet'] = occs_dup_col['sE-indet'].str.replace(r'^(.(?<!indet.))*?$', '')
     # # thinking about it, no sense in seperating out empty values, as these will not merge back ...
@@ -253,20 +253,20 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
 
     # backup the old dets
     occs_dup_col['genus_old'] = occs_dup_col['genus']
-    occs_dup_col['specificEpithet_old'] = occs_dup_col['specificEpithet']
+    occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
 
     # cols we to change
-    cols = ['genus','specificEpithet','detBy', 'detYear']
+    cols = ['genus','specific_epithet','detBy', 'det_year']
 
     # https://stackoverflow.com/questions/59697994/what-does-transformfirst-do
     #groupby col and num, and sort more recent det
-    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('detYear', ascending=False))
+    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
 
     #groupby col and num, and transform the rest of the columns
     #we shall create a new column just to keep a trace
 
     occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
-    occs_dup_col['specificEpithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specificEpithet'].transform('first')
+    occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
 
     #save a csv with all duplicates beside each other but otherwise cleaned, allegedly.
     occs_dup_col.to_csv(working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv', index = False, sep = ';')
@@ -290,36 +290,36 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
     # Here we can still modify which columns we take further, and how they are merged,
     #   i.e. is it record1, record1duplicate or do we discard duplicate data and just take the first record.
     occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
-        scientificName = pd.NamedAgg(column = 'scientificName', aggfunc = 'first'),
+        scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
     	genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
-    	specificEpithet = pd.NamedAgg(column = 'specificEpithet', aggfunc = 'first' ),
-    	speciesAuthor = pd.NamedAgg(column = 'speciesAuthor', aggfunc = 'first' ),
-    	collectorID = pd.NamedAgg(column = 'collectorID', aggfunc = 'first' ),
-        recordedBy = pd.NamedAgg(column = 'recordedBy', aggfunc = 'first' ),
-        colNum_full = pd.NamedAgg(column = 'colNum_full', aggfunc=lambda x: ', '.join(x)),
+    	specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+    	species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+    	collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+        recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+        colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
     	prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
-    	colNum = pd.NamedAgg(column = 'colNum', aggfunc = 'first' ),
+    	colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
     	sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
-        colDate = pd.NamedAgg(column = 'colDate', aggfunc = 'first' ),
-        colDay = pd.NamedAgg(column = 'colDay', aggfunc = 'first' ),
-        colMonth = pd.NamedAgg(column = 'colMonth', aggfunc = 'first' ),
-        colYear = pd.NamedAgg(column = 'colYear', aggfunc = 'first' ),
-    	detBy = pd.NamedAgg(column = 'detBy', aggfunc = lambda x: ', '.join(x) ),
-    	detDate = pd.NamedAgg(column = 'detDate', aggfunc = 'first' ),
-        detDay = pd.NamedAgg(column = 'detDay', aggfunc = 'first' ),
-        detMonth = pd.NamedAgg(column = 'detMonth', aggfunc = 'first' ),
-        detYear = pd.NamedAgg(column = 'detYear', aggfunc = 'first' ),
-    	countryID = pd.NamedAgg(column = 'countryID', aggfunc = 'first' ),
+        col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+        col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+        col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+        col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+    	det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+    	det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+        det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+        det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+        det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+    	country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
     	country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
     	continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
     	locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
-    	coordinateID = pd.NamedAgg(column = 'coordinateID', aggfunc = 'first' ),
+    	coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
     	ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
         ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
     	institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
         herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
         barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
-        orig_BC = pd.NamedAgg(column = 'orig_BC', aggfunc=lambda x: ', '.join(x)),
+        orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
         coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'))
     # here quite some data might get lost, so we need to check where we want to just join first,
     # and where we add all values, and then decide on the columns we really want in the final
@@ -371,13 +371,13 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
     print(occs.dtypes)
     #occs.replace('nan', pd.NA, inplace=True)
 
-
-    dup_cols = ['coll_surname', 'colYear', 'colMonth', 'colDay', 'genus', 'specificEpithet'] # the columns by which duplicates are identified
+    # for the s.n. we have to be quite specific, as otherwise we deduplicate too much!
+    dup_cols = ['coll_surname', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
 
     #-------------------------------------------------------------------------------
     # MISSING collector information r
     # remove empty collector
-    occs1 = occs.dropna(how='all', subset = ['recordedBy'])
+    occs1 = occs.dropna(how='all', subset = ['recorded_by'])
 
     #-------------------------------------------------------------------------------
     occs_dup_col =  occs1.loc[occs1.duplicated(subset=dup_cols, keep=False)]
@@ -443,8 +443,8 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
 
     print('CHECKING:', occs_dup_col.shape)
     # for smaller differences, take the mean value...
-    occs_dup_col['ddlat'] = occs_dup_col.groupby(['colYear'])['ddlat'].transform('mean')
-    occs_dup_col['ddlong'] = occs_dup_col.groupby(['colYear'])['ddlong'].transform('mean')
+    occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year'])['ddlat'].transform('mean')
+    occs_dup_col['ddlong'] = occs_dup_col.groupby(['col_year'])['ddlong'].transform('mean')
     #print(occs_dup_col.shape)
 
 
@@ -460,9 +460,9 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
     # taxonomy at a later date, so dets to earlier concepts might not be a massive issue?
     print('CHECKING2:', occs_dup_col.shape)
 
-    dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['colYear', 'country'],keep=False)&~occs_dup_col.duplicated(['recordedBy','colNum_full','specificEpithet','genus'],keep=False)]
+    dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','specific_epithet','genus'],keep=False)]
     try:
-        dups_diff_species = dups_diff_species.sort_values(['colYear'], ascending = (True, True))
+        dups_diff_species = dups_diff_species.sort_values(['col_year'], ascending = (True, True))
     except:
         do_nothing=True
 
@@ -494,13 +494,18 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
     occs_dup_col['specificEpithet_old'] = occs_dup_col['specificEpithet']
 
     # cols we to change
-    # cols = ['genus','specificEpithet','detBy', 'detYear']
+    # cols = ['genus','specificEpithet','detBy', 'det_year']
 
     # https://stackoverflow.com/questions/59697994/what-does-transformfirst-do
     #groupby col and num, and sort more recent det
     print('CHECKING3:', occs_dup_col.shape)
     #PROBLEM IS HERE:
-    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('detYear', ascending=False))
+
+
+
+    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+    #print('Intermediate Check: ', occs_dup_col.shape)
+    #occs_dup_col = occs_dup_col
     print('CHECKING3:', occs_dup_col.shape)
 
 
@@ -509,7 +514,7 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
     # if the df is empty, there's issues
     try:
         occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
-        occs_dup_col['specificEpithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specificEpithet'].transform('first')
+        occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
     except:
         do_nothing=True
         print(len(occs_dup_col))
@@ -536,36 +541,36 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
     #   i.e. is it record1, record1duplicate or do we discard duplicate data and just take the first record.
     if len(occs_dup_col)>0:
         occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
-            scientificName = pd.NamedAgg(column = 'scientificName', aggfunc = 'first'),
+            scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
         	genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
-        	specificEpithet = pd.NamedAgg(column = 'specificEpithet', aggfunc = 'first' ),
-        	speciesAuthor = pd.NamedAgg(column = 'speciesAuthor', aggfunc = 'first' ),
-        	collectorID = pd.NamedAgg(column = 'collectorID', aggfunc = 'first' ),
-            recordedBy = pd.NamedAgg(column = 'recordedBy', aggfunc = 'first' ),
-            colNum_full = pd.NamedAgg(column = 'colNum_full', aggfunc= 'first'), # as both are by definition NA, it really doesn't matter how we merge this...
+        	specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+        	species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+        	collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+            recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+            colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc= 'first'), # as both are by definition NA, it really doesn't matter how we merge this...
         	prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
-        	colNum = pd.NamedAgg(column = 'colNum', aggfunc = 'first' ),
+        	colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
         	sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
-            colDate = pd.NamedAgg(column = 'colDate', aggfunc = 'first' ),
-            colDay = pd.NamedAgg(column = 'colDay', aggfunc = 'first' ),
-            colMonth = pd.NamedAgg(column = 'colMonth', aggfunc = 'first' ),
-            colYear = pd.NamedAgg(column = 'colYear', aggfunc = 'first' ),
-        	detBy = pd.NamedAgg(column = 'detBy', aggfunc = lambda x: ', '.join(x) ),
-        	detDate = pd.NamedAgg(column = 'detDate', aggfunc = 'first' ),
-            detDay = pd.NamedAgg(column = 'detDay', aggfunc = 'first' ),
-            detMonth = pd.NamedAgg(column = 'detMonth', aggfunc = 'first' ),
-            detYear = pd.NamedAgg(column = 'detYear', aggfunc = 'first' ),
-        	countryID = pd.NamedAgg(column = 'countryID', aggfunc = 'first' ),
+            col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+            col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+            col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+            col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+        	det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+        	det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+            det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+            det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+            det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+        	country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
         	country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
         	continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
         	locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
-        	coordinateID = pd.NamedAgg(column = 'coordinateID', aggfunc = 'first' ),
+        	coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
         	ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
             ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
         	institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
             herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
             barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
-            orig_BC = pd.NamedAgg(column = 'orig_BC', aggfunc=lambda x: ', '.join(x)),
+            orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
             coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'))
 
     # here quite some data might get lost, so we need to check where we want to just join first,

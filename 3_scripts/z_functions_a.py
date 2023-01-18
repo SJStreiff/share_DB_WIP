@@ -16,7 +16,7 @@ CONTAINS:
     column_cleaning():
         takes columns and puts the content into standard/exchangeable format
     collector_names():
-        takes collector names column ("recordedBy") and rearranges it into the format
+        takes collector names column ("recorded_by") and rearranges it into the format
         Surname, F (firstname just as initials)
 '''
 
@@ -92,7 +92,7 @@ def column_standardiser(importfile, data_source_type, verbose=True):
     occs[miss_col] = '0'
     occs = occs.astype(dtype = z_dependencies.final_col_type)
     #print(occs.dtypes)
-
+    #_bc
     return occs
 
 
@@ -122,23 +122,23 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
 
-        occs[['colDate_1', 'colDate_2']] = occs.colDate.str.split("-", expand=True,)
-        occs[['detDate_1', 'detDate_2']] = occs.detDate.str.split("-", expand=True,)
+        occs[['colDate_1', 'col_date_2']] = occs.col_date.str.split("-", expand=True,)
+        occs[['det_date_1', 'det_date_2']] = occs.det_date.str.split("-", expand=True,)
         #delete the coldate_2 colomn, doesn't have info we need
-        occs.drop(['colDate_2'], axis='columns', inplace=True)
-        occs.drop(['detDate_2'], axis='columns', inplace=True)
+        occs.drop(['col_date_2'], axis='columns', inplace=True)
+        occs.drop(['det_date_2'], axis='columns', inplace=True)
 
         #split colDate_1 on '/' into three new fields (dd/mm/yyyy). Let's just hope no american ever turns up in that data
-        occs[['colDay', 'colMonth', 'colYear']] = occs.colDate_1.str.split("/", expand=True,)
-        occs[['detDay', 'detMonth', 'detYear']] = occs.detDate_1.str.split("/", expand=True,)
+        occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,)
+        occs[['det_day', 'det_month', 'det_year']] = occs.det_date_1.str.split("/", expand=True,)
         # cahnge datatype to pd Int64 (integer that can handle NAs)
-        occs[['colDay', 'colMonth', 'colYear', 'detDay', 'detMonth', 'detYear']] = occs[['colDay', 'colMonth', 'colYear', 'detDay', 'detMonth', 'detYear']].astype(float).astype(pd.Int64Dtype())
+        occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']] = occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(float).astype(pd.Int64Dtype())
 
         #split colDate_1 on '/' into three new fields
-        occs[['colDay', 'colMonth', 'colYear']] = occs.colDate_1.str.split("/", expand=True,)
-        occs[['detDay', 'detMonth', 'detYear']] = occs.detDate_1.str.split("/", expand=True,)
-        occs[['colDay', 'colMonth', 'colYear', 'detDay', 'detMonth', 'detYear']].astype(float)
-        #occs[['colDay', 'colMonth', 'colYear', 'detDay', 'detMonth', 'detYear']].astype(pd.Int64Dtype())
+        occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,)
+        occs[['det_day', 'det_month', 'det_year']] = occs.det_date_1.str.split("/", expand=True,)
+        occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(float)
+        #occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(pd.Int64Dtype())
 
 
 
@@ -147,29 +147,29 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # S: keep the very original col and det date cols, remove the colDate_1...
 
         # for the time being I'm just doing it my way...
-        occs.drop(['colDate_1'], axis='columns', inplace=True)
-        occs.drop(['detDate_1'], axis='columns', inplace=True)
+        occs.drop(['col_date_1'], axis='columns', inplace=True)
+        occs.drop(['det_date_1'], axis='columns', inplace=True)
 
         if verbose:
-            print(occs.colDate)
+            print(occs.col_date)
         if verbose:
             print('\n','The collection date has now been split into separate (int) columns for day, month and year')
 
 
 
-        #occs.drop(['colDate_1'], axis='columns', inplace=True)
-        #occs.drop(['detDate_1'], axis='columns', inplace=True)
+        #occs.drop(['col_date_1'], axis='columns', inplace=True)
+        #occs.drop(['det_date_1'], axis='columns', inplace=True)
 
         if verbose:
- 		         print(occs.colDate)
+ 		         print(occs.col_date)
 
 
         # COLLECTION NUMBERS
 
-        # keep the original colNum column
-        occs.rename(columns={'colNum': 'colNum_full'}, inplace=True)
+        # keep the original colnum column
+        occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
         #create prefix, extract text before the number
-        occs['prefix'] = occs['colNum_full'].astype(str).str.extract('^([a-zA-Z]*)')
+        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([a-zA-Z]*)')
         ##this code deletes spaces at start or end
         occs['prefix'] = occs['prefix'].str.strip()
         #print(occs.dtypes)
@@ -186,7 +186,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
           r'(?:R_\d{1,})', ## extract 'R_' followed by 1 to 3 digits
         ]
 
-        occs['sufix'] = occs['colNum_full'].astype(str).str.extract('(' + '|'.join(regex_list_sufix) + ')')
+        occs['sufix'] = occs['colnum_full'].astype(str).str.extract('(' + '|'.join(regex_list_sufix) + ')')
         occs['sufix'] = occs['sufix'].str.strip()
 
         # extract only digits without associated stuff, but including some characters (colNam)
@@ -196,13 +196,13 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             r'(?:\d+\.\d+)', # 00.00
             r'(?:\d+)', # 00000
         ]
-        occs['colNum']  = occs['colNum_full'].astype(str).str.extract('(' + '|'.join(regex_list_digits) + ')')
+        occs['colnum']  = occs['colnum_full'].astype(str).str.extract('(' + '|'.join(regex_list_digits) + ')')
 
-        occs['colNum'] = occs['colNum'].str.strip()
+        occs['colnum'] = occs['colnum'].str.strip()
 
 
         # for completeness we need this
-        occs['orig_BC'] = occs['barcode']
+        occs['orig_bc'] = occs['barcode']
 
         occs = occs.replace('nan', pd.NA) # remove NAs that aren't proper
 
@@ -210,14 +210,26 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
     #-------------------------------------------------------------------------------
     if(data_source_type == 'GBIF'):
-        """things that need to be done in the herbonautes data:
+        """things that need to be done in the GBIF data:
             - BARCODE (just number or Herbcode + number)
-            THIS STILL NEEDS SOME FINE TUNING, FOR NOW IGNORING THIS ISSUE
+            THIS STILL NEEDS SOME FINE TUNING, FOR NOW MOST IRREGULARITIES ARE CAUGHT, but not all
             - specific epithet!
             - record number (includes collectors regularly...)
         """
     #==
-    # NOT WORKING YET
+
+
+        occs['tmp_det_date'] = occs['det_date'].str.split('T', expand=True)[0]
+        occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True,)
+        occs.drop(['tmp_det_date'], axis='columns', inplace=True)
+
+        occs = occs.replace('nan', pd.NA)
+
+        print(occs.det_year)
+
+
+
+    #
             # check for different barcode formats:
             # either just numeric : herb missing
             #     --> merge herbarium and code
@@ -226,21 +238,21 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         if verbose:
             print(occs.barcode)
 
-        #occs[['prel_herbCode', 'prel_BC']] = occs['barcode'].str.split('.', expand = True)
+        #occs[['prel_herbCode', 'prel_bc']] = occs['barcode'].str.split('.', expand = True)
         # if the barcode is only digits, copy it into prel_code
 
     #TODO!!!!!!
 
 
         # if there is a nondigit, take it away from the digits, and modify it to contain only letters
-        #occs['prel_BC'] = occs['barcode'].str.extract('(' + '|'.join([r'(\d+\/\d+)',r'(\d+)']) + ')')
-        occs['prel_BC'] = occs['barcode'].str.extract(r'(\d+\/\d+)')
+        #occs['prel_bc'] = occs['barcode'].str.extract('(' + '|'.join([r'(\d+\/\d+)',r'(\d+)']) + ')')
+        occs['prel_bc'] = occs['barcode'].str.extract(r'(\d+\/\d+)')
         # TODO find HERBXX-XXX-XXX-etc.
-        occs['prel_BC2'] = occs['barcode'].str.extract(r'(\d+)')
-        occs['prel_BC'] = occs['prel_BC'].fillna(occs['prel_BC2'])
+        occs['prel_bc2'] = occs['barcode'].str.extract(r'(\d+)')
+        occs['prel_bc'] = occs['prel_bc'].fillna(occs['prel_bc2'])
 
         if verbose:
-            print(occs.prel_BC)
+            print(occs.prel_bc)
 
         occs['prel_herbCode'] = occs['barcode'].str.extract(r'([A-Z]+)' or r'(\[A-Z]+\-)') # gets most issues...
         occs['prel_code'] = occs['barcode'].astype(str).str.extract(r'(\D+)')
@@ -270,8 +282,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         if verbose:
             print(occs.prel_herbCode)
         if verbose:
-            print(occs.prel_BC)
-        occs['st_barcode'] = occs['prel_herbCode'] + occs['prel_BC']
+            print(occs.prel_bc)
+        occs['st_barcode'] = occs['prel_herbCode'] + occs['prel_bc']
         if verbose:
             print(occs.st_barcode)
     #    prel_herbCode trumps all others,
@@ -297,8 +309,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
                 print(occs)
 
 
-        occs = occs.drop(['prel_BC', 'prel_BC2', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc'], axis = 1)
-        occs = occs.rename(columns = {'barcode': 'orig_BC'})
+        occs = occs.drop(['prel_bc', 'prel_bc2', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc'], axis = 1)
+        occs = occs.rename(columns = {'barcode': 'orig_bc'})
         occs = occs.rename(columns = {'st_barcode': 'barcode'})
         if verbose:
             print(occs.columns)
@@ -311,13 +323,17 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
         # COLLECTION NUMBERS
-        # keep the original colNum column
-        occs.rename(columns={'colNum': 'colNum_full'}, inplace=True)
-        occs.colNum_full.replace('s.n.', pd.NA, inplace=True)
-        #occs.colNum_full.replace("s. n.", pd.NA, inplace=True)
-
+        # keep the original colnum column
+        occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
+        try:
+            occs = occs.colnum_full.replace('s.n.', np.nan, inplace=True) # keep s.n. for later?
+        except:
+            if verbose:
+                print('No plain s.n. values found in the full collection number fields.')
+        #occs.colnum_full.replace("s. n.", pd.NA, inplace=True)
+        print(occs)
         #create prefix, extract text before the number
-        occs['prefix'] = occs['colNum_full'].astype(str).str.extract('^([a-zA-Z]*)')
+        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([a-zA-Z]*)')
         ##this code deletes spaces at start or end
         occs['prefix'] = occs['prefix'].str.strip()
 
@@ -332,7 +348,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
           r'(?:R_\d{1,})', ## extract 'R_' followed by 1 to 3 digits
         ]
 
-        occs['sufix'] = occs['colNum_full'].astype(str).str.extract('(' + '|'.join(regex_list_sufix) + ')')
+        occs['sufix'] = occs['colnum_full'].astype(str).str.extract('(' + '|'.join(regex_list_sufix) + ')')
         occs['sufix'] = occs['sufix'].str.strip()
 
         # extract only number (colNam)
@@ -342,24 +358,25 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             r'(?:\d+\.\d+)', # 00.00
             r'(?:\d+)', # 00000
         ]
-        occs['colNum']  = occs['colNum_full'].astype(str).str.extract('(' + '|'.join(regex_list_digits) + ')')
-        occs['colNum'] = occs['colNum'].str.strip()
+        occs['colnum']  = occs['colnum_full'].astype(str).str.extract('(' + '|'.join(regex_list_digits) + ')')
+        occs['colnum'] = occs['colnum'].str.strip()
+        occs['colnum'].replace('nan', pd.NA, inplace=True)
 
         #print(occs)
         # ok this looks good for the moment.
-        """ Still open here:
-        remove collector name in prefix (partial match should take care of that)
+        """ Still open here: TODO
+        remove collector name in prefix (partial match could take care of that)
         """
 
         # SPECIFIC EPITHET
 
         # darwin core specific...
 
-        occs[['tmp', 'specificEpithet']] = occs['species-tobesplit'].str.split(' ', expand = True)
+        occs[['tmp', 'specific_epithet']] = occs['species-tobesplit'].str.split(' ', expand = True)
         #print(occs.tmp)
 
 
-        occs[['tmp', 'specificEpithet']] = occs['species-tobesplit'].str.split(' ', expand = True)
+        occs[['tmp', 'specific_epithet']] = occs['species-tobesplit'].str.split(' ', expand = True)
         if verbose:
             print(occs.tmp)
 
@@ -377,11 +394,11 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
 
-    #for name in occs.recordedBy:
+    #for name in occs.recorded_by:
     """ We could consider modifying the collector names to all be standard at least
      if initials are there and pre-names (de, van, ...) to have these all the same. Then
      we might be able to have prettier names. It also might facilitate merging collector names
-     and later on searching for collectorID (ORCID or other IDs??)
+     and later on searching for collector_id (ORCID or other IDs??)
     """
 
     occs = occs.astype(dtype = z_dependencies.final_col_type) # check data type
@@ -416,28 +433,28 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
     #print(occs.dtypes) # if you want to double check types again
     occs = occs.astype(dtype = z_dependencies.final_col_type)
-    occs['recordedBy'] = occs['recordedBy'].replace('nan', pd.NA)
+    occs['recorded_by'] = occs['recorded_by'].replace('nan', pd.NA)
     #print(occs.head)
     # -------------------------------------------------------------------------------
     #print('MINUS FIRST TRY \n', occs.info())
 
-    occs['ORIG_recBy'] = occs['recordedBy'] # keep original column...
+    occs['orig_recby'] = occs['recorded_by'] # keep original column...
     # remove the introductory string before double point :
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace('Collector(s):', '', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace('&', ';', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace(' y ', ';', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace(' and ', ';', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace('Jr.', 'JUNIOR', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace('et al.', '', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace('et al', '', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace('etal', '', regex=False)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.replace('Philippine Plant Inventory (PPI)', 'Philippines, Philippines Plant Inventory', regex=False)
-    ##we will need to find a way of taking out all the recordedBy with (Dr) Someone's Collector
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Collector(s):', '', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('&', ';', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace(' y ', ';', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace(' and ', ';', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Jr.', 'JUNIOR', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('et al.', '', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('et al', '', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('etal', '', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Philippine Plant Inventory (PPI)', 'Philippines, Philippines Plant Inventory', regex=False)
+    ##we will need to find a way of taking out all the recorded_by with (Dr) Someone's Collector
 
     ##isolate just the first collector (before a semicolon)
-    occs['recordedBy'] = occs['recordedBy'].astype(str).str.split(';').str[0]
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.split(';').str[0]
 
-    occs['recordedBy'] = occs['recordedBy'].str.strip()
+    occs['recorded_by'] = occs['recorded_by'].str.strip()
 
     if verbose:
         print('---------------- \n The changing of the weird exceptions still not completely done',
@@ -520,16 +537,16 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # The row within the extr_list corresponds to the column in the debugging dataframe printed below
 
 
-    names_WIP = occs[['recordedBy']] #.astype(str)
+    names_WIP = occs[['recorded_by']] #.astype(str)
 
     #print(names_WIP)
     i = 0
     for key, value in extr_list.items():
         i = i+1
         # make a new panda series with the regex matches/replacements
-        X1 = names_WIP.recordedBy.str.replace(key, value, regex = True)
+        X1 = names_WIP.recorded_by.str.replace(key, value, regex = True)
         # replace any fields that matched with empty string, so following regex cannot match.
-        names_WIP.loc[:,'recordedBy'] = names_WIP.loc[:,'recordedBy'].str.replace(key, '', regex = True)
+        names_WIP.loc[:,'recorded_by'] = names_WIP.loc[:,'recorded_by'].str.replace(key, '', regex = True)
         # make new columns for every iteration
         names_WIP.loc[:,i] = X1 #.copy()
 
@@ -547,7 +564,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # For all names that didn't match anything:
     # extract and then check manually
     TC_occs = occs.copy()
-    TC_occs['to_check'] = names_WIP['recordedBy']
+    TC_occs['to_check'] = names_WIP['recorded_by']
     #print(TC_occs.to_check)
     TC_occs.dropna(subset= ['to_check'], inplace = True)
     #print(TC_occs.to_check)
@@ -561,7 +578,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
     # mask all values that didn't match for whatever reason in the dataframe (results in NaN)
-    names_WIP = names_WIP.mask(names_WIP.recordedBy.notna())
+    names_WIP = names_WIP.mask(names_WIP.recorded_by.notna())
 
     # now merge all columns into one
     while(len(names_WIP.columns) > 1): # while there are more than one column, merge the last two, with the one on the right having priority
@@ -579,16 +596,16 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     names_WIP = names_WIP.astype(str)
 
     # now merge these cleaned names into the output dataframe
-    occs_newnames = occs.assign(recordedBy = names_WIP['corrnames'])
+    occs_newnames = occs.assign(recorded_by = names_WIP['corrnames'])
 
-    occs_newnames['recordedBy'] = occs_newnames['recordedBy'].replace('nan', 'ZZZ_THIS_NAME_FAILED')
-    #print(occs_newnames.recordedBy)
+    occs_newnames['recorded_by'] = occs_newnames['recorded_by'].replace('nan', 'ZZZ_THIS_NAME_FAILED')
+    #print(occs_newnames.recorded_by)
     # remove records I cannot work with...
-    occs_newnames = occs_newnames[occs_newnames['recordedBy'] != 'ZZZ_THIS_NAME_FAILED']
+    occs_newnames = occs_newnames[occs_newnames['recorded_by'] != 'ZZZ_THIS_NAME_FAILED']
     if verbose:
-        print('It used to look like this:\n', occs.recordedBy)
+        print('It used to look like this:\n', occs.recorded_by)
         print('\n---------------------------------------------------\n')
-        print(" Now it looks like this:\n", occs_newnames.recordedBy)
+        print(" Now it looks like this:\n", occs_newnames.recorded_by)
 
     # summary output
     print('I removed', len(occs) - len(occs_newnames), 'records because I could not handle the name.')
@@ -598,10 +615,10 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     occs_newnames = occs_newnames.astype(z_dependencies.final_col_type)
     # save to file
     occs_newnames.to_csv(working_directory+prefix+'names_standardised.csv', index = False, sep = ';', )
-    occs_newnames['coll_surname'] = occs_newnames['recordedBy'].str.split(',', expand=True)[0]
+    occs_newnames['coll_surname'] = occs_newnames['recorded_by'].str.split(',', expand=True)[0]
 
     if debugging:
-        unique_names = occs_newnames['recordedBy'].unique()
+        unique_names = occs_newnames['recorded_by'].unique()
         unique_names = pd.DataFrame(unique_names)
         unique_names.to_csv(working_directory + prefix+'collectors_unique.csv', index = False, sep =';', )
         print('I have saved', len(unique_names), 'Collector names to the file', working_directory + prefix+'collectors_unique.csv.')
