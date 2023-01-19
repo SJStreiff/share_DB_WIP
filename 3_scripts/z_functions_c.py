@@ -9,12 +9,13 @@ All the functions called from the main script for namechecking the Harvard Unive
 CHANGELOG:
     2023-01-10: created
     2023-01-12: it works. BUT it doesn't give what i want. I do not get access to the full name of the collector or ID I need to access more deta
-
+    2023-01-19: HUH still nothing. But crossfill working
 
 CONTAINS:
     harvard_reference():
       queries the HUH database of collectors for the correct name format.
-
+    country_crossfill():
+      crossfils between the two country identifier columns (i.e. country_id (ISO 2 letter abbreviation), and country (full name))
 '''
 
 import pandas as pd
@@ -23,17 +24,14 @@ import codecs
 import os
 import regex as re
 import requests
+import country_converter as coco
+cc = coco.CountryConverter()
 
 #custom dependencies
 import z_dependencies # can be replaced at some point, but later...
 
 
 recordedBy = "Wilde, WJ de"
-
-def get_secret_message():
-    url = os.environ["SECRET_URL"]
-    response = requests.get(url)
-    print(f"The secret message is: {response.text}")
 
 
 
@@ -91,6 +89,42 @@ def get_HUH_names(recordedBy, verbose=True):
 
 
     return 'Yay maybe'
+#
+# test = get_HUH_names(recordedBy)
+# print(test)
 
-test = get_HUH_names(recordedBy)
-print(test)
+
+def country_crossfill(occs, verbose=True):
+    """
+    Take records and crossfill the country_id and country name columns
+    """
+    if verbose:
+        print('Let\'s see if this works', occs.country_id)
+    occs[['country_id', 'country']] = occs[['country_id', 'country']].replace('0', pd.NA)
+    occs['country_id'] = occs.country_id.fillna(cc.pandas_convert(series = occs.country, to='ISO2'))
+    occs['country'] = occs.country.fillna(cc.pandas_convert(series = occs.country_id, to='name_short'))
+    occs['country_iso3'] = cc.pandas_convert(series = occs.country, to='ISO3') # needed for later in coordinate cleaner
+
+    print('it should now be all good?', occs.country)
+
+    return occs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#

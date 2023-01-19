@@ -28,11 +28,11 @@ def powo_query(gen, sp, distribution=False, verbose=True):
     accepted, it is copied into the output, if it is a synonym, the accepted name is
     copied into the output. In the end the accepted names are returned.
 
-    INPUT: 'genus'{string}, 'specificepithet'{string} and 'distribution'{bool}
+    INPUT: 'genus'{string}, 'specific_epithet'{string} and 'distribution'{bool}
     OUTPUT: 'accepted_species', string of Genus species.
             'status' the status of the inputted name
             'ipni_no' the IPNI number assigned to the input name
-         if distribution=True:
+         # if distribution=True: this has been disabled here.....
              'native_to' POWO range information
     '''
     #print('Checking uptodate-ness of nomenclature in your dataset...')
@@ -58,6 +58,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
             if verbose:
                 print('Accepted taxon name:', acc_taxon['name']) #TODO: add taxon author
             scientificname = acc_taxon['name']
+            species_author = acc_taxon['author']
             # if distribution:
             #     res2 = powo.lookup(qID, include=['distribution'])
             #     try:
@@ -73,6 +74,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
             qID = r['fqId']
             ipni_no = r['url'].split(':', )[-1]
             scientificname = gen + ' ' + sp
+            species_author = r['author']
             # if distribution:
             #     res2 = powo.lookup(qID, include=['distribution'])
             #     #print(res2)
@@ -90,12 +92,13 @@ def powo_query(gen, sp, distribution=False, verbose=True):
               ' I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
         status = pd.NA
         scientificname = pd.NA
+        species_author = pd.NA
         # native_to = pd.NA
         ipni_no = pd.NA
 
     if verbose:
         print(status)
-        print(scientificname)
+        print(scientificname, species_author)
         #print(native_to)
 
     res = ipni.search(query)  # , filters = [Filters.accepted])
@@ -110,7 +113,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
         ipni_pubYr = pd.NA
 
 
-    return status, scientificname, ipni_no, ipni_pubYr#, native_to
+    return status, scientificname, species_author, ipni_no, ipni_pubYr#, native_to
 
 
 
@@ -119,11 +122,11 @@ def kew_query(occs, working_directory, verbose=True):
     Note I have verbose=False here, as this function does a load of output, which is not strictly necessary.
     '''
 
-    occs[['genus', 'specificepithet']] = occs[['genus', 'specificepithet']].astype(str)
-    occs[['genus', 'specificepithet']] = occs[['genus', 'specificepithet']].replace('nan', pd.NA)
-    occs = occs.dropna(how='all', subset=['genus', 'specificepithet']) # these are really bad for the query ;-)
-    print(occs[['genus', 'specificepithet']])
-    occs[['status','accepted_name', 'ipni_no', 'ipni_pub']] = occs.apply(lambda row: powo_query(row['genus'], row['specificepithet'], distribution=False, verbose=True), axis = 1, result_type='expand')
+    occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].astype(str)
+    occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].replace('nan', pd.NA)
+    occs = occs.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)
+    print(occs[['genus', 'specific_epithet']])
+    occs[['status','accepted_name', 'species_author', 'ipni_no', 'ipni_pub']] = occs.apply(lambda row: powo_query(row['genus'], row['specific_epithet'], distribution=False, verbose=True), axis = 1, result_type='expand')
     # now drop some of the columns we really do not need here...
     print(occs)
     occs = occs.drop(['ipni_pub'], axis=1)
@@ -139,7 +142,7 @@ def kew_query(occs, working_directory, verbose=True):
 
     # some stats
     print(len(occs), 'records had an ACCEPTED name in the end. \n')
-    print(len(issue_occs), 'records had an ISSUE in their name and could not be assigned an accepted name. \n',
+    print(len(issue_occs), 'records had an ISSUE in their name and could not be assigned any name name. \n',
     'These are saved to a separate output, please check these, and either rerun them or look for duplicates with a determination.')
     #occs.to_csv(out_dir + 'taxonomy_checked.csv', index = False, sep=';')
     issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')

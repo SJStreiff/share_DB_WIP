@@ -78,9 +78,9 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 * Step C:
   * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily. With other familiesthe situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
   * Check coordinates. Probably we just check for country centroids and points in the water. This will be done with already available packages, and issues flagged for potential correction in e.g. QGIS (qgis.org)
-  This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe).
+  This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe). For the moment I just implemented an automatic CoordinateCleaner (https://ropensci.github.io/CoordinateCleaner/index.html)
 
-RECORD-FILER then goes and takes freshly (or even old) cleaned data
+RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to integrate it into a preexisting database
 
 * Step D:
   * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and?

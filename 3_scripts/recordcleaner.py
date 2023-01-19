@@ -10,6 +10,7 @@ PREFIX "Z_" for scripts
 import z_functions_a as stepA
 import z_functions_b as stepB
 import z_nomenclature as stepC
+import z_functions_c as stepB2
 #import z_merging as stepD
 
 import z_dependencies
@@ -122,6 +123,10 @@ if __name__ == "__main__":
     tmp_occs_5 = pd.concat([tmp_occs_4, tmp_s_n_1])
 
     #---------------------------------------------------------------------------
+
+    # crossfill country names
+    tmp_occs_5 = stepB2.country_crossfill(tmp_occs_5, verbose=True)
+    
 
     # step C1, nomenclature check??
     print('\n.........................................\n')

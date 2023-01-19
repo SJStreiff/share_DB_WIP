@@ -434,11 +434,13 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     #print(occs.dtypes) # if you want to double check types again
     occs = occs.astype(dtype = z_dependencies.final_col_type)
     occs['recorded_by'] = occs['recorded_by'].replace('nan', pd.NA)
+    occs['det_by'] = occs['det_by'].replace('nan', pd.NA)
     #print(occs.head)
     # -------------------------------------------------------------------------------
     #print('MINUS FIRST TRY \n', occs.info())
 
     occs['orig_recby'] = occs['recorded_by'] # keep original column...
+    occs['orig_detby'] = occs['det_by']
     # remove the introductory string before double point :
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Collector(s):', '', regex=False)
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('&', ';', regex=False)
@@ -598,14 +600,93 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # now merge these cleaned names into the output dataframe
     occs_newnames = occs.assign(recorded_by = names_WIP['corrnames'])
 
+
+
     occs_newnames['recorded_by'] = occs_newnames['recorded_by'].replace('nan', 'ZZZ_THIS_NAME_FAILED')
     #print(occs_newnames.recorded_by)
     # remove records I cannot work with...
     occs_newnames = occs_newnames[occs_newnames['recorded_by'] != 'ZZZ_THIS_NAME_FAILED']
+
+
+
+
+    # ------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
+    # repeat the story with the det names
+    names_WIP = occs[['det_by']] #.astype(str)
+
+    #print(names_WIP)
+    i = 0
+    for key, value in extr_list.items():
+        i = i+1
+        # make a new panda series with the regex matches/replacements
+        X1 = names_WIP.det_by.str.replace(key, value, regex = True)
+        # replace any fields that matched with empty string, so following regex cannot match.
+        names_WIP.loc[:,'det_by'] = names_WIP.loc[:,'det_by'].str.replace(key, '', regex = True)
+        # make new columns for every iteration
+        names_WIP.loc[:,i] = X1 #.copy()
+
+    # debugging dataframe: every column corresponds to a regex query
+    if debugging:
+        names_WIP.to_csv(working_directory + prefix + 'DEBUG_detby_regex.csv', index = False, sep =';', )
+        print('debugging dataframe for det bys printed to', working_directory + prefix + 'DEBUG_detby_regex.csv')
+
+    #####
+    # Now i need to just merge the columns from the right and bobs-your-uncle we have beautiful collector names...
+    names_WIP = names_WIP.mask(names_WIP == '') # mask all empty values to overwrite them potentially
+    names_WIP = names_WIP.mask(names_WIP == ' ')
+
+    #-------------------------------------------------------------------------------
+    # For all names that didn't match anything:
+    # extract and then check manually
+    TC_occs = occs.copy()
+    TC_occs['to_check'] = names_WIP['det_by']
+    #print(TC_occs.to_check)
+    TC_occs.dropna(subset= ['to_check'], inplace = True)
+    #print(TC_occs.to_check)
+
+    # output so I can go through and check manually
+    if len(TC_occs)!= 0:
+        TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'names.csv', index = False, sep = ';', )
+        print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
+        '\n Please double check these in the separate file saved at: \n', working_directory+'to_check_names.csv')
+    #-------------------------------------------------------------------------------
+
+
+    # mask all values that didn't match for whatever reason in the dataframe (results in NaN)
+    names_WIP = names_WIP.mask(names_WIP.det_by.notna())
+
+    # now merge all columns into one
+    while(len(names_WIP.columns) > 1): # while there are more than one column, merge the last two, with the one on the right having priority
+        i = i+1
+        names_WIP.iloc[:,-1] = names_WIP.iloc[:,-1].fillna(names_WIP.iloc[:,-2])
+        names_WIP = names_WIP.drop(names_WIP.columns[-2], axis = 1)
+        #print(names_WIP) # for debugging, makes a lot of output
+        #print('So many columns:', len(names_WIP.columns), '\n')
+    #print(type(names_WIP))
+
+
+    #print('----------------------\n', names_WIP, '----------------------\n')
+    # just to be sure to know where it didn't match
+    names_WIP.columns = ['corrnames']
+    names_WIP = names_WIP.astype(str)
+
+    # now merge these cleaned names into the output dataframe
+    occs_newnames = occs_newnames.assign(det_by = names_WIP['corrnames'])
+
+
+    # ------------------------------------------------------------------------------#
+    # ------------------------------------------------------------------------------
+
     if verbose:
         print('It used to look like this:\n', occs.recorded_by)
         print('\n---------------------------------------------------\n')
         print(" Now it looks like this:\n", occs_newnames.recorded_by)
+
+    if verbose:
+        print('\n AND \n It used to look like this:\n', occs.det_by)
+        print('\n---------------------------------------------------\n')
+        print(" Now it looks like this:\n", occs_newnames.det_by)
 
     # summary output
     print('I removed', len(occs) - len(occs_newnames), 'records because I could not handle the name.')

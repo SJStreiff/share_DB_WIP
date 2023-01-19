@@ -20,16 +20,8 @@ VERBOSE='-v 1' # prints intermediate information to STDOUT, which might be helpf
                # -v 2 also outputs debugging information
 NOCOLLECTOR='' # if '-nc', the name standardisation step is skipped! Use with caution!
 
-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# Step 2 RECORDFILER
 INPUT_2=$(echo $OUT_DIR$PREFIX'cleaned.csv')
-MASTERDB='GLOBAL'
-HOSTNAME='10.4.91.57'
-TABLE='phil_test_221209'
-SCHEMA='serafin_test'
-
-
+OUT_2=$(echo $OUT_DIR$PREFIX'spatialvalid.csv')
 
 # AND NOW LETS LAUNCH RECORDCLEANER
 
@@ -38,8 +30,24 @@ SCHEMA='serafin_test'
 # working for now, commented out...
 python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
 
-echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
-echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+echo "R script tests"
+Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
+echo "How are we doing??"
+
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Step 2 RECORDFILER
+MASTERDB='GLOBAL'
+HOSTNAME='10.4.91.57'
+TABLE='phil_test_221209'
+SCHEMA='serafin_test'
+
+
+
+
+#echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
+#echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 #if STEP2ASWELL='YES' do
 #python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 #done

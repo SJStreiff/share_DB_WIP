@@ -86,7 +86,40 @@ def fetch_master_db(database, host, tablename, schema):  #subset????
     print(master_db_test.head())
 
     return master_db_test
-#
+
+
+def send_to_sql(data, database, host, tablename, schema):
+    """ send a dataframe to the specified sql databases
+    """
+
+    print('\n ................................\n',
+    'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
+    'Please type the USERNAME used to connect to the database:')
+    username=input() #'n' # make back to input()
+    print('\n ................................\n',
+    'Please type the PASSWORD used to connect to the database for user', username)
+    password=getpass() #'n' # make back to input()
+    print('\n ................................\n',
+    'Please type the PORT required to connect to the database:')
+    port=input() #'n' # make back to input()
+
+    url_obj = URL.create(
+        'postgresql',
+        username,
+        password,
+        host,
+        #-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+        port,
+        database,
+        )
+
+    engine = create_engine(url_obj)
+
+    data.to_csv('loading_table', engine, schema)
+
+    print('Maybe this worked')
+
+    #
 # print('Hostname?')
 # hostname=input()
 # test = fetch_master_db('GLOBAL', hostname, 'phil_test_221209', 'serafin_test')

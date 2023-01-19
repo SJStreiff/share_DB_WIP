@@ -83,6 +83,11 @@ if __name__ == "__main__":
     print(occs)
     # if just one small group, then do
 
+    
+    print('I am just going to upload the current state of the data into GLOBAL (schema: \"serafin_test\")')
+    SQL.send_to_sql(occs ,args.database_name, args.hostname, args.tablename, args.schema)
+
+
 
     # Step D1
     # - get database extract from the GLOBAL database.
