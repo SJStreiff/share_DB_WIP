@@ -220,9 +220,12 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
         occs['tmp_det_date'] = occs['det_date'].str.split('T', expand=True)[0]
-        occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True,)
-        occs.drop(['tmp_det_date'], axis='columns', inplace=True)
-
+        try:
+            occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True,)
+            occs.drop(['tmp_det_date'], axis='columns', inplace=True)
+        except:
+            if verbose:
+                print('no det dates available...')
         occs = occs.replace('nan', pd.NA)
 
         print(occs.det_year)
@@ -245,11 +248,26 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
         # if there is a nondigit, take it away from the digits, and modify it to contain only letters
-        #occs['prel_bc'] = occs['barcode'].str.extract('(' + '|'.join([r'(\d+\/\d+)',r'(\d+)']) + ')')
-        occs['prel_bc'] = occs['barcode'].str.extract(r'(\d+\/\d+)')
-        # TODO find HERBXX-XXX-XXX-etc.
-        occs['prel_bc2'] = occs['barcode'].str.extract(r'(\d+)')
-        occs['prel_bc'] = occs['prel_bc'].fillna(occs['prel_bc2'])
+        barcode_regex = [
+            r'(\d+\-\d+\/\d+)$',
+            r'(\d+\-\d+)$',
+            r'(\d+\/\d+)$',
+            r'(\d+)$',
+        ]
+        bc_extract = occs['barcode'].astype(str).str.extract('(' + '|'.join(barcode_regex) + ')')
+        #occs['prel_bc'] = occs['prel_bc'].str.strip()
+        if verbose:
+            print('Numeric part of barcodes extracted', bc_extract)
+
+        i=0
+        while(len(bc_extract.columns) > 1): # while there are more than one column, merge the last two, with the one on the right having priority
+            i = i+1
+            bc_extract.iloc[:,-1] = bc_extract.iloc[:,-1].fillna(bc_extract.iloc[:,-2])
+            bc_extract = bc_extract.drop(bc_extract.columns[-2], axis = 1)
+            #print(names_WIP) # for debugging, makes a lot of output
+            #print('So many columns:', len(names_WIP.columns), '\n')
+        print(bc_extract)
+        occs['prel_bc'] = bc_extract
 
         if verbose:
             print(occs.prel_bc)
@@ -309,7 +327,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
                 print(occs)
 
 
-        occs = occs.drop(['prel_bc', 'prel_bc2', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc'], axis = 1)
+        occs = occs.drop(['prel_bc', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc'], axis = 1)
         occs = occs.rename(columns = {'barcode': 'orig_bc'})
         occs = occs.rename(columns = {'st_barcode': 'barcode'})
         if verbose:
@@ -331,7 +349,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             if verbose:
                 print('No plain s.n. values found in the full collection number fields.')
         #occs.colnum_full.replace("s. n.", pd.NA, inplace=True)
-        print(occs)
+        print(occs.colnum_full)
         #create prefix, extract text before the number
         occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([a-zA-Z]*)')
         ##this code deletes spaces at start or end
@@ -474,6 +492,9 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
     extr_list = {
+        #r'^([A-Z][a-z]\-[A-Z][a-z]\W+[A-Z][a-z])' : r'\1', # a name with Name-Name Name
+        #r'^([A-Z][a-z]+)\W+([A-Z]{2,5})' : r'\1, \2', #Surname FMN
+
         r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4 \5',  # all full full names with sep = ' ' plus Surname F van
         r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4',  # all full full names with sep = ' '
 
@@ -534,6 +555,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
         r'^([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\3, \1 \2', #F Surname
         r'^([A-Z])\W+([A-Z][a-z]+)': r'\2, \1', #F Surname
+        #r'^([A-Z][a-z]+)\W+([A-Z]{2,5})' : r'\1, \2', #Surname FMN
 
     }
     # The row within the extr_list corresponds to the column in the debugging dataframe printed below
@@ -568,15 +590,13 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     TC_occs = occs.copy()
     TC_occs['to_check'] = names_WIP['recorded_by']
     #print(TC_occs.to_check)
-    TC_occs.dropna(subset= ['to_check'], inplace = True)
-    #print(TC_occs.to_check)
 
     # output so I can go through and check manually
-    if len(TC_occs)!= 0:
-        TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'names.csv', index = False, sep = ';', )
-        print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
-        '\n Please double check these in the separate file saved at: \n', working_directory+'to_check_names.csv')
-    #-------------------------------------------------------------------------------
+    # if len(TC_occs)!= 0:
+    #     TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'recby_names.csv', index = False, sep = ';', )
+    #     print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
+    #     '\n Please double check these in the separate file saved at: \n', working_directory+'TO_CHECK_'+prefix+'recby_names.csv')
+    # #-------------------------------------------------------------------------------
 
 
     # mask all values that didn't match for whatever reason in the dataframe (results in NaN)
@@ -603,6 +623,8 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
     occs_newnames['recorded_by'] = occs_newnames['recorded_by'].replace('nan', 'ZZZ_THIS_NAME_FAILED')
+    occs_newnames['recorded_by'] = occs_newnames['recorded_by'].replace('<NA>', 'ZZZ_THIS_NAME_FAILED')
+
     #print(occs_newnames.recorded_by)
     # remove records I cannot work with...
     occs_newnames = occs_newnames[occs_newnames['recorded_by'] != 'ZZZ_THIS_NAME_FAILED']
@@ -613,7 +635,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # ------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------
     # repeat the story with the det names
-    names_WIP = occs[['det_by']] #.astype(str)
+    names_WIP = occs_newnames[['det_by']] #.astype(str)
 
     #print(names_WIP)
     i = 0
@@ -639,17 +661,19 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     #-------------------------------------------------------------------------------
     # For all names that didn't match anything:
     # extract and then check manually
-    TC_occs = occs.copy()
-    TC_occs['to_check'] = names_WIP['det_by']
-    #print(TC_occs.to_check)
-    TC_occs.dropna(subset= ['to_check'], inplace = True)
+
     #print(TC_occs.to_check)
 
-    # output so I can go through and check manually
-    if len(TC_occs)!= 0:
-        TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'names.csv', index = False, sep = ';', )
-        print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
-        '\n Please double check these in the separate file saved at: \n', working_directory+'to_check_names.csv')
+    TC_occs1 = TC_occs.copy()
+    TC_occs1['to_check_det'] = names_WIP['det_by']
+    #print(TC_occs.to_check)
+    TC_occs1['to_check_det'] = TC_occs1['to_check_det'].replace('<NA>', pd.NA)
+
+    ###
+
+
+
+
     #-------------------------------------------------------------------------------
 
 
@@ -673,6 +697,31 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
     # now merge these cleaned names into the output dataframe
     occs_newnames = occs_newnames.assign(det_by = names_WIP['corrnames'])
+
+
+
+
+    TC_occs.dropna(subset= ['to_check'], inplace = True)
+    TC_occs.det_by = occs_newnames.det_by
+
+    TC_occs1.dropna(subset= ['to_check_det'], inplace = True)
+    #print(TC_occs.to_check)
+    TC_occs['to_check_det'] = 'recby_problem'
+    TC_occs1['to_check'] = 'detby_problem'
+
+    TC_occs = pd.concat([TC_occs, TC_occs1])#, on = 'orig_recby', how='inner')
+    print('YAY1',TC_occs.shape, 'COLUMNS', TC_occs.columns)
+    TC_occs = TC_occs.drop_duplicates(subset = ['barcode'], keep = 'first')
+    print('YAY2',TC_occs.shape)
+
+
+
+    # output so I can go through and check manually
+    if len(TC_occs)!= 0:
+        TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'probl_names.csv', index = False, sep = ';', )
+        print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
+        '\n Please double check these in the separate file saved at: \n', working_directory+'TO_CHECK_'+prefix+'probl_names.csv')
+
 
 
     # ------------------------------------------------------------------------------#
@@ -719,7 +768,7 @@ def reinsertion(occs_already_in_program, names_to_reinsert, verbose=True):
     if verbose:
         print('Reinsertion data read successfully')
 
-    occs_merged = pd.concat[occs_already_in_program, re_occs]
+    occs_merged = pd.concat([occs_already_in_program, re_occs])
     if len(occs_merged) == len(occs_already_in_program) + len(re_occs):
         if verbose:
             print('Data reinserted successfully.')

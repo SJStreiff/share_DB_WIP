@@ -12,7 +12,8 @@ INPUT='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/1_data_raw/20230112_gbif_in
 DAT_FORM='GBIF'           # format of your input file
 WDIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/1a_WIP/' # directory where intermediate files will be written to
 OUT_DIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/' # directory where final file is written to
-PREFIX='G_indo_'          # prefix for all intermediate and final files
+PREFIX='G_ID_'          # prefix for all intermediate and final files
+# for GLOBAL I am trying to to data source (i.e. GBIF = G) followed by ISO2 coutry code (e.g. Indonesia=ID)
 
 # OPTIONAL VARIABLES, FACULTATIVE!
 

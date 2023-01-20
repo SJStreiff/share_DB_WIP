@@ -69,10 +69,10 @@ if __name__ == "__main__":
 
     # Here we check if the user wants to check the collector names, and if yes, the user can reinsert checked non-conforming names into the workflow
     if args.nonamecln == None:
-        tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=False)
+        tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
         # should we reinsert the names we threw out?
         print('\n ................................\n',
-        'Would you like to reinsert the names I couldn\'t handle?',
+        'Would you like to reinsert the collector names I couldn\'t handle?',
         'Please take care of encoding (usually best is UTF-8) when opening (especially in Microsoft Excel!!)',
         'If you would like to reinsert your checked names, please indicate the path to your modified file. Otherwise type "n" or "no".')
         reinsert=input() #'n' # make back to input()
@@ -86,6 +86,25 @@ if __name__ == "__main__":
                 tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
             except:
                 print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
+
+                tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
+                # should we reinsert the names we threw out?
+        print('\n ................................\n',
+        'Would you like to also reinsert the determiner names I couldn\'t handle?',
+        'If you would like to reinsertthis too, please indicate the path to your modified file. Otherwise type "n" or "no".')
+        reinsert=input() #'n' # make back to input()
+
+        if reinsert == 'n' or 'no':
+            print('Ok I will continue without any reinsertion')
+        else:
+            # check for fileending etc
+            print('reinserting the file', reinsert)
+            try:
+                tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
+            except:
+                print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
+
+
 
     # If this step is not wished for, we just continue as if nothing happened
     else:
@@ -126,7 +145,7 @@ if __name__ == "__main__":
 
     # crossfill country names
     tmp_occs_5 = stepB2.country_crossfill(tmp_occs_5, verbose=True)
-    
+
 
     # step C1, nomenclature check??
     print('\n.........................................\n')
