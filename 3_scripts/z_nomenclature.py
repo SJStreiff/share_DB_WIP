@@ -122,7 +122,11 @@ def kew_query(occs, working_directory, verbose=True):
     ''' This function wraps the function above to query all the interesting stuff from Kew.
     Note I have verbose=False here, as this function does a load of output, which is not strictly necessary.
     '''
+<<<<<<< HEAD
     occs_na
+=======
+    
+>>>>>>> ba638fa89f5db4ee6ef0e8c233deecf37417311e
     occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].astype(str)
     occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].replace('nan', pd.NA)
     occs = occs.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)
