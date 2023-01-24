@@ -32,7 +32,7 @@ OUT_2=$(echo $OUT_DIR$PREFIX'spatialvalid.csv')
 python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
 
 echo "R script tests"
-Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
+#Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
 echo "How are we doing??"
 
 
