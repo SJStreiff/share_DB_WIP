@@ -76,39 +76,42 @@ if __name__ == "__main__":
         'Please take care of encoding (usually best is UTF-8) when opening (especially in Microsoft Excel!!)',
         'If you would like to reinsert your checked names, please indicate the path to your modified file. Otherwise type "n" or "no".')
         reinsert=input() #'n' # make back to input()
-
-        if reinsert == 'n' or 'no':
+        print(reinsert)
+        if reinsert == ['n' or 'no']:
+            print('TRUE')
             print('Ok I will continue without any reinsertion')
         else:
             # check for fileending etc
             print('reinserting the file', reinsert)
             try:
                 tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
+                print('Reintegration successful!')
             except:
                 print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
-
-                tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
+                
+                #tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
                 # should we reinsert the names we threw out?
-        print('\n ................................\n',
-        'Would you like to also reinsert the determiner names I couldn\'t handle?',
-        'If you would like to reinsertthis too, please indicate the path to your modified file. Otherwise type "n" or "no".')
-        reinsert=input() #'n' # make back to input()
-
-        if reinsert == 'n' or 'no':
-            print('Ok I will continue without any reinsertion')
-        else:
-            # check for fileending etc
-            print('reinserting the file', reinsert)
-            try:
-                tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
-            except:
-                print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
-
+        print('\n ................................\n')
+        # dets combined with
+        # 'Would you like to also reinsert the determiner names I couldn\'t handle?',
+        # 'If you would like to reinsertthis too, please indicate the path to your modified file. Otherwise type "n" or "no".')
+        # reinsert=input() #'n' # make back to input()
+        #
+        # if reinsert == 'n' or 'no':
+        #     print('Ok I will continue without any reinsertion')
+        # else:
+        #     # check for fileending etc
+        #     print('reinserting the file', reinsert)
+        #     try:
+        #         tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
+        #     except:
+        #         print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
 
 
     # If this step is not wished for, we just continue as if nothing happened
     else:
         tmp_occs_3 = tmp_occs_2
+
 
     # # option of including a fuzzy matching step here. I haven't implemented this yet...
     print('STEP A complete.')

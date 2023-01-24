@@ -36,6 +36,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
              'native_to' POWO range information
     '''
     #print('Checking uptodate-ness of nomenclature in your dataset...')
+    if gen or sp
     query = {Name.genus: gen, Name.species: sp}
     res = powo.search(query, filters=Filters.species)  # , filters = [Filters.accepted])
     if verbose:
@@ -121,7 +122,7 @@ def kew_query(occs, working_directory, verbose=True):
     ''' This function wraps the function above to query all the interesting stuff from Kew.
     Note I have verbose=False here, as this function does a load of output, which is not strictly necessary.
     '''
-
+    occs_na
     occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].astype(str)
     occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].replace('nan', pd.NA)
     occs = occs.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)

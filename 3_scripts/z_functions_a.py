@@ -212,13 +212,13 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
     if(data_source_type == 'GBIF'):
         """things that need to be done in the GBIF data:
             - BARCODE (just number or Herbcode + number)
-            THIS STILL NEEDS SOME FINE TUNING, FOR NOW MOST IRREGULARITIES ARE CAUGHT, but not all
             - specific epithet!
             - record number (includes collectors regularly...)
         """
-    #==
+    # -----------------------------------------------------------------------
+    # split dates into format we can work with
 
-
+        # format det date into separate int values yead-month-day
         occs['tmp_det_date'] = occs['det_date'].str.split('T', expand=True)[0]
         try:
             occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True,)
@@ -228,11 +228,13 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
                 print('no det dates available...')
         occs = occs.replace('nan', pd.NA)
 
-        print(occs.det_year)
+        if verbose:
+            print(occs.det_year)
 
 
-
-    #
+    # -----------------------------------------------------------------------
+    # Barcode issues:
+    # sonetimes the herbarium is in the column institute, sometimes herbarium_code, sometimes before the actual barcode number...
             # check for different barcode formats:
             # either just numeric : herb missing
             #     --> merge herbarium and code
@@ -240,11 +242,6 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             print('debugging barcode issues \n')
         if verbose:
             print(occs.barcode)
-
-        #occs[['prel_herbCode', 'prel_bc']] = occs['barcode'].str.split('.', expand = True)
-        # if the barcode is only digits, copy it into prel_code
-
-    #TODO!!!!!!
 
 
         # if there is a nondigit, take it away from the digits, and modify it to contain only letters
@@ -254,6 +251,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             r'(\d+\/\d+)$',
             r'(\d+)$',
         ]
+        # extract the numeric part of the barcode
         bc_extract = occs['barcode'].astype(str).str.extract('(' + '|'.join(barcode_regex) + ')')
         #occs['prel_bc'] = occs['prel_bc'].str.strip()
         if verbose:
@@ -267,25 +265,30 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             #print(names_WIP) # for debugging, makes a lot of output
             #print('So many columns:', len(names_WIP.columns), '\n')
         print(bc_extract)
+        # reassign into dataframe
         occs['prel_bc'] = bc_extract
 
         if verbose:
             print(occs.prel_bc)
-
-        occs['prel_herbCode'] = occs['barcode'].str.extract(r'([A-Z]+)' or r'(\[A-Z]+\-)') # gets most issues...
+        # now get the herbarium code. First if it was correct to start with, extract from barcode.
+        bc = pd.Series(occs['barcode'])
+        prel_herbCode = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)') # gets most issues...
+        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+\-)'))
+        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+)'))
+        occs = occs.assign(prel_herbCode = prel_herbCode)
         occs['prel_code'] = occs['barcode'].astype(str).str.extract(r'(\D+)')
         occs['prel_code_X'] = occs['barcode'].astype(str).str.extract(r'(\d+\.\d)') # this is just one entry and really f@#$R%g annoying
-
+        #occs.to_csv('debug.csv', sep = ';')
         if verbose:
             print(type(occs.prel_code))
         if verbose:
             print(occs.prel_herbCode)
-        #occs['Institute'] = occs['Institute'].astype(float)
-        #occs['Institute'] = occs['Institute'].replace('nan', 'NaN')
-        #occs['prel_herbCode'].fillna(occs['institute'], inplace=True)
+
+        # if the barcode column was purely numericm integrate
         occs['tmp_hc'] = occs['institute'].str.extract(r'(^[A-Z]+\Z)')
+        #occs['tmp_hc'] = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)')
         occs['tmp_hc'] = occs['herbarium_code'].str.extract(r'(^[A-Z]+\Z)')
-        occs['tmp_hc'] = occs['tmp_hc'].replace('PLANT', 'TAIF')
+        occs['tmp_hc'] = occs['tmp_hc'].replace({'PLANT': 'TAIF'})
         #occs['tmp_hc'] = occs['tmp_hc'].str.replace('PLANT', '')
         occs.prel_herbCode.fillna(occs['tmp_hc'], inplace = True)
         #occs[occs['herbarium_code'] == r'([A-Z]+)', 'tmp_test'] = 'True'
@@ -326,22 +329,19 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             if verbose:
                 print(occs)
 
-
+        # and clean up now
         occs = occs.drop(['prel_bc', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc'], axis = 1)
         occs = occs.rename(columns = {'barcode': 'orig_bc'})
         occs = occs.rename(columns = {'st_barcode': 'barcode'})
         if verbose:
             print(occs.columns)
-        # # now i have pure number barcodes: my herbarium code is either in 'Herbarium_Code'
-        # or in 'prel_herbCode'
 
-        # if there is no entry in the prel_* column, then combine institute and code column
-
-    #==
-
-
+        # -----------------------------------------------------------------------
         # COLLECTION NUMBERS
         # keep the original colnum column
+        # split to get a purely numeric colnum, plus a prefix for any preceding characters,
+        # and sufix for trailing characters
+
         occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
         try:
             occs = occs.colnum_full.replace('s.n.', np.nan, inplace=True) # keep s.n. for later?
@@ -411,14 +411,6 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
 
-
-    #for name in occs.recorded_by:
-    """ We could consider modifying the collector names to all be standard at least
-     if initials are there and pre-names (de, van, ...) to have these all the same. Then
-     we might be able to have prettier names. It also might facilitate merging collector names
-     and later on searching for collector_id (ORCID or other IDs??)
-    """
-
     occs = occs.astype(dtype = z_dependencies.final_col_type) # check data type
     #print(occs.dtypes)
     if verbose:
@@ -436,17 +428,20 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
     #occs.to_csv(out_file, sep = ';')
 
-    print('\n','STEP 1 completed successfully.')
+    print('\n','Column standardisation completed successfully.')
 
     return occs
 
 def collector_names(occs, working_directory, prefix, verbose=True, debugging=False):
+    """
+    With an elaborate regex query, match all name formats I have been able to come up with.
+    This is applied to both recorded_by and det_by columns. All those records that failed are
+    written into a debugging file, to be manually cleaned.
+    """
+
     pd.options.mode.chained_assignment = None  # default='warn'
     # this removes this warning. I am aware that we are overwriting stuff with this function.
     # the column in question is backed up
-
-
-
 
 
     #print(occs.dtypes) # if you want to double check types again
@@ -455,8 +450,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     occs['det_by'] = occs['det_by'].replace('nan', pd.NA)
     #print(occs.head)
     # -------------------------------------------------------------------------------
-    #print('MINUS FIRST TRY \n', occs.info())
-
+    # Clean some obvious error sources, back up original column
     occs['orig_recby'] = occs['recorded_by'] # keep original column...
     occs['orig_detby'] = occs['det_by']
     # remove the introductory string before double point :
@@ -468,10 +462,10 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('et al.', '', regex=False)
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('et al', '', regex=False)
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('etal', '', regex=False)
-    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Philippine Plant Inventory (PPI)', 'Philippines, Philippines Plant Inventory', regex=False)
-    ##we will need to find a way of taking out all the recorded_by with (Dr) Someone's Collector
+    #occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Philippine Plant Inventory (PPI)', 'Philippines, Philippines Plant Inventory', regex=False)
+    #we will need to find a way of taking out all the recorded_by with (Dr) Someone's Collector
 
-    ##isolate just the first collector (before a semicolon)
+    #isolate just the first collector (before a semicolon)
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.split(';').str[0]
 
     occs['recorded_by'] = occs['recorded_by'].str.strip()
@@ -490,6 +484,9 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # 4 C. Meade      -->
     # 5 Chris Meade   -->
 
+
+    #-------------------------------------------------------------------------------
+    # regex queries: going from most specific to least specific.
 
     extr_list = {
         #r'^([A-Z][a-z]\-[A-Z][a-z]\W+[A-Z][a-z])' : r'\1', # a name with Name-Name Name
@@ -591,11 +588,6 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     TC_occs['to_check'] = names_WIP['recorded_by']
     #print(TC_occs.to_check)
 
-    # output so I can go through and check manually
-    # if len(TC_occs)!= 0:
-    #     TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'recby_names.csv', index = False, sep = ';', )
-    #     print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
-    #     '\n Please double check these in the separate file saved at: \n', working_directory+'TO_CHECK_'+prefix+'recby_names.csv')
     # #-------------------------------------------------------------------------------
 
 
@@ -630,11 +622,10 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     occs_newnames = occs_newnames[occs_newnames['recorded_by'] != 'ZZZ_THIS_NAME_FAILED']
 
 
-
-
     # ------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------
     # repeat the story with the det names
+    print(occs_newnames.recorded_by)
     names_WIP = occs_newnames[['det_by']] #.astype(str)
 
     #print(names_WIP)
@@ -664,7 +655,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
     #print(TC_occs.to_check)
 
-    TC_occs1 = TC_occs.copy()
+    TC_occs1 = occs_newnames.copy()
     TC_occs1['to_check_det'] = names_WIP['det_by']
     #print(TC_occs.to_check)
     TC_occs1['to_check_det'] = TC_occs1['to_check_det'].replace('<NA>', pd.NA)
@@ -765,10 +756,19 @@ def reinsertion(occs_already_in_program, names_to_reinsert, verbose=True):
 
     imp = codecs.open(names_to_reinsert,'r','utf-8') #open for reading with "universal" type set
     re_occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
-    if verbose:
-        print('Reinsertion data read successfully')
+    print(re_occs)
+    try:
+        re_occs = re_occs.drop(['to_check', 'to_check_det'])
+    except:
+        print('Special columns are already removed.')
+
+    re_occs = re_occs.astype(z_dependencies.final_col_type)
+
+    #if verbose:
+    print('Reinsertion data read successfully')
 
     occs_merged = pd.concat([occs_already_in_program, re_occs])
+    print('TOTAL', len(occs_merged), 'in Prog', len(occs_already_in_program), 'reintegrated', len(re_occs))
     if len(occs_merged) == len(occs_already_in_program) + len(re_occs):
         if verbose:
             print('Data reinserted successfully.')
