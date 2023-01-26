@@ -502,7 +502,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
         r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]{2,20}': r'\1, \2',  # just SURNAME, Firstname
 
         r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\s+([a-z]{0,3})\Z': r'\1, \2\3\4 \5',  # Surname, F(.) M(.) M(.) # VAN
-        r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\Z': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.)
+        r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.)
 
         r'(^[A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W\s+([a-z]{0,3})\,.+': r'\1, \2\3\4 \5',  # Surname, F(.) M(.) M(.), other collectors
         r'(^[A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W\,.+': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.), other collectors
@@ -541,8 +541,12 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
         r'^([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\2, \1', # F. Surname ...
         r'^([A-Z])\W+([A-Z][a-z]+)': r'\2, \1', # F. Surname ...
 
-        r'^([A-Z])\W+([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\4, \1\2 \3', #F. M. Surname
+        r'^([A-Z])\W+([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\4, \1\2 \3', #F. M. van  Surname
         r'^([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\3, \1\2', #F. M. Surname
+        
+        r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\5, \1\2\3 \4', #F. M. M. van Surname
+        r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\4, \1\2\3', #F. M. M. van Surname
+
 
         r'^([A-Z])([A-Z])([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\5, \1\2\3 \4', #FMM Surname
         r'^([A-Z])([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\4, \1\2\3', #FMM Surname
@@ -753,15 +757,20 @@ def reinsertion(occs_already_in_program, names_to_reinsert, verbose=True):
     '''
     Quickly read in data for reinsertion, test that nothing went too wrong, and append to the data already in the system.
     '''
-
+    if verbose:
+        print('REINSERTING...')
+        print(names_to_reinsert)
     imp = codecs.open(names_to_reinsert,'r','utf-8') #open for reading with "universal" type set
+    print('problems?')
     re_occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
+    print('yes')
     print(re_occs)
-    try:
-        re_occs = re_occs.drop(['to_check', 'to_check_det'])
-    except:
-        print('Special columns are already removed.')
-
+    print(re_occs.columns)
+    #try:
+    re_occs = re_occs.drop(['to_check', 'to_check_det'], axis = 1)
+    #except:
+    #    print('Special columns are already removed.')
+    print('here?')
     re_occs = re_occs.astype(z_dependencies.final_col_type)
 
     #if verbose:

@@ -83,6 +83,8 @@ if __name__ == "__main__":
         else:
             # check for fileending etc
             print('reinserting the file', reinsert)
+            #print('How is it separated? (e.g. ";" or ","...)')
+            #separ = input()
             try:
                 tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
                 print('Reintegration successful!')
@@ -111,7 +113,6 @@ if __name__ == "__main__":
     # If this step is not wished for, we just continue as if nothing happened
     else:
         tmp_occs_3 = tmp_occs_2
-
 
     # # option of including a fuzzy matching step here. I haven't implemented this yet...
     print('STEP A complete.')
