@@ -34,7 +34,7 @@ OUT_2=$(echo $OUT_DIR$PREFIX'spatialvalid.csv')
 #python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
 
 echo "R script tests"
-Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
+#Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
 echo "How are we doing??"
 
 
@@ -46,13 +46,17 @@ HOSTNAME='10.4.91.57'
 TABLE='phil_test_221209'
 SCHEMA='serafin_test'
 
+WDIR2='/Users/fin/Sync/1_Annonaceae/share_DB_WIP/2a_WIP/' # directory where intermediate files will be written to
+
 
 
 
 #echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
 #echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 #if STEP2ASWELL='YES' do
-#python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+
+# NEEDS TO BE CHANGED TO OUT2
+python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR2
 #done
 
 

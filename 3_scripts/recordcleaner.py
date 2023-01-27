@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # Here we check if the user wants to check the collector names, and if yes, the user can reinsert checked non-conforming names into the workflow
     if args.nonamecln == None:
-        tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
+        tmp_occs_3, frame_to_check = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
         # should we reinsert the names we threw out?
         print('\n ................................\n',
         'Would you like to reinsert the collector names I couldn\'t handle?',
@@ -86,7 +86,7 @@ if __name__ == "__main__":
             #print('How is it separated? (e.g. ";" or ","...)')
             #separ = input()
             try:
-                tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
+                tmp_occs_3 = stepA.reinsertion(tmp_occs_3, frame_to_check, reinsert)
                 print('Reintegration successful!')
             except:
                 print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # If this step is not wished for, we just continue as if nothing happened
     else:
         tmp_occs_3 = tmp_occs_2
-
+    #stop
     # # option of including a fuzzy matching step here. I haven't implemented this yet...
     print('STEP A complete.')
     print(tmp_occs_3.columns)

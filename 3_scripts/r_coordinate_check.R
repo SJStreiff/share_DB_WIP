@@ -43,6 +43,8 @@ print(opt$options$input)
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
 dat <- data.frame(dat)  # checking
+
+dat <- dat[!is.na(dat$ddlong),]
 flags <- clean_coordinates(x = dat,
                            lon = "ddlong",
                            lat = "ddlat",

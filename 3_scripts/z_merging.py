@@ -35,9 +35,14 @@ def check_premerge(mdb, occs, verbose=True):
 
 
     print('\n \n Some stats about potential duplicates being integrated: \n .................................................\n')
-    print('\n By surname, number, sufix and collyear & country ID', tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colNum', 'sufix', 'colYear', 'countryID' ], keep=False)].shape)
-    print('\n By surname, number, sufix and collyear & country ID', tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colNum_full' ], keep=False)].shape)
-    print('\n By surname, number, genus & specific epithet', tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colNum', 'genus', 'specificEpithet' ], keep=False)].shape)
+    print('\n By surname, number, sufix and col_year & country ID', 
+    tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum', 'sufix', 'col_year', 'country_id' ], keep=False)].shape)
+    print('\n By surname & full collectionnumber', 
+    tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum_full' ], keep=False)].shape)
+    print('\n By surname, number, genus & specific epithet', 
+    tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum', 'genus', 'specific_epithet' ], keep=False)].shape)
+
+    print('\n By barcode', tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)].shape)
 
     print('\n .................................................\n')
 
@@ -48,10 +53,6 @@ def check_premerge(mdb, occs, verbose=True):
 
 
     return tmp_mast
-
-
-
-
 
 
 

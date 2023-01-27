@@ -122,7 +122,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
 
-        occs[['colDate_1', 'col_date_2']] = occs.col_date.str.split("-", expand=True,)
+        occs[['col_date_1', 'col_date_2']] = occs.col_date.str.split("-", expand=True,)
         occs[['det_date_1', 'det_date_2']] = occs.det_date.str.split("-", expand=True,)
         #delete the coldate_2 colomn, doesn't have info we need
         occs.drop(['col_date_2'], axis='columns', inplace=True)
@@ -709,11 +709,11 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     TC_occs = TC_occs.drop_duplicates(subset = ['barcode'], keep = 'first')
     print('YAY2',TC_occs.shape)
 
-
+    TC_occs_write = TC_occs[['recorded_by', 'orig_recby', 'colnum_full', 'det_by', 'orig_detby', 'to_check', 'to_check_det']]
 
     # output so I can go through and check manually
     if len(TC_occs)!= 0:
-        TC_occs.to_csv(working_directory +'TO_CHECK_' + prefix + 'probl_names.csv', index = False, sep = ';', )
+        TC_occs_write.to_csv(working_directory +'TO_CHECK_' + prefix + 'probl_names.csv', index = True, sep = ';', )
         print(len(TC_occs), ' records couldn\'t be matched to the known formats.',
         '\n Please double check these in the separate file saved at: \n', working_directory+'TO_CHECK_'+prefix+'probl_names.csv')
 
@@ -749,11 +749,11 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
         print('I have saved', len(unique_names), 'Collector names to the file', working_directory + prefix+'collectors_unique.csv.')
 
     # done
-    return occs_newnames
+    return occs_newnames, TC_occs
 
 
 
-def reinsertion(occs_already_in_program, names_to_reinsert, verbose=True):
+def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, verbose=True):
     '''
     Quickly read in data for reinsertion, test that nothing went too wrong, and append to the data already in the system.
     '''
@@ -768,15 +768,25 @@ def reinsertion(occs_already_in_program, names_to_reinsert, verbose=True):
     print(re_occs.columns)
     #try:
     re_occs = re_occs.drop(['to_check', 'to_check_det'], axis = 1)
+    re_occs.sort_index(inplace=True)
+    re_occs = re_occs.replace('NaN', pd.NA)
+    print(re_occs.recorded_by)
+    frame_to_be_better.sort_index(inplace=True)
+    print(frame_to_be_better.orig_recby)
+    frame_to_be_better['recorded_by'] = re_occs['recorded_by']
+    frame_to_be_better['det_by'] = re_occs['det_by']
+    
+    print(frame_to_be_better.recorded_by) #[['recordedBy', 'orig_recby']])
+    print(frame_to_be_better.orig_recby)
     #except:
     #    print('Special columns are already removed.')
     print('here?')
-    re_occs = re_occs.astype(z_dependencies.final_col_type)
+    frame_to_be_better = frame_to_be_better.astype(z_dependencies.final_col_type)
 
     #if verbose:
     print('Reinsertion data read successfully')
 
-    occs_merged = pd.concat([occs_already_in_program, re_occs])
+    occs_merged = pd.concat([occs_already_in_program, frame_to_be_better])
     print('TOTAL', len(occs_merged), 'in Prog', len(occs_already_in_program), 'reintegrated', len(re_occs))
     if len(occs_merged) == len(occs_already_in_program) + len(re_occs):
         if verbose:

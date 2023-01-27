@@ -188,7 +188,7 @@ herbo_subset_cols = (['recorded_by',
     'barcode',
 	'country',
 	'genus',
-	'specificEpithet'])
+	'specific_epithet'])
 
 gbif_key = {'genus': 'genus',
     'species': 'species-tobesplit',
