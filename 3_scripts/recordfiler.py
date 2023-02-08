@@ -93,7 +93,7 @@ if __name__ == "__main__":
     # SQL.send_to_sql(occs ,args.database_name, args.hostname, args.tablename, args.schema)
 
 
-# TEMPORARILY NOT HAPPENING AS I JUST WANT OT DEBUG THE MERGING OF DATASETS.
+    # TEMPORARILY NOT HAPPENING AS I JUST WANT OT DEBUG THE MERGING OF DATASETS.
     # Step D1
     # # - get database extract from the GLOBAL database.
     # print('Please check if you are connected to the VPN. If not this will not work.')
@@ -116,7 +116,14 @@ if __name__ == "__main__":
     # print('Master database read successfully!', len(m_DB), 'records downloaded')
     # #
     
-    m_DB = pd.read_csv('/Users/fin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_Phil_cleaned.csv', sep =';')
+
+
+    ###--- Import a local file to make sure it works, GLOBAL seems down at the moment
+    m_DB = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_Phil_cleaned.csv', sep =';')
+    # to make it look like the masterdb I will add all the final columns
+    miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
+    m_DB[miss_col] = '0'
+    m_DB = m_DB.astype(dtype = z_dependencies.final_col_for_import_type)
     
     test_upd_DB = pre_merge.check_premerge(m_DB, occs, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
@@ -125,6 +132,8 @@ if __name__ == "__main__":
 
     print(deduplid)
 
+    deduplid.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB/Phil_final_2023-02-07.csv', sep=';', index=False)
+ 
 
 
 

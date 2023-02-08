@@ -8,12 +8,12 @@ STEP2ASWELL='YES' # defaults to 'YES'.
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Step 1 RECORDCLEANER
 # VARIABLES TO MODIFY, REQUIRED!!
-#INPUT='/Users/fin/Sync/1_Annonaceae/share_DB_WIP/1_data_raw/20230126_GBIF_phil.csv' # path to your input file
-INPUT='//Users/fin/Sync/1_Annonaceae/share_DB_WIP/1_data_raw/P_Asia_2022-11-15.csv'
+#INPUT='/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/1_data_raw/20230126_GBIF_phil.csv' # path to your input file
+INPUT='/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/1_data_raw/P_Asia_2022-11-15.csv'
 
 DAT_FORM='P'           # format of your input file
-WDIR='/Users/fin/Sync/1_Annonaceae/share_DB_WIP/1a_WIP/' # directory where intermediate files will be written to
-OUT_DIR='/Users/fin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/' # directory where final file is written to
+WDIR='/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/1a_WIP/' # directory where intermediate files will be written to
+OUT_DIR='/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/' # directory where final file is written to
 PREFIX='G_PhilP_'          # prefix for all intermediate and final files
 # for GLOBAL I am trying to to data source (i.e. GBIF = G) followed by ISO2 coutry code (e.g. Indonesia=ID)
 
@@ -34,9 +34,8 @@ OUT_2=$(echo $OUT_DIR$PREFIX'spatialvalid.csv')
 #python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
 
 echo "R script tests"
-Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
+#Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
 echo "How are we doing??"
-
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -52,7 +51,7 @@ SCHEMA='serafin_test'
 #echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
 #echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 #if STEP2ASWELL='YES' do
-#python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+python ./3_scripts/recordfiler.py $OUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR
 #done
 
 
