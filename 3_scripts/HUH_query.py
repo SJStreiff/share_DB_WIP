@@ -118,7 +118,7 @@ def get_HUH_names(recordedBy, verbose=True):
     
     # to integrate into a dataframe afterwards
 
-    tmp = ('link/id', 'name')
+    tmp = ('link_id', 'name')
     pot_df = pd.DataFrame(tmp).transpose()
     print(pot_df)
 
@@ -190,6 +190,8 @@ def get_HUH_names(recordedBy, verbose=True):
     extr_list = {
             #r'^([A-Z][a-z]\-[A-Z][a-z]\W+[A-Z][a-z])' : r'\1', # a name with Name-Name Name
             #r'^([A-Z][a-z]+)\W+([A-Z]{2,5})' : r'\1, \2', #Surname FMN
+            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4\5 \6',  # all full full names with sep = ' ' plus Surname F van
+            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4\5',  # all full full names with sep = ' '
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4 \5',  # all full full names with sep = ' ' plus Surname F van
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4',  # all full full names with sep = ' '
@@ -224,6 +226,9 @@ def get_HUH_names(recordedBy, verbose=True):
             r'^([A-Z][a-z]+)\W*\Z': r'\1',  # Surname without anything
             r'^([A-Z][a-z]+)\,\W+([A-Z])\W+\s+([a-z]{0,3})': r'\1, \2 \3',  # Surname, F(.)
             r'^([A-Z][a-z]+)\,\W+([A-Z])\W+': r'\1, \2',  # Surname, F(.)
+
+            r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([a-z]{0,3})\s([A-Z][a-z]+)': r'\6, \1\2\3\4 \5', # Firstname Mid Nid Surname ...
+            r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z][a-z]+)': r'\5, \1\2\3\4', # Firstname Mid Nid Surname ...
 
             r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([a-z]{0,3})\s([A-Z][a-z]+)': r'\5, \1\2\3 \4', # Firstname Mid Nid Surname ...
             r'^([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z])[a-z]+\s([A-Z][a-z]+)': r'\4, \1\2\3', # Firstname Mid Nid Surname ...
@@ -302,9 +307,85 @@ def get_HUH_names(recordedBy, verbose=True):
     print(pot_df_ext)
 
 
+    pot_df_ext[['surname', 'givname']] = pot_df_ext.regexed_nm.str.split(',', expand = True)
+    # now we have a column with surname, which has to match exactly (identical) 
+    print('\n', lastname, firstnames)
+    print(len(pot_df_ext))
+    pot_df_ext['givname'] =  pot_df_ext['givname'].str.strip()
+    pot_df_ext = pot_df_ext[pot_df_ext.surname == lastname]
+   # print(pot_df_ext.givname[0])
+    # and then we can try to see which initials best match to the query
+    if len(firstnames)==0:
+        subs1 = pot_df_ext
+        print('No first name provided')
+    elif len(firstnames)==1:
+        subs1 = pot_df_ext[pot_df_ext.givname.str[0:(len(firstnames))] == firstnames[0:(len(firstnames))]]
+        print('Length of firstnames 1')
+    else:
+        subs1 = pot_df_ext[pot_df_ext.givname.str[0:(len(firstnames)-1)] == firstnames[0:(len(firstnames)-1)]]
+        print('length of firstnames laregr 1')
+    #print(len(firstnames)-1)
+
+    subs1 = subs1.drop_duplicates(subset = ['link_id'])
+
+    print('\n','We have', len(subs1.name), 'candidate names.' )
+    print(subs1)
+    # now we have a shortlist, we can go and check     
+
+    ###------- Now go and check out the results from the first query --------###
+
+    for i in range(len(subs1.name)):
+        print(i)
+        bot_str = subs1.iloc[i,1]
+        print(bot_str)
+        url = "https://kiki.huh.harvard.edu/databases/"+bot_str
+        
+       # print('The URL is:', url)
+        response = requests.get(url)
+        # # important: re-encode into utf-8 to have all non-english characters and accents work
+        response.encoding = 'UTF-8'
+        # # print('ENCODING', response.apparent_encoding)
+        # # print(f"The response is: {response.text}")
+
+        # # now feed the html document into beautiful soup
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # # print(soup)
+       # print(soup.findAll(class_ = "val")[0])
+    # the results are NAME, BIRTH, DEATH, REMARKS, ASA-ID, GUID, 
+
+
+
+        huh_name = soup.findAll(class_ = "val")[0]
+        huh_birth = soup.findAll(class_ = "val")[1]
+        print(huh_birth)
+
+
+
+        
+        i2 = pd.DataFrame(huh_name).astype(str)
+        i2 = str(i2.iloc[0,0])        
+        print(i2)
+
+
+
+
+
+        # print(abc)
+        # i2 = pd.Series(i).astype(str)
+        # i3 = str(i2)
+        # print(i2)
+        
+        # # we now get all possibilities found on the webpage
+        # pot_names = soup.findAll(href = re.compile("botanist_search.php"))
+    
+
 #
-test = get_HUH_names(recordedBy)
-print(test)
+#test = get_HUH_names('Gray, A')
+
+asagray = "Gray, A"
+test = get_HUH_names(asagray)
+print('test')
 
 
 
