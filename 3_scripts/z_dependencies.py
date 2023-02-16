@@ -46,7 +46,10 @@ final_cols_for_import = list(['global_id',
     'orig_recby',
     'status',
     'accepted_name',
-    'ipni_no'])
+    'ipni_no',
+    'huh_name',
+    'geo_col',
+    'wiki_url'])
 
 final_col_for_import_type = {'global_id': str,
     'childData_id': str,
@@ -85,7 +88,10 @@ final_col_for_import_type = {'global_id': str,
     'orig_recby': str,
     'status': str,
     'accepted_name': str,
-    'ipni_no': str}
+    'ipni_no': str,
+    'huh_name': str,
+    'geo_col': str,
+    'wiki_url': str}
 
 
 
@@ -116,7 +122,10 @@ final_cols = list(['scientific_name',
     'ddlat',
 	'institute',
     'herbarium_code',
-    'barcode'])
+    'barcode',
+    'huh_name',
+    'geo_col',
+    'wiki_url'])
 
 final_col_type = {'scientific_name': str,
 	'genus': str,
@@ -145,7 +154,10 @@ final_col_type = {'scientific_name': str,
     'ddlat': float,
 	'institute': str,
     'herbarium_code': str,
-    'barcode': str}
+    'barcode': str,
+    'huh_name': str,
+    'geo_col': str,
+    'wiki_url': str}
 
 
 # herbonautes data set columns present and wished in database

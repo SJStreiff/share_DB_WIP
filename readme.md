@@ -68,7 +68,8 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
   * A1: Standardise column names, remove unwanted columns and add empty columns we need later
     Note that as I think the database columns make all capital letters to small, I have changed this accordingly in the preprocessing
   * A2: Standardise data within some columns, e.g. separate all dates into separate columns day, month and year, make sure all barcodes have the institution leading before the number, have the first collector in a separate column,
-  * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record.
+  * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record
+  * A4: TO BE COMPLETED: Standardise collector names more by querying the Harvard Univ. Herbarium botanists database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...)
 
 * Step B:
   * B1: run some statistics on duplicates in the dataset.
@@ -83,7 +84,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to integrate it into a preexisting database
 
 * Step D:
-  * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and?
+  * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and merge these 
 
 
 * Unclear if possible:

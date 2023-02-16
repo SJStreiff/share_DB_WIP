@@ -8,6 +8,7 @@ PREFIX "Z_" for scripts
 '''
 
 import z_functions_a as stepA
+import HUH_query as huh_query
 import z_functions_b as stepB
 import z_nomenclature as stepC
 import z_functions_c as stepB2
@@ -74,10 +75,10 @@ if __name__ == "__main__":
         print('\n ................................\n',
         'Would you like to reinsert the collector names I couldn\'t handle?',
         'Please take care of encoding (usually best is UTF-8) when opening (especially in Microsoft Excel!!)',
-        'If you would like to reinsert your checked names, please indicate the path to your modified file. Otherwise type "n" or "no".')
+        'If you would like to reinsert your checked names, please indicate the path to your modified file. Otherwise type "n"')
         reinsert=input() #'n' # make back to input()
         print(reinsert)
-        if reinsert == ['n' or 'no']:
+        if reinsert == 'n':
             print('TRUE')
             print('Ok I will continue without any reinsertion')
         else:
@@ -126,6 +127,8 @@ if __name__ == "__main__":
     tmp_occs_3.drop(drop_ind, inplace = True)
     print('After removing dataproblematic institutions:',tmp_occs_3.shape)
 
+    # HUH name query
+    tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
 
     #---------------------------------------------------------------------------
     # step B:

@@ -489,7 +489,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # regex queries: going from most specific to least specific.
 
    
-   extr_list = {
+    extr_list = {
             #r'^([A-Z][a-z]\-[A-Z][a-z]\W+[A-Z][a-z])' : r'\1', # a name with Name-Name Name
             #r'^([A-Z][a-z]+)\W+([A-Z]{2,5})' : r'\1, \2', #Surname FMN
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4\5 \6',  # all full full names with sep = ' ' plus Surname F van
