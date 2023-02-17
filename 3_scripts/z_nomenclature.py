@@ -131,11 +131,19 @@ def kew_query(occs, working_directory, verbose=True):
     '''
     #occs_na
     
-    occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].astype(str)
-    occs[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].replace('nan', pd.NA)
+    occs_toquery[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].astype(str).copy()
+    occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('nan', pd.NA)
+
+     
+    occs_toquery = occs_toquery.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)
+    occs_toquery['sp_idx'] = occs_toquery['genus']+ occs_toquery['specific_epithet']
+    occs_toquery.set_index(occs_toquery.sp_idx, inplace = True)
+   
+
+  ###----> finish implementing this. broken now! 
+  # ask just unique species and then reinsert based on index... WHICH NEEDS TO ALSO GO INTO ORIGINAL OCCS!!!
 
     
-    occs = occs.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)
     print(occs[['genus', 'specific_epithet']])
     occs[['status','accepted_name', 'species_author', 'ipni_no', 'ipni_pub']] = occs.apply(lambda row: powo_query(row['genus'], row['specific_epithet'], distribution=False, verbose=True), axis = 1, result_type='expand')
     # now drop some of the columns we really do not need here...

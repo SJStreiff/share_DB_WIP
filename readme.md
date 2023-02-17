@@ -66,10 +66,10 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 
 * Step A:
   * A1: Standardise column names, remove unwanted columns and add empty columns we need later
-    Note that as I think the database columns make all capital letters to small, I have changed this accordingly in the preprocessing
+    Note that as the postgreSQL database columns make all capital letters to small, I have changed this accordingly in the preprocessing
   * A2: Standardise data within some columns, e.g. separate all dates into separate columns day, month and year, make sure all barcodes have the institution leading before the number, have the first collector in a separate column,
   * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record
-  * A4: TO BE COMPLETED: Standardise collector names more by querying the Harvard Univ. Herbarium botanists database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...)
+  * A4:  tandardise collector names even more by querying the Harvard Univ. Herbarium botanists [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...)
 
 * Step B:
   * B1: run some statistics on duplicates in the dataset.
