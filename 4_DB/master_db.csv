@@ -1,9 +1,1 @@
 coll_surname;scientificName;genus;specificEpithet;speciesAuthor;collectorID;recordedBy;prefix;colNum;sufix;colDate;colDay;colMonth;colYear;detBy;detByDate;detDay;detMonth;detYear;countryID;country;continent;locality;coordinateID;ddlong;ddlat;institute;herbarium_code;barcode;colNum_full;detDate;orig_BC;ORIG_recBy
-Achacoso;Neo-uvaria merrillii (C.B.Rob.) Chaowasku;Neo-Uvaria;acuminatissima;0;0;Achacoso, I;Forestry;26807;;0;;;;nan;0;0;0;0;PH;0;0;Province of Antique, Panay.;0;;;US;US;US1375298;Forestry Bureau 26807;;US 1375298;I. Achacoso
-Achacoso;Annonaceae;nan;nan;0;0;Achacoso, I;nan;nan;nan;0;;4;1917;Kessler;0;0;0;0;PH;0;0;nan;0;;;MNHN;P;P00267940;nan;;P00267940;Achacoso, I.
-Adduru;Polyalthia barnesii Merr.;Polyalthia;barnesii;0;0;Adduru, M;;108;;0;1;5;1917;nan;0;0;0;0;PH;0;0;Litto. Vicinity of Peñablanca. Cagayan Province. Luzon.;0;;;US;US;US1091857;108;;US 1091857;M. Adduru
-Adduru;Artabotrys cagayanensis Merr.;Artabotrys;cagayanensis;0;0;Adduru, M;;136;;0;18;5;1917;nan, nan;0;0;0;0;PH;0;0;Pena Blanca.;0;;;US, K;US, Herbarium;US1091758, K000691300;;;;
-Adduru;Mitrephora cagayanensis Merr.;Mitrephora;cagayanensis;0;0;Adduru, M;;143;;0;;;1917;nan;0;0;0;0;PH;0;0;Vicinity of Penablanca on hillside;0;;;A;A;A00105857;143;;barcode-00105857;M. Adduru
-Adduru;Orophea cumingiana S.Vidal;Orophea;cumingiana;0;0;Adduru, M;;148;;0;1;5;1917;nan;0;0;0;0;PH;0;0;Litto, Vicinity of Peñablanca, Cagayan Province, Luzon.;0;;;US;US;US898676;148;;US 898676;M. Adduru
-Adduru;Dasymaschalon clusiflorum (Merr.) Merr.;Dasymaschalon;clusiflorum;0;0;Adduru, M;;205;;0;1;5;1917;nan;0;0;0;0;PH;0;0;Lagum. Vicinity of Peñablanca. Cagayan Province. Luzon. Ibi Creek.;0;;;US;US;US1091766;205;;US 1091766;M. Adduru
-Adduru;Goniothalamus amuyon (Blanco) Merr.;Goniothalamus;amuyon;0;0;Adduru, M;Forestry;25871;;0;;;;nan;0;0;0;0;PH;0;0;Province of Ilocos Norte. Luzon.;0;;;US;US;US1376216;Forestry Bureau 25871;;US 1376216;M. Adduru

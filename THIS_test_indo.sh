@@ -31,6 +31,7 @@ OUT_2=$(echo $OUT_DIR$PREFIX'spatialvalid.csv')
 # working for now, commented out...
 python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM  $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
 
+echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
 echo "R script tests"
 Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
 echo "How are we doing??"
@@ -47,10 +48,10 @@ SCHEMA='serafin_test'
 
 
 
-#echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
-#echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+
+echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 #if STEP2ASWELL='YES' do
-#python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+python ./3_scripts/recordfiler.py $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 #done
 
 

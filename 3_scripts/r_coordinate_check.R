@@ -3,7 +3,9 @@
 # 2022-01-18: sjs
 #
 # using options parsed from the bash launch script
+#
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 rm(list = ls()) # just making sure the environment is clean
 
 package_list <- c('optparse',
@@ -40,11 +42,15 @@ getwd()
 print('Inputfile:')
 print(opt$options$input)
 
+#debugging
+dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/4_DB/G_t_cleaned.csv', sep =';', head=T)
+
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
 dat <- data.frame(dat)  # checking
 
-dat <- dat[!is.na(dat$ddlong),]
+dat <- dat[!is.na(dat$ddlong),] # checking that all records have coordinates...
+
 flags <- clean_coordinates(x = dat,
                            lon = "ddlong",
                            lat = "ddlat",
@@ -53,6 +59,12 @@ flags <- clean_coordinates(x = dat,
                            tests = c("capitals", "centroids", "equal","gbif", "institutions",
                                      "zeros", "countries" ))
 # and send the file out again for integrating into database
+
+newcols <- which(colnames(flags) != colnames(dat))
+print(newcols)
+
+
+
 write.table(flags, file = out_file, row.names = FALSE, sep=';')
 
 print(paste('Annotated coordinates are written to', out_file))

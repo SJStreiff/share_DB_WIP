@@ -69,7 +69,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
     Note that as the postgreSQL database columns make all capital letters to small, I have changed this accordingly in the preprocessing
   * A2: Standardise data within some columns, e.g. separate all dates into separate columns day, month and year, make sure all barcodes have the institution leading before the number, have the first collector in a separate column,
   * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record
-  * A4:  tandardise collector names even more by querying the Harvard Univ. Herbarium botanists [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...)
+  * A4:  Standardise collector names even more by querying the Harvard Univ. Herbarium botanists [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...) Names that are not found in that database are returned in the same format as the regex names... **TO BE IMPLEMENTED**
 
 * Step B:
   * B1: run some statistics on duplicates in the dataset.
@@ -77,32 +77,30 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
   Note that records with no collection number (i.e. *s.n.*) are treated separately. Here the combination of Surname, Collection Year, Month and Day and Genus + specific_epithet are used to identify duplicates. This leads to errors, but in my humble opinion it's better than nothing.
 
 * Step C:
-  * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily. With other familiesthe situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
+  * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily within the framework of our project collaborators. With other families the situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
   * Check coordinates. Probably we just check for country centroids and points in the water. This will be done with already available packages, and issues flagged for potential correction in e.g. QGIS (qgis.org)
   This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe). For the moment I just implemented an automatic CoordinateCleaner (https://ropensci.github.io/CoordinateCleaner/index.html)
 
-RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to integrate it into a preexisting database
+RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to integrate it into a pre-existing database
 
-* Step D:
+* RECORD-FILER:
   * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and merge these 
-
-
-* Unclear if possible:
-  * Check collector names against Harvard Univ. Herb. database of botanists... tests in *z_functions.py*...
-  So far my efforts have been limited, although I'm able to communicate with the HUH database, just the output is not what i was hoping for...
+  * **To Come soon**: Check backlog of indets etc for potential duplicates with missing data previously...?
 
 
 ## TODO
 
 * Keep readme uptodate with new developments and changes
-* add overwrite protection in case script is called multiple times, at least for time intensive steps (removed for debugging!!) --> done as mode='x' for example within pd.to_csv()
-* RETURN interactive input(), removed for scripting...
+* **add overwrite protection in case script is called multiple times**, at least for time intensive steps (removed for debugging!!) --> done as mode='x' for example within pd.to_csv()
+* **DONE**: RETURN interactive input(), removed for scripting...
 * Barcodes error in GBIF input! (issue dealing with "-" within barcode.)
-* implement problem name output and reinsertion, optionally pausing execution
-* when do we query POWO/IPNI??
-* quantify fast and slow steps?
-* Implement background files:
-  * indets and similar
+* **DONE** - implement problem name output and reinsertion, optionally pausing execution
+* **DONE** when do we query POWO/IPNI?? irrelevant in my opinion. We do it before inserting a new bunch of data into the master database. 
+* quantify fast and slow steps and make backup files between, so we can restart at that step (maybe integrate variable to call analysis from step XYZ)
+
+* **Implement background files**:
+  * indets and similar: before integrating data, check for data previosly set aside because we had no conclusive data...?
+
   * master distribution database for integration.
 
 

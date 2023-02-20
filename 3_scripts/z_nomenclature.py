@@ -137,6 +137,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     occs.set_index(occs.sp_idx, inplace = True)
     occs_toquery = occs[['genus', 'specific_epithet']].astype(str).copy()
     occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('nan', pd.NA)
+    occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('None', pd.NA)
     occs_toquery['sp_idx'] = occs_toquery['genus']+ ' ' + occs_toquery['specific_epithet']
     if debugging:
         print('The is the index and length of taxa column (contains duplicated taxon names; should be same length as input dataframe)')
@@ -150,7 +151,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     if verbose:
         print('Number of unique taxa to check:', len(occs_toquery.sp_idx))
 
-    occs_toquery[['status','accepted_name', 'species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.apply(lambda row: powo_query(row['genus'], 
+    occs_toquery[['status','accepted_name', 'ipni_species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.apply(lambda row: powo_query(row['genus'], 
                                                                                                                             row['specific_epithet'],
                                                                                                                          distribution=False, verbose=True),
                                                                                                                               axis = 1, result_type='expand')
