@@ -11,6 +11,9 @@ CHANGELOG:
 
 
 CONTAINS:
+    powo_query():
+        despite the misleading function name, this function queries both POWO 
+
     kew_query():
         queries IPNI for the ipni number, and POWO for status of a name, including potential synonymy and updated nomenclature.
         potentially it can query a distribution, if this is wished.
@@ -23,7 +26,7 @@ from pykew.powo_terms import Name, Filters
 import pandas as pd
 
 
-def powo_query(gen, sp, distribution=False, verbose=True):
+def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
     ''' This function takes genus species and crosschecks it to POWO. If the name is
     accepted, it is copied into the output, if it is a synonym, the accepted name is
     copied into the output. In the end the accepted names are returned.
@@ -49,7 +52,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
                 if 'name' in r:
                     r['name']
 
-            if verbose:
+            if debugging:
                 print('Input taxon accepted:', r['accepted'])
 
             if r['accepted'] == False:
@@ -57,8 +60,8 @@ def powo_query(gen, sp, distribution=False, verbose=True):
                 acc_taxon = r['synonymOf']
                 qID = acc_taxon['fqId']
                 ipni_no = r['url'].split(':', )[-1]
-                if verbose:
-                    print('Accepted taxon name:', acc_taxon['name']) #TODO: add taxon author
+                if debugging:
+                    print('Accepted taxon name:', acc_taxon['name']) 
                 scientificname = acc_taxon['name']
                 species_author = acc_taxon['author']
                 # if distribution:
@@ -89,7 +92,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
 
         except:
             # there are issues when the function is presented the string 'sp.' or 'indet.' etc
-            if verbose:
+            if debugging:
                 print('The species', gen, sp, 'is not registered in POWO...\n',
                   ' I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
             status = pd.NA
@@ -98,7 +101,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
             # native_to = pd.NA
             ipni_no = pd.NA
 
-        if verbose:
+        if debugging:
             print(status)
             print(scientificname, species_author)
             #print(native_to)
@@ -109,7 +112,7 @@ def powo_query(gen, sp, distribution=False, verbose=True):
                 if 'name' in r:
                     r['name']
             ipni_pubYr = r['publicationYear']
-            if verbose:
+            if debugging:
                 print('IPNI publication year found.')
         except:
             ipni_pubYr = pd.NA
@@ -121,53 +124,81 @@ def powo_query(gen, sp, distribution=False, verbose=True):
         ipni_pubYr = pd.NA
 
 
-    return status, scientificname, species_author, ipni_no, ipni_pubYr#, native_to
+    return status, scientificname, species_author, ipni_no, ipni_pubYr 
 
 
 
-def kew_query(occs, working_directory, verbose=True):
+def kew_query(occs, working_directory, verbose=True, debugging=False):
     ''' This function wraps the function above to query all the interesting stuff from Kew.
-    Note I have verbose=False here, as this function does a load of output, which is not strictly necessary.
     '''
+
     #occs_na
-    
-    occs_toquery[['genus', 'specific_epithet']] = occs[['genus', 'specific_epithet']].astype(str).copy()
+    occs['sp_idx'] = occs['genus']+ ' ' + occs['specific_epithet']
+    occs.set_index(occs.sp_idx, inplace = True)
+    occs_toquery = occs[['genus', 'specific_epithet']].astype(str).copy()
     occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('nan', pd.NA)
-
-     
-    occs_toquery = occs_toquery.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)
-    occs_toquery['sp_idx'] = occs_toquery['genus']+ occs_toquery['specific_epithet']
+    occs_toquery['sp_idx'] = occs_toquery['genus']+ ' ' + occs_toquery['specific_epithet']
+    if debugging:
+        print('The is the index and length of taxa column (contains duplicated taxon names; should be same length as input dataframe)')
+        print(occs_toquery.sp_idx)
+        print(len(occs_toquery.sp_idx))
     occs_toquery.set_index(occs_toquery.sp_idx, inplace = True)
-   
 
+    occs_toquery = occs_toquery.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)
+    # drop duplicated genus-species combinations (callable by index in final dataframe)
+    occs_toquery = occs_toquery.drop_duplicates(subset = 'sp_idx', keep = 'last')
+    if verbose:
+        print('Number of unique taxa to check:', len(occs_toquery.sp_idx))
+
+    occs_toquery[['status','accepted_name', 'species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.apply(lambda row: powo_query(row['genus'], 
+                                                                                                                            row['specific_epithet'],
+                                                                                                                         distribution=False, verbose=True),
+                                                                                                                              axis = 1, result_type='expand')
+    
+    occs_toquery = occs_toquery.drop(['ipni_pub'], axis=1)
+    occs_toquery = occs_toquery.set_index('sp_idx')
+    occs_toquery = occs_toquery.drop(['genus', 'specific_epithet'], axis = 1)
+    
+
+    occs_out = occs.join(occs_toquery)
   ###----> finish implementing this. broken now! 
   # ask just unique species and then reinsert based on index... WHICH NEEDS TO ALSO GO INTO ORIGINAL OCCS!!!
 
-    
-    print(occs[['genus', 'specific_epithet']])
-    occs[['status','accepted_name', 'species_author', 'ipni_no', 'ipni_pub']] = occs.apply(lambda row: powo_query(row['genus'], row['specific_epithet'], distribution=False, verbose=True), axis = 1, result_type='expand')
-    # now drop some of the columns we really do not need here...
-    print(occs)
-    occs = occs.drop(['ipni_pub'], axis=1)
+    if debugging:
+        print(occs_out[['genus', 'specific_epithet', 'accepted_name']])
+    # occs[['status','accepted_name', 'species_author', 'ipni_no', 'ipni_pub']] = occs.apply(lambda row: powo_query(row['genus'], row['specific_epithet'], distribution=False, verbose=True), axis = 1, result_type='expand')
+    # # now drop some of the columns we really do not need here...
+    # print(occs)
+    # occs = occs.drop(['ipni_pub'], axis=1)
 
 
-    if verbose:
-        print('I started with', len(occs), 'records. \n')
+    # if verbose:
+    #     print('I started with', len(occs), 'records. \n')
 
-    #occs.to_csv(out_dir + 'no_subset.csv', index = False, sep=';')
+    # #occs.to_csv(out_dir + 'no_subset.csv', index = False, sep=';')
 
-    issue_occs = occs[occs['status'].isna()]
-    occs = occs[occs['status'].notna()]
+    issue_occs = occs_out[occs_out['status'].isna()]
+    occs_out = occs_out[occs_out['status'].notna()]
 
     # some stats
-    print(len(occs), 'records had an ACCEPTED name in the end. \n')
-    print(len(issue_occs), 'records had an ISSUE in their name and could not be assigned any name name. \n',
+    if verbose:
+        print(len(occs_out), 'records had an ACCEPTED name in the end. \n')
+        print(len(issue_occs), 'records had an ISSUE in their name and could not be assigned any name name. \n',
     'These are saved to a separate output, please check these, and either rerun them or look for duplicates with a determination.')
     #occs.to_csv(out_dir + 'taxonomy_checked.csv', index = False, sep=';')
     issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')
 
 
-    return occs
+    return occs_out
+
+
+
+# for debugging:
+# debug_occs = pd.read_csv('/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_Phil_cleaned.csv', sep=';')
+# print(debug_occs.columns)
+# debug_occs = debug_occs.drop(['status', 'accepted_name', 'species_author', 'ipni_no'], axis = 1)
+# tmp1 = kew_query(debug_occs, 'Users/serafin/Sync/1_Annonaceae/share_DB_WIP/', verbose = True)
+# print('TMP!:', tmp1)
 
 
 #

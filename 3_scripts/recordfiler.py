@@ -19,6 +19,7 @@ import z_dependencies
 import argparse, os, pathlib, codecs
 import pandas as pd
 import numpy as np
+from datetime import date
 
 
 print(os.getcwd())
@@ -119,7 +120,7 @@ if __name__ == "__main__":
 
 
     ###--- Import a local file to make sure it works, GLOBAL seems down at the moment
-    m_DB = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_Phil_cleaned.csv', sep =';')
+    m_DB = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/master_db.csv', sep =';')
     # to make it look like the masterdb I will add all the final columns
     miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
     m_DB[miss_col] = '0'
@@ -132,6 +133,12 @@ if __name__ == "__main__":
 
     print(deduplid)
 
+
+    # print the old database back into new backup table
+    m_DB.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB/backups/'+date.today()+'master_backup.csv', sep = ';', index = False, mode='X')
+    # the mode=x prevents overwriting an existing file...
+
+    # this is now the new master database...
     deduplid.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB/Phil_final_2023-02-07.csv', sep=';', index=False)
  
 
