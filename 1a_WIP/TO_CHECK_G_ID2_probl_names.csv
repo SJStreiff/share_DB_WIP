@@ -106,11 +106,8 @@
 370;<NA>;<NA>; bb 17503 ;;<NA>;<NA>;recby_problem
 383;<NA>;<NA>; bb 13490 ;;Steenis CGGJ van;<NA>;recby_problem
 386;<NA>;<NA>; bb 18190 ;;Steenis CGGJ van;<NA>;recby_problem
-407;Kostermans, A.J.G.H.;"Kostermans, A.J.G.H.;Anta";50;;Sauquet, H.;H.;recby_problem
-410;Kostermans, A.J.G.H.;"Kostermans, A.J.G.H.;Anta";264;;Sauquet, H.;H.;recby_problem
 414;De Vogel, E.F.;De Vogel, E.F.;5627;;<NA>;, E.F.;recby_problem
 416;<NA>;<NA>;3786;;<NA>;<NA>;recby_problem
-417;W. J. J. O. de Wilde;W. J. J. O. de Wilde;20834;;<NA>;W. J. J. O. de Wilde;recby_problem
 1743;-. Veldkamp;-. Veldkamp;8241;;<NA>;-. Veldkamp;recby_problem
 1750;S. Tan, H. Balslev, I. Nielsen;S. Tan, H. Balslev, I. Nielsen & A. D. Poulsen;39;;<NA>;, H. Balslev, I. Nielsen;recby_problem
 1758;J. S. Burley, -. Turkirin;J. S. Burley, -. Turkirin & et al.;1896;;<NA>;, -. Turkirin;recby_problem
@@ -660,6 +657,7 @@
 9773;Laman, T.G. Ismail, A.R.;"Laman, T.G. Ismail, A.R.; et al.";Collector Number: TL 269;;Ismail, A.;smail, A.R.;recby_problem
 9774;McDonald, J.A. Ismail;McDonald, J.A. Ismail;Collector Number: 3620;;J.A.McDonald;McDonald, J.A. Ismail;recby_problem
 9775;Church, A.C. Ismail;Church, A.C. Ismail;Collector Number: 19;;<NA>;smail;recby_problem
+9776;Sands, M.J.S. Wally, E.;Sands, M.J.S. Wally, E.;Collector Number: 6839;;<NA>;ally, E.;recby_problem
 9777;McDonald, J.A. Ismail;McDonald, J.A. Ismail;Collector Number: 4164;;<NA>;McDonald, J.A. Ismail;recby_problem
 9778;Laman, T.G. Ismail, A.R.;"Laman, T.G. Ismail, A.R.; et al.";Collector Number: TL8;;Ismail, A.;smail, A.R.;recby_problem
 9779;Burley, J.S. Tukirin;"Burley, J.S. Tukirin; et al.";Collector Number: 2744;;<NA>;ukirin;recby_problem
@@ -675,6 +673,7 @@
 9791;Burley, J.S. Tukirin;"Burley, J.S. Tukirin; et al.";Collector Number: 2971;;<NA>;ukirin;recby_problem
 9792;Laman, T.G. Ismail, A.R.;"Laman, T.G. Ismail, A.R.; et al.";Collector Number: TL 139;;Ismail, A.;smail, A.R.;recby_problem
 9793;de Vogel, E.F.;de Vogel, E.F.;Collector Number: 2571;;<NA>;de Vogel, E.F.;recby_problem
+9794;Sands, M.J.S. Jitmau, M.;Sands, M.J.S. Jitmau, M.;Collector Number: 6580;;<NA>;itmau, M.;recby_problem
 9795;McDonald, J.A. Ismail;McDonald, J.A. Ismail;Collector Number: 3780;;McDonald, J.A.;McDonald, J.A. Ismail;recby_problem
 9796;Laman, T.G. Rachman, I.A.;"Laman, T.G. Rachman, I.A.; Mirmanto, E.";Collector Number: TL 301;;Ismail, A.;achman, I.A.;recby_problem
 9797;Church, A.C. Mahyar;"Church, A.C. Mahyar; et al.";Collector Number: 1445;;<NA>;ahyar;recby_problem
@@ -716,6 +715,7 @@
 9844;Henty, E.E. Ridsdale;"Henty, E.E. Ridsdale; Galore, M.";Collector Number: NGF 31812;;<NA>;idsdale;recby_problem
 9845;Burley, J.S. Tukirin;"Burley, J.S. Tukirin; et al.";Collector Number: 3035;;<NA>;ukirin;recby_problem
 9846;Church, A.C. Mahyar;"Church, A.C. Mahyar; et al.";Collector Number: 774;;<NA>;ahyar;recby_problem
+9847;Utteridge, T.M.A. Triono, T.;"Utteridge, T.M.A. Triono, T.; Johns, R.; Kasmin, O.";Collector Number: 308;;<NA>;riono, T.;recby_problem
 9849;de Vogel, E.F.;de Vogel, E.F.;Collector Number: 2528;;Nedi;de Vogel, E.F.;recby_problem
 9850;McDonald, J.A. Ismail;McDonald, J.A. Ismail;Collector Number: 3801;;<NA>;McDonald, J.A. Ismail;recby_problem
 9851;Church, A.C. Mahyar, U.W.;"Church, A.C. Mahyar, U.W.; et al.";Collector Number: 762;;<NA>;ahyar, U.W.;recby_problem
@@ -749,10 +749,7 @@
 9885;Mark Hughes Sumatra 2011;Mark Hughes Sumatra 2011;CP283;;<NA>; 2011;recby_problem
 9897;André Joseph Guillaume Henri Kostermans;André Joseph Guillaume Henri Kostermans;7933;;Ian Mark Turner;André Joseph Guillaume Henri Kostermans;recby_problem
 9921;I Made Maduarta (Pung);I Made Maduarta (Pung);IMM 118;;Utteridge & Moore; Maduarta (Pung);recby_problem
-9923;Wilde, W.J.J.O. de;"Wilde, W.J.J.O. de; Wilde-Duyfjes, B.E.E. de";14778;;Heuden, E.C.H.van;O. de;recby_problem
-9925;Wilde, W.J.J.O. de;"Wilde, W.J.J.O. de; Wilde-Duyfjes, B.E.E. de";18746;;<NA>;O. de;recby_problem
 9932;de Kok, Rogier;de Kok, Rogier;1282;;Tunner, I.M. Utteridge, T.M.A.;de Kok, Rogier;recby_problem
-9938;Wilde, W.J.J.O. de;"Wilde, W.J.J.O. de; Wilde-Duyfjes, B.E.E. de";18657;;<NA>;O. de;recby_problem
 9940;Dransfield, Dr. J.;Dransfield, Dr. J.;3401;;<NA>;Dransfield, Dr. J.;recby_problem
 9957;Kessler P.J.A.;"Kessler P.J.A.; Arifin, Zainal";2751;;<NA>;Kessler P.J.A.;recby_problem
 9958;Mendum, M., Atkins, H.J., Newman, M.F., Hendrian, Sofyan, A.;Mendum, M., Atkins, H.J., Newman, M.F., Hendrian, Sofyan, A.;127;;<NA>;, M.F., Hendrian, Sofyan, A.;recby_problem
@@ -1156,6 +1153,7 @@
 9866;Church, AC;Church, A.C. et al.;Collector Number: 900;P.J.A.Keßler;P.J.A.Keßler;detby_problem;ßler
 9910;Forbes, HO;Henry Ogg Forbes;1648;Rui-Jiang Wang;Rui-Jiang Wang;detby_problem;Rui-Jiang Wang
 9914;Forbes, HO;Henry Ogg Forbes;1714a;Rui-Jiang Wang;Rui-Jiang Wang;detby_problem;Rui-Jiang Wang
+9923;Wilde, WJJO de;"Wilde, W.J.J.O. de; Wilde-Duyfjes, B.E.E. de";14778;Heuden, E.C.H.van;Heuden, E.C.H.van;detby_problem;van
 9930;Utteridge, TMA;Utteridge, T.M.A.;652;Tunner, I.M. & Utteridge, T.M.A.;Tunner, I.M. & Utteridge, T.M.A.;detby_problem;tteridge, T.M.A.
 9931;Bramley, G;Bramley, G.;GB 69;Tunner, I.M. & Utteridge, T.M.A.;Tunner, I.M. & Utteridge, T.M.A.;detby_problem;tteridge, T.M.A.
 9933;Bramley, G;Bramley, G.;GB 63;Tunner, I.M. & Utteridge, T.M.A.;Tunner, I.M. & Utteridge, T.M.A.;detby_problem;tteridge, T.M.A.

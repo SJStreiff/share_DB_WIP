@@ -69,7 +69,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
     Note that as the postgreSQL database columns make all capital letters to small, I have changed this accordingly in the preprocessing
   * A2: Standardise data within some columns, e.g. separate all dates into separate columns day, month and year, make sure all barcodes have the institution leading before the number, have the first collector in a separate column,
   * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record
-  * A4:  Standardise collector names even more by querying the Harvard Univ. Herbarium botanists [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...) Names that are not found in that database are returned in the same format as the regex names... **TO BE IMPLEMENTED**
+  * A4:  Standardise collector names even more by querying the Harvard Univ. Herbarium botanists [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...). Names that are not found in that database are returned in the same format as the regex names (i.e. *Streiff, SJR*), whereas successfully found names are either returned as full names (*Surname, Firstname Any Middlename*) or abbreviated names (*Surname, F. A. M.*). The HUH database query is performed only with the surname, and results filtered with the original label data provided by the input data.
 
 * Step B:
   * B1: run some statistics on duplicates in the dataset.
@@ -93,7 +93,7 @@ RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to
 * Keep readme uptodate with new developments and changes
 * **add overwrite protection in case script is called multiple times**, at least for time intensive steps (removed for debugging!!) --> done as mode='x' for example within pd.to_csv()
 * **DONE**: RETURN interactive input(), removed for scripting...
-* Barcodes error in GBIF input! (issue dealing with "-" within barcode.)
+* **DONE**: Barcodes error in GBIF input! (issue dealing with "-" within barcode.)
 * **DONE** - implement problem name output and reinsertion, optionally pausing execution
 * **DONE** when do we query POWO/IPNI?? irrelevant in my opinion. We do it before inserting a new bunch of data into the master database. 
 * quantify fast and slow steps and make backup files between, so we can restart at that step (maybe integrate variable to call analysis from step XYZ)

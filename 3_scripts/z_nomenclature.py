@@ -137,7 +137,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     occs.set_index(occs.sp_idx, inplace = True)
     occs_toquery = occs[['genus', 'specific_epithet']].astype(str).copy()
     occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('nan', pd.NA)
-    occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('None', pd.NA)
+    #occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('None', pd.NA)
     occs_toquery['sp_idx'] = occs_toquery['genus']+ ' ' + occs_toquery['specific_epithet']
     if debugging:
         print('The is the index and length of taxa column (contains duplicated taxon names; should be same length as input dataframe)')
@@ -178,7 +178,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
 
     # #occs.to_csv(out_dir + 'no_subset.csv', index = False, sep=';')
 
-    issue_occs = occs_out[occs_out['status'].isna()]
+    indet_occs = occs_out[occs_out['status'].isna()]
     occs_out = occs_out[occs_out['status'].notna()]
 
     # some stats
@@ -190,7 +190,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')
 
 
-    return occs_out
+    return occs_out, indet_occs
 
 
 

@@ -34,7 +34,7 @@ import z_dependencies # can be replaced at some point, but later...
 
 
 
-def column_standardiser(importfile, data_source_type, verbose=True):
+def column_standardiser(importfile, data_source_type, verbose=True, debugging = False):
     ''' reads a file, checks the columns and subsets and adds columns where
     necessary to be workable later down the line.'''
 
@@ -53,9 +53,10 @@ def column_standardiser(importfile, data_source_type, verbose=True):
         occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
         occs = occs.rename(columns = z_dependencies.herbo_key) # rename columns
         occs = occs[z_dependencies.herbo_subset_cols] # subset just required columns
-        if verbose:
- 	          print('Just taking the Philippines for now!')
-        occs = occs[occs['country'] == 'Philippines']
+        
+        # if verbose:
+ 	    #       print('Just taking the Philippines for now!')
+        # occs = occs[occs['country'] == 'Philippines']
 
     elif(data_source_type == 'GBIF'):
         # for all data in the darwin core format!!
@@ -73,7 +74,7 @@ def column_standardiser(importfile, data_source_type, verbose=True):
  		         print('\n','datatype not found')
         # maybe think if we want to somehow merge and conserve the plant description
         # for future interest (as in just one column 'plantdesc'???)
-    if verbose:
+    if debugging:
  	      print('\n', 'The columns now are:', occs.columns)
 
     #-------------------------------------------------------------------------------
@@ -83,11 +84,11 @@ def column_standardiser(importfile, data_source_type, verbose=True):
     miss_col = [i for i in z_dependencies.final_cols if i not in occs.columns]
 
 
-    if verbose:
+    if debugging:
  	      print('\n','These columns are missing in the data from source: ', miss_col,
           '\n Empty columns will be added and can later be modified.')
 
-    if verbose:
+    if debugging:
  	      print('These columns are missing in the data being handled: ', miss_col)
     occs[miss_col] = '0'
     occs = occs.astype(dtype = z_dependencies.final_col_type)
@@ -96,7 +97,7 @@ def column_standardiser(importfile, data_source_type, verbose=True):
     return occs
 
 
-def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=True):
+def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=True, debugging = False):
     '''
     Cleaning up the columns to all be the same...
     '''
@@ -150,9 +151,9 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs.drop(['col_date_1'], axis='columns', inplace=True)
         occs.drop(['det_date_1'], axis='columns', inplace=True)
 
-        if verbose:
+        if debugging:
             print(occs.col_date)
-        if verbose:
+        if debugging:
             print('\n','The collection date has now been split into separate (int) columns for day, month and year')
 
 
@@ -160,7 +161,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         #occs.drop(['col_date_1'], axis='columns', inplace=True)
         #occs.drop(['det_date_1'], axis='columns', inplace=True)
 
-        if verbose:
+        if debugging:
  		         print(occs.col_date)
 
 
@@ -224,11 +225,11 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True,)
             occs.drop(['tmp_det_date'], axis='columns', inplace=True)
         except:
-            if verbose:
+            if debugging:
                 print('no det dates available...')
         occs = occs.replace('nan', pd.NA)
 
-        if verbose:
+        if debugging:
             print(occs.det_year)
 
 
@@ -239,8 +240,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             # either just numeric : herb missing
             #     --> merge herbarium and code
         if verbose:
-            print('debugging barcode issues \n')
-        if verbose:
+            print('Reformatting problematic barcodes and standardising them \n')
+        if debugging:
             print(occs.barcode)
 
 
@@ -254,7 +255,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # extract the numeric part of the barcode
         bc_extract = occs['barcode'].astype(str).str.extract('(' + '|'.join(barcode_regex) + ')')
         #occs['prel_bc'] = occs['prel_bc'].str.strip()
-        if verbose:
+        if debugging:
             print('Numeric part of barcodes extracted', bc_extract)
 
         i=0
@@ -264,11 +265,12 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             bc_extract = bc_extract.drop(bc_extract.columns[-2], axis = 1)
             #print(names_WIP) # for debugging, makes a lot of output
             #print('So many columns:', len(names_WIP.columns), '\n')
-        print(bc_extract)
+        if debugging:
+            print(bc_extract)
         # reassign into dataframe
         occs['prel_bc'] = bc_extract
 
-        if verbose:
+        if debugging:
             print(occs.prel_bc)
         # now get the herbarium code. First if it was correct to start with, extract from barcode.
         bc = pd.Series(occs['barcode'])
@@ -279,9 +281,9 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs['prel_code'] = occs['barcode'].astype(str).str.extract(r'(\D+)')
         occs['prel_code_X'] = occs['barcode'].astype(str).str.extract(r'(\d+\.\d)') # this is just one entry and really f@#$R%g annoying
         #occs.to_csv('debug.csv', sep = ';')
-        if verbose:
+        if debugging:
             print(type(occs.prel_code))
-        if verbose:
+        if debugging:
             print(occs.prel_herbCode)
 
         # if the barcode column was purely numericm integrate
@@ -292,7 +294,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         #occs['tmp_hc'] = occs['tmp_hc'].str.replace('PLANT', '')
         occs.prel_herbCode.fillna(occs['tmp_hc'], inplace = True)
         #occs[occs['herbarium_code'] == r'([A-Z]+)', 'tmp_test'] = 'True'
-        if verbose:
+        if debugging:
             print(occs.tmp_hc)
         # this now works, but,
             # we have an issue with very few institutions messing up the order in which stuff is supposed to be...
@@ -300,25 +302,25 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         #occs.institute.fillna(occs.prel_herbCode, inplace=True)
 
-        if verbose:
+        if debugging:
             print(occs.prel_herbCode)
-        if verbose:
+        if debugging:
             print(occs.prel_bc)
         occs['st_barcode'] = occs['prel_herbCode'] + occs['prel_bc']
-        if verbose:
+        if debugging:
             print(occs.st_barcode)
     #    prel_herbCode trumps all others,
     #        then comes herbarium_code, IF (!) it isn't a word (caps and non-caps) and if it is not (!!) 'PLANT'
     #           then comes institute
 
 
-        if verbose:
+        if debugging:
             print(occs.columns)
 
 
         if occs.st_barcode.isna().sum() > 0:
             if verbose:
-                print('I couldn\'t standardise the barcodes of some records.')
+                print('I couldn\'t standardise the barcodes of some records. This includes many records (if from GBIF) with barcode = NA')
             na_bc = occs[occs['st_barcode'].isna()]
             na_bc.to_csv(working_directory + prefix + 'NA_barcodes.csv', index = False, sep = ';', )
             if verbose:
@@ -326,14 +328,14 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             if verbose:
                 print('I am continuing without these.')
             occs = occs[occs['st_barcode'].notna()]
-            if verbose:
+            if debugging:
                 print(occs)
 
         # and clean up now
         occs = occs.drop(['prel_bc', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc'], axis = 1)
         occs = occs.rename(columns = {'barcode': 'orig_bc'})
         occs = occs.rename(columns = {'st_barcode': 'barcode'})
-        if verbose:
+        if debugging:
             print(occs.columns)
 
         # -----------------------------------------------------------------------
@@ -349,7 +351,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             if verbose:
                 print('No plain s.n. values found in the full collection number fields.')
         #occs.colnum_full.replace("s. n.", pd.NA, inplace=True)
-        print(occs.colnum_full)
+        if debugging:
+            print(occs.colnum_full)
         #create prefix, extract text before the number
         occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([a-zA-Z]*)')
         ##this code deletes spaces at start or end
@@ -395,7 +398,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
         occs[['tmp', 'specific_epithet']] = occs['species-tobesplit'].str.split(' ', expand = True)
-        if verbose:
+        if debugging:
             print(occs.tmp)
 
         occs.drop(['tmp'], axis='columns', inplace=True)
@@ -418,17 +421,17 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
     if verbose:
         print('\n','Shape of the final file is: ', occs.shape )
 
-    if verbose:
+    if debugging:
         print(occs.columns)
     #occs = occs.replace('nan', '')
     #
     occs = occs.astype(dtype = z_dependencies.final_col_type)
-    if verbose:
-        print('Shape of the final file is: ', occs.shape )
+    # if verbose:
+    #     print('Shape of the final file is: ', occs.shape )
 
     #occs.to_csv(out_file, sep = ';')
-
-    print('\n','Column standardisation completed successfully.')
+    if verbose:
+        print('\n','Column standardisation completed successfully.')
 
     return occs
 
@@ -471,7 +474,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     occs['recorded_by'] = occs['recorded_by'].str.strip()
 
     if verbose:
-        print('---------------- \n The changing of the weird exceptions still not completely done',
+        print('---------------- \n There are still weird exceptions which I do not catch. These have to be handled manually',
         '\n -------------------')
 
     # sep collectors by ';', multiple collectors separated like this
@@ -492,17 +495,21 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     extr_list = {
             #r'^([A-Z][a-z]\-[A-Z][a-z]\W+[A-Z][a-z])' : r'\1', # a name with Name-Name Name
             #r'^([A-Z][a-z]+)\W+([A-Z]{2,5})' : r'\1, \2', #Surname FMN
-            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4\5 \6',  # all full full names with sep = ' ' plus Surname F van
-            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4\5',  # all full full names with sep = ' '
+            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4\5 \6',  # all full full names with sep = ' ' plus Surname F van
+            r'^([A-Z][a-z]+)\,\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+' : r'\1, \2\3\4\5',  # all full full names with sep = ' '
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4 \5',  # all full full names with sep = ' ' plus Surname F van
-            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4',  # all full full names with sep = ' '
+            r'^([A-Z][a-z]+)\,\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+' : r'\1, \2\3\4',  # all full full names with sep = ' '
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})': r'\1, \2\3 \4',  # all full names: 2 given names # + VAN
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+': r'\1, \2\3',  # all full names: 2 given names
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]{2,20}\s+([a-z]{0,3})': r'\1, \2 \3',  # just SURNAME, Firstname  # + VAN
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]{2,20}': r'\1, \2',  # just SURNAME, Firstname
+
+            r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\s+([a-z]{0,3})\Z': r'\1, \2\3\4\5 \6',  # Surname, F(.) M(.) M(.)M(.) # VAN
+            r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.)M(.)
+
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\s+([a-z]{0,3})\Z': r'\1, \2\3\4 \5',  # Surname, F(.) M(.) M(.) # VAN
             r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.)
@@ -552,6 +559,12 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
             
             r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\5, \1\2\3 \4', #F. M. M. van Surname
             r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\4, \1\2\3', #F. M. M. van Surname
+
+            r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\6, \1\2\3\4 \5', #F. M. M. M. van Surname
+            r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\5, \1\2\3\4', #F. M. M. M. van Surname
+
+            r'^([A-Z])([A-Z])([A-Z])([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\6, \1\2\3\4 \5', #FMMM Surname
+            r'^([A-Z])([A-Z])([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\5, \1\2\3\4', #FMM Surname
 
 
             r'^([A-Z])([A-Z])([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\5, \1\2\3 \4', #FMM Surname
@@ -637,7 +650,8 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # ------------------------------------------------------------------------------
     # ------------------------------------------------------------------------------
     # repeat the story with the det names
-    print(occs_newnames.recorded_by)
+    if debugging:
+        print('The cleaned name format: \n', occs_newnames.recorded_by)
     names_WIP = occs_newnames[['det_by']] #.astype(str)
 
     #print(names_WIP)
@@ -713,9 +727,11 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     TC_occs1['to_check'] = 'detby_problem'
 
     TC_occs = pd.concat([TC_occs, TC_occs1])#, on = 'orig_recby', how='inner')
-    print('YAY1',TC_occs.shape, 'COLUMNS', TC_occs.columns)
+    if debugging:
+        print('To check:',TC_occs.shape)
     TC_occs = TC_occs.drop_duplicates(subset = ['barcode'], keep = 'first')
-    print('YAY2',TC_occs.shape)
+    if debugging:
+        print('To check (deduplicated by barcode)',TC_occs.shape)
 
     TC_occs_write = TC_occs[['recorded_by', 'orig_recby', 'colnum_full', 'det_by', 'orig_detby', 'to_check', 'to_check_det']]
 
@@ -741,9 +757,9 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
         print(" Now it looks like this:\n", occs_newnames.det_by)
 
     # summary output
-    print('I removed', len(occs) - len(occs_newnames), 'records because I could not handle the name.')
-    print('I have saved', len(occs_newnames), ' to the specified file (originally I read', len(occs), 'points)' )
-    print('\n Don\'t worry about the warnings above, it works as it should and i don\'t understand python enough to make them go away')
+    print('\n I removed', len(occs) - len(occs_newnames), 'records because I could not handle the name.')
+    # print('I have saved', len(occs_newnames), ' to the specified file (originally I read', len(occs), 'points)' )
+    # print('\n Don\'t worry about the warnings above, it works as it should and i don\'t understand python enough to make them go away')
 
     occs_newnames = occs_newnames.astype(z_dependencies.final_col_type)
     # save to file
@@ -769,26 +785,30 @@ def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, 
         print('REINSERTING...')
         print(names_to_reinsert)
     imp = codecs.open(names_to_reinsert,'r','utf-8') #open for reading with "universal" type set
-    print('problems?')
+    if debugging:
+        print('problems?')
     re_occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
-    print('yes')
-    print(re_occs)
-    print(re_occs.columns)
+    if debugging:
+        print('yes')
+        print(re_occs)
+        print(re_occs.columns)
     #try:
     re_occs = re_occs.drop(['to_check', 'to_check_det'], axis = 1)
     re_occs.sort_index(inplace=True)
     re_occs = re_occs.replace('NaN', pd.NA)
-    print(re_occs.recorded_by)
+    if debugging:
+        print(re_occs.recorded_by)
     frame_to_be_better.sort_index(inplace=True)
-    print(frame_to_be_better.orig_recby)
+    if debugging:
+        print(frame_to_be_better.orig_recby)
     frame_to_be_better['recorded_by'] = re_occs['recorded_by']
     frame_to_be_better['det_by'] = re_occs['det_by']
-    
-    print(frame_to_be_better.recorded_by) #[['recordedBy', 'orig_recby']])
-    print(frame_to_be_better.orig_recby)
+    if debugging:
+        print(frame_to_be_better.recorded_by) #[['recordedBy', 'orig_recby']])
+        print(frame_to_be_better.orig_recby)
     #except:
     #    print('Special columns are already removed.')
-    print('here?')
+    
     frame_to_be_better = frame_to_be_better.astype(z_dependencies.final_col_type)
 
     #if verbose:

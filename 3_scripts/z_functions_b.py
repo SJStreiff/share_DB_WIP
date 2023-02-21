@@ -100,6 +100,8 @@ def duplicate_stats(occs, working_directory, prefix, verbose=True, debugging=Fal
     print('\n By SURNAME and FULL COLLECTION NUMBER', occs_colNum.duplicated([ 'coll_surname', 'colnum_full' ], keep=False).sum())
     print('\n By SURNAME and COLLECTION NUMBER and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colnum', 'col_year' ], keep=False).sum())
     print('\n By SURNAME and COLLECTION NUMBER, SUFIX and YEAR', occs_colNum.duplicated([ 'coll_surname', 'colnum', 'sufix', 'col_year' ], keep=False).sum())
+    print('\n By HUH-NAME and COLLECTION NUMBER, SUFIX and YEAR', occs_colNum.duplicated([ 'huh_name', 'colnum', 'sufix', 'col_year' ], keep=False).sum())
+
     print('\n ................................................. \n ')
 
 
@@ -320,7 +322,11 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
         herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
         barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
         orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
-        coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'))
+        coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
+        huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
+        geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+        wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
+        )
     # here quite some data might get lost, so we need to check where we want to just join first,
     # and where we add all values, and then decide on the columns we really want in the final
     # database!!!
@@ -372,7 +378,7 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
     #occs.replace('nan', pd.NA, inplace=True)
 
     # for the s.n. we have to be quite specific, as otherwise we deduplicate too much!
-    dup_cols = ['coll_surname', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
+    dup_cols = ['huh_name', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
 
     #-------------------------------------------------------------------------------
     # MISSING collector information r

@@ -64,7 +64,7 @@ if __name__ == "__main__":
     tmp_occs_2 = stepA.column_cleaning(tmp_occs, args.data_type, args.working_directory, args.prefix, verbose=True)
 
 
-    print(tmp_occs_2.columns)
+    #print(tmp_occs_2.columns)
 
     # do we check the nomenclature here?
 
@@ -127,6 +127,8 @@ if __name__ == "__main__":
     tmp_occs_3.drop(drop_ind, inplace = True)
     print('After removing dataproblematic institutions:',tmp_occs_3.shape)
 
+   
+
     # HUH name query
     tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
 
@@ -135,7 +137,7 @@ if __name__ == "__main__":
 
     #make this optional? No probably just force people to read this mess.
     tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
-    tmp_occs_4 = stepB.duplicate_cleaner(tmp_occs_3, args.working_directory, args.prefix, verbose=False)
+    tmp_occs_4 = stepB.duplicate_cleaner(tmp_occs_3, args.working_directory, args.prefix, verbose=False, debugging=False)
     print(len(tmp_occs_4))
     stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix)
     print(tmp_occs_4.columns)
@@ -154,13 +156,13 @@ if __name__ == "__main__":
     tmp_occs_5 = stepB2.country_crossfill(tmp_occs_5, verbose=True)
 
 
-    # step C1, nomenclature check??
+    # step C1, nomenclature check
     print('\n.........................................\n')
     print('Checking the taxonomy now. This takes a moment!')
     print('Do you want to do this now? [y]/[n]')
     goahead=input()
     if goahead == 'y':
-        tmp_occs_6 = stepC.kew_query(tmp_occs_5, args.working_directory, verbose=True)
+        tmp_occs_6, indets = stepC.kew_query(tmp_occs_5, args.working_directory, verbose=True)
 
     else:
         print('Nomenclature remains unchecked!!')
@@ -184,20 +186,21 @@ if __name__ == "__main__":
     #coordinate checks
     #---------------------------------------------------------------------------
     # this happens in R, as I have not found an alternative in python. There are known reliable (albeit somewhat problematic) packages available in R.
-    print('Note I think that I will clean the coordinates in a separate step just after this. In R.')
+    print('First cleaning steps completed. Next is Coordinate validation. ')
 
-    # would be nice to have an option to again merge in some data that is known as clean, e.g. other data that was cleaned manually
+    # write indets to backlog
+    indets.to_csv(args.output_directory+args.prefix+'indet.csv', index=False, sep=';')
+    print("\n\n--------------------------------------\n",
+    "The indets file is saved to:",
+    args.output_directory+args.prefix+'indets.csv',
+    '\n---------------------------------------------\n')
+
+
     print('Thanks for cleaning your records ;-)')
-
-
-
-    print('so far so good??')
-
-
-
 
 
 
 
 
 # done
+###-------- END OF RECORDCLEANER ------###

@@ -19,7 +19,7 @@ CONTAINS:
 '''
 
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning) # suppress future warnings
+#warnings.simplefilter(action='ignore', category=FutureWarning) # suppress future warnings
 
 import pandas as pd
 import numpy as np
@@ -59,8 +59,7 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
     """
 
     if verbose:
-        print('HUH name checker \n  \n .........................\n')
-        print("Checking the botanist", recordedBy)
+        print('HUH name checker checking the botanist', recordedBy, '\n .........................\n')
 
     recby_length = len(recordedBy.split())
     if debugging:
@@ -177,17 +176,21 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
     extr_list = {
             #r'^([A-Z][a-z]\-[A-Z][a-z]\W+[A-Z][a-z])' : r'\1', # a name with Name-Name Name
             #r'^([A-Z][a-z]+)\W+([A-Z]{2,5})' : r'\1, \2', #Surname FMN
-            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4\5 \6',  # all full full names with sep = ' ' plus Surname F van
-            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4\5',  # all full full names with sep = ' '
+            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4\5 \6',  # all full full names with sep = ' ' plus Surname F van
+            r'^([A-Z][a-z]+)\,\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+' : r'\1, \2\3\4\5',  # all full full names with sep = ' '
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})' : r'\1, \2\3\4 \5',  # all full full names with sep = ' ' plus Surname F van
-            r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+.*' : r'\1, \2\3\4',  # all full full names with sep = ' '
+            r'^([A-Z][a-z]+)\,\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([A-Z])[a-z]+' : r'\1, \2\3\4',  # all full full names with sep = ' '
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+\s+([a-z]{0,3})': r'\1, \2\3 \4',  # all full names: 2 given names # + VAN
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]+\s+([A-Z])[a-z]+': r'\1, \2\3',  # all full names: 2 given names
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]{2,20}\s+([a-z]{0,3})': r'\1, \2 \3',  # just SURNAME, Firstname  # + VAN
             r'^([A-Z][a-z]+)\,\W+([A-Z])[a-z]{2,20}': r'\1, \2',  # just SURNAME, Firstname
+
+            r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\s+([a-z]{0,3})\Z': r'\1, \2\3\4\5 \6',  # Surname, F(.) M(.) M(.)M(.) # VAN
+            r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.)M(.)
+
 
             r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*\s+([a-z]{0,3})\Z': r'\1, \2\3\4 \5',  # Surname, F(.) M(.) M(.) # VAN
             r'^([A-Z][a-z]+)\,\W+([A-Z])\W+([A-Z])\W+([A-Z])\W*': r'\1, \2\3\4',  # Surname, F(.) M(.) M(.)
@@ -238,6 +241,12 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
             r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\5, \1\2\3 \4', #F. M. M. van Surname
             r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\4, \1\2\3', #F. M. M. van Surname
 
+            r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\6, \1\2\3\4 \5', #F. M. M. M. van Surname
+            r'^([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z])\W+([A-Z][a-z]+)': r'\5, \1\2\3\4', #F. M. M. M. van Surname
+
+            r'^([A-Z])([A-Z])([A-Z])([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\6, \1\2\3\4 \5', #FMMM Surname
+            r'^([A-Z])([A-Z])([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\5, \1\2\3\4', #FMM Surname
+
 
             r'^([A-Z])([A-Z])([A-Z])\W+([a-z]{0,3})\s([A-Z][a-z]+)': r'\5, \1\2\3 \4', #FMM Surname
             r'^([A-Z])([A-Z])([A-Z])\W+([A-Z][a-z]+)': r'\4, \1\2\3', #FMM Surname
@@ -268,7 +277,7 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
     ### no debugging dataframe here. if required uncomment the lines below
     # # debugging dataframe: every column corresponds to a regex query
 
-    # names_WIP.to_csv('DEBUG_regex.csv', index = False, sep =';', )
+    names_WIP.to_csv('DEBUG_regex.csv', index = False, sep =';', )
     # print('debugging dataframe printed to','DEBUG_regex.csv')
 
     names_WIP = names_WIP.mask(names_WIP == '') # mask all empty values to overwrite them potentially
@@ -309,22 +318,23 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
     # and then we  try to see which initials best match to the query
     if len(firstnames)==0:
         subs1 = pot_df_ext
-        if verbose:
+        if debugging:
             print('No first name provided')
     elif len(firstnames)==1:
         subs1 = pot_df_ext[pot_df_ext.givname.str[0:(len(firstnames))] == firstnames[0:(len(firstnames))]]
-        if verbose:
+        if debugging:
             print('Length of firstnames 1')
     else:
         subs1 = pot_df_ext[pot_df_ext.givname.str[0:(len(firstnames))] == firstnames[0:(len(firstnames))]]
-        if verbose:
+        if debugging:
             print('length of firstnames laregr 1')
     
     subs1 = subs1.drop_duplicates(subset = ['link_id']) # get rid of all records pointing to the identical database entry
 
     if verbose:
         print('\n','We have', len(subs1.name), 'candidate names.' )
-        print(subs1)
+        if debugging:
+            print(subs1)
     # now we have a shortlist, we can go and check     
 
     ###------- Now go and check out the results from the first query --------###
@@ -350,7 +360,7 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         soup = BeautifulSoup(response.text, "html.parser")
         # this time around, we can transform the output to a table
         df_soup = pd.read_html(str(soup.find('table')))[0].transpose()
-        if verbose:
+        if debugging:
             print('For this record, the following details are available:', df_soup.columns)
     
         # we want Name, Date of birth, Date of death, URL, Geography Collector
@@ -422,7 +432,6 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
 
         # print('REDUCED?', df_tocheck)
-
         if len(df_tocheck.name) > 1: # if still more than one name in the dataframe
 
             if debugging:
@@ -489,6 +498,22 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
                         if sum(df_tocheck.duplicated(subset = [ 'surname', 'fname1'])) >= 1:
                             
+                            thelength = len(df_tocheck.name)
+                            if debugging:
+                                print('I have', thelength, 'duplicated rows.')
+                            for k in range(0,thelength):
+                                try:
+                                    df_tocheck.loc[k,] = df_tocheck.loc[k,].fillna(df_tocheck.loc[k+1,])  
+                                except:
+                                    print('No more k+1 possible')
+                            for k in range(thelength, 0):
+                                try:
+                                    df_tocheck.loc[k,] = df_tocheck.loc[k,].fillna(df_tocheck.loc[k-1,])  
+                                except:
+                                    print('No more k-1 possible')
+
+
+
                             df_tocheck.lendf = pd.DataFrame(df_tocheck.name.str.split())
                             df_tocheck['lengths'] = df_tocheck.lendf.name.str.len()
                             df_tocheck['fulllengths'] = df_tocheck.lendf.name.apply(lambda x: len(str(x))) # number of characters, in case the names have same number of words... (e.g. initials vs fullnames)
@@ -547,6 +572,9 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                             if len(df_tocheck.name) > 1:
                                 if debugging:
                                     print('ERROR: I cannot handle the names', df_tocheck.name, '!')
+
+                                print(df_tocheck.duplicated(subset=['name', 'fulllengths']))
+                                    
                                 break
                             finalvote = True
 
@@ -563,7 +591,6 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                     finalvote = True
                 elif len(df_tocheck.name) > 1:
                     finalvote = False
-            
     # the df_tocheck we can take away and do further checks with...
             colyear = float(colyear)
             #colyear = pd.Int64Dtype
@@ -593,24 +620,37 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                 print('CHECKED2',df_checked)
                 print(finalvote)
             #df_checked['dobirth'] = df_checked['dobirth'].astype(str).str.replace('NaN', '0')
+            if len(df_checked.name) > 1:
+                # chose the row now with the longest name? Special case??
+                if verbose:
+                    print('SPECIAL CASE: After a lot of whittling down, I still have', len(df_checked.name), 'records I cannot distinguish.')
+                    print('I will try drastic measures')
+                    the_row = df_checked.fulllengths.idxmax()
+                   #df_tocheck = df_tocheck.drop(df_tocheck.index[i], axis=0)
 
-
-
-
-
+                    df_checked = df_checked.drop(df_checked.index[df_checked.fulllengths.idxmax()], axis=0)
+               #HERETOGO
+                finalvote = True
 
         else:
             df_tocheck[['dobirth', 'dodeath']] = df_tocheck[['dobirth', 'dodeath']].astype(float)
             if debugging:
                 print(df_tocheck.dtypes)
             df_checked = df_tocheck
-            
+
             df_checked[['dobirth', 'dodeath']] = df_checked[['dobirth', 'dodeath']].astype(int)
-            df_checked[['surname', 'othernames']] = df_checked['name'].str.split(',', expand=True) 
+            try:
+                df_checked[['surname', 'othernames']] = df_checked['name'].str.split(',', expand=True) 
+            except:
+                df_checked.surname = df_checked.name
+                df_checked[['othernames']] = ''
+                #print('now let\'s see', df_checked)
+            #print(df_checked.surname)
             df_checked['fname1'] = df_checked['othernames'].str.strip().str.split(' ', expand=True)[0]   
-        
+           # print('CHECKPOINT2')
+
             finalvote = True
-            
+
 
         if debugging:
             print('fin vote', finalvote)
@@ -618,7 +658,7 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         if len(df_checked.name) > 1:
             if debugging:
                 print("resorting to geography")
-
+            #print(df_checked.geo_col)
             df_checked = df_checked[df_checked.geo_col == country]
             if len(df_checked.name) == 1:
                 finalvote = True
@@ -671,6 +711,7 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     # reset index, so we can reintegrate data later....
     occs.set_index(occs.recorded_by, inplace=True)
     # drop the cols we had for formatting purposes...
+
     occs = occs.drop(['huh_name', 'geo_col', 'wiki_url'], axis = 1)
 
     # subset the columns of interest for querying...
@@ -687,6 +728,8 @@ def huh_wrapper(occs, verbose=True, debugging=False):
                                                                                             row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
     # print(mod_data)
     # set index so we can reintegrate the resulting data
+   # 
+    mod_data.huh_name = mod_data.huh_name.fillna(mod_data['recorded_by'])
     mod_data = mod_data.set_index('recorded_by') 
     # check dtype
     mod_data = mod_data.astype(str)
@@ -705,6 +748,9 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     return out_data
 
     
+
+#----------------------- for debugging --------------------#
+#     
 # test_data = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_Phil_cleaned.csv', sep =';')
 # print(test_data)
 # test_data = test_data.tail(20)
@@ -712,13 +758,13 @@ def huh_wrapper(occs, verbose=True, debugging=False):
 
 
 # test = huh_wrapper(test_data)
-
+# print(test)
 
 
 # # # debugging, but other names are more suitable.
-# # asagray = "Ordon Jr"
-# # test1, test2, test3 = get_HUH_names(asagray, 1993, 'Philippines', 'Stone, BC', verbose = True)
-# # print(test1, test2, test3)
+# asagray = "Steenis, CGGJ van"
+# test1, test2, test3 = get_HUH_names(asagray, 1993, 'Philippines', 'Steenis, CGGJ van', verbose = True, debugging=True)
+# print(test1, test2, test3)
 
 
 

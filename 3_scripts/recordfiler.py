@@ -8,7 +8,7 @@ PREFIX "Y_" for scripts
 '''
 
 
-import y_sql_functions as SQL
+#import y_sql_functions as sql
 import z_merging as pre_merge
 import z_functions_b as dupli
 
@@ -36,6 +36,10 @@ if __name__ == "__main__":
     # parser.add_argument('MasterDB',
     #                     help='The location of the master database file.',
     #                     type=str)
+    parser.add_argument('db_local',
+                         choices=['local','remote'],
+                        help='Is the database saved locally or on a server??',
+                        type = str)
     parser.add_argument('database_name',
                         help='The name of the SQL database to access',
                         type = str)
@@ -57,6 +61,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # optional, but for debugging. Maybe make it prettier
     print('Arguments:', args)
+
+    print('Welcome to recordsfiler')
 
     """
     In record filer we want to implement the following steps.
@@ -93,34 +99,37 @@ if __name__ == "__main__":
     # print('I am just going to upload the current state of the data into GLOBAL (schema: \"serafin_test\")')
     # SQL.send_to_sql(occs ,args.database_name, args.hostname, args.tablename, args.schema)
 
-
-    # TEMPORARILY NOT HAPPENING AS I JUST WANT OT DEBUG THE MERGING OF DATASETS.
-    # Step D1
-    # # - get database extract from the GLOBAL database.
-    # print('Please check if you are connected to the VPN. If not this will not work.')
-    # SUBSET_GENERA = '???'
-    # SUBSET_COUNTRY = '???'
-    # m_DB = SQL.fetch_master_db(args.database_name, args.hostname, args.tablename, args.schema)
-    # print('The downloaded DB is the following:', m_DB)
-    # m_DB.to_csv('./4_DB/sql_data_transf_test.csv', index=False, sep=';')
-    # # m_DB =pd.read_csv('./4_DB/sql_data_transf_test.csv')
-    # # This works
-    # try:
-    #     m_DB = m_DB.replace('nan', pd.NA)
-    # except Exception as e:
-    #     print('NA as nan replacement problematic')
-    # try:
-    #     m_DB = m_DB.replace(np.nan, pd.NA)
-    # except Exception as e:
-    #     print('NA as np replacement problematic')
-    # 
-    # print('Master database read successfully!', len(m_DB), 'records downloaded')
-    # #
-    
+    if args.db_local == 'remote':
+         print("Trying to read remote database...")
+         print('Not today')
+        # TEMPORARILY NOT HAPPENING AS I JUST WANT OT DEBUG THE MERGING OF DATASETS.
+        # Step D1
+        # # - get database extract from the GLOBAL database.
+        # print('Please check if you are connected to the VPN. If not this will not work.')
+        # SUBSET_GENERA = '???'
+        # SUBSET_COUNTRY = '???'
+        # m_DB = SQL.fetch_master_db(args.database_name, args.hostname, args.tablename, args.schema)
+        # print('The downloaded DB is the following:', m_DB)
+        # m_DB.to_csv('./4_DB/sql_data_transf_test.csv', index=False, sep=';')
+        # # m_DB =pd.read_csv('./4_DB/sql_data_transf_test.csv')
+        # # This works
+        # try:
+        #     m_DB = m_DB.replace('nan', pd.NA)
+        # except Exception as e:
+        #     print('NA as nan replacement problematic')
+        # try:
+        #     m_DB = m_DB.replace(np.nan, pd.NA)
+        # except Exception as e:
+        #     print('NA as np replacement problematic')
+        # 
+        # print('Master database read successfully!', len(m_DB), 'records downloaded')
+        # #
+        
 
 
     ###--- Import a local file to make sure it works, GLOBAL seems down at the moment
-    m_DB = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/master_db.csv', sep =';')
+
+    m_DB = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/master_db.csv', sep =';')
     # to make it look like the masterdb I will add all the final columns
     miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
     m_DB[miss_col] = '0'
@@ -133,13 +142,15 @@ if __name__ == "__main__":
 
     print(deduplid)
 
+    date = str(date.today())
+    print(date)
 
     # print the old database back into new backup table
-    m_DB.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB/backups/'+date.today()+'master_backup.csv', sep = ';', index = False, mode='X')
+    m_DB.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/backups/'+date+'_master_backup.csv', sep = ';', index = False)#, mode='x')
     # the mode=x prevents overwriting an existing file...
 
     # this is now the new master database...
-    deduplid.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB/Phil_final_2023-02-07.csv', sep=';', index=False)
+    deduplid.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/master_db.csv', sep=';', index=False)
  
 
 

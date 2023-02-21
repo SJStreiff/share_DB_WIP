@@ -43,7 +43,7 @@ print('Inputfile:')
 print(opt$options$input)
 
 #debugging
-dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/4_DB/G_t_cleaned.csv', sep =';', head=T)
+dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_ID2_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
@@ -59,13 +59,27 @@ flags <- clean_coordinates(x = dat,
                            tests = c("capitals", "centroids", "equal","gbif", "institutions",
                                      "zeros", "countries" ))
 # and send the file out again for integrating into database
+'%notin%' <-  Negate('%in%')
+newcols <- which(colnames(flags) %notin% colnames(dat))
+# print(newcols)
+# keep the last column (that is << .summary >>)
+newcols <- newcols[-length(newcols)]
+#flags[,newcols] <- !flags[,newcols] # so that all the problematic values are 
 
-newcols <- which(colnames(flags) != colnames(dat))
-print(newcols)
+for(j in newcols){
+  print(names(flags[j])) # working
+  w <- which(flags[,j]=="FALSE")
+  print(w)
+  flags[,j] <- as.character(NA)
+  flags[w, j] <- names(flags[j])
+}
 
 
+# make a new column with all issues collated together... in one cell.
+geo_issues <- tidyr::unite(flags, geo_issues, any_of(newcols), sep = ',', na.rm = TRUE)
+geo_issues <- geo_issues[,-geo_issues$.summary] # drop the summary col as we have all the info we need in the geo_issue column
 
-write.table(flags, file = out_file, row.names = FALSE, sep=';')
+write.table(geo_issues, file = out_file, row.names = FALSE, sep=';')
 
 print(paste('Annotated coordinates are written to', out_file))
 
