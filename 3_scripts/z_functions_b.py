@@ -106,7 +106,7 @@ def duplicate_stats(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
 
-    # this function only does stats, no return call...
+    # this function only returns records with no collection number!
     return occs_nocolNum
 
 

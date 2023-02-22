@@ -43,13 +43,16 @@ print('Inputfile:')
 print(opt$options$input)
 
 #debugging
-dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_ID2_cleaned.csv', sep =';', head=T)
+# dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_ID2_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
 dat <- data.frame(dat)  # checking
 
 dat <- dat[!is.na(dat$ddlong),] # checking that all records have coordinates...
+no_coord_dat <- dat[is.na(dat$ddlong),] # subsetting coords with no coordinate value
+
+
 
 flags <- clean_coordinates(x = dat,
                            lon = "ddlong",

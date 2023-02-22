@@ -679,9 +679,17 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         if verbose:
             print('OUTPUT', df_out)
         name = ' '.join(df_out.name.values)
-        geo_col = ' '.join(df_out.geo_col.values)
-        wiki_url = ' '.join(df_out.wiki_url.values)
-
+        try: # issue with NA values
+            geo_col = ' '.join(df_out.geo_col.values)
+        except:
+            geo_col = '0'
+        try:
+            wiki_url = ' '.join(df_out.wiki_url.values)
+        except:
+            wiki_url = pd.NA
+        if verbose:
+            print('OUTPUT', df_out)
+        
         if len(df_out.name) == 0: # if no result make all NA
             name = pd.NA
             geo_col = pd.NA
@@ -728,7 +736,11 @@ def huh_wrapper(occs, verbose=True, debugging=False):
                                                                                             row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
     # print(mod_data)
     # set index so we can reintegrate the resulting data
-   # 
+    # 
+    total = len(mod_data.huh_name)
+    nojoy = len(pd.isna(mod_data.huh_name))
+
+    
     mod_data.huh_name = mod_data.huh_name.fillna(mod_data['recorded_by'])
     mod_data = mod_data.set_index('recorded_by') 
     # check dtype
@@ -744,6 +756,8 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     if verbose:
         print('originally:', out_data.recorded_by)
         print('\n now', out_data.huh_name)
+        print('--------- HUH STATS -----------\n',
+        'Total names:', total, '\n NA names:', nojoy, '\n Success ratio', (nojoy/total)*100,'%')
 
     return out_data
 
@@ -762,9 +776,9 @@ def huh_wrapper(occs, verbose=True, debugging=False):
 
 
 # # # debugging, but other names are more suitable.
-# asagray = "Steenis, CGGJ van"
-# test1, test2, test3 = get_HUH_names(asagray, 1993, 'Philippines', 'Steenis, CGGJ van', verbose = True, debugging=True)
-# print(test1, test2, test3)
+asagray = "Wilde, WJJO de"
+test1, test2, test3 = get_HUH_names(asagray, 1993, 'Philippines', 'Wilde, WJJO', verbose = True, debugging=True)
+print(test1, test2, test3)
 
 
 

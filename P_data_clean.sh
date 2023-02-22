@@ -23,7 +23,8 @@ NOCOLLECTOR='' # if '-nc', the name standardisation step is skipped! Use with ca
 
 INPUT_2=$(echo $OUT_DIR$PREFIX'cleaned.csv')
 OUT_2=$(echo $OUT_DIR$PREFIX'spatialvalid.csv')
-
+INDETS=$(echo $OUT_DIR$PREFIX'indet.csv')
+NOCOORDS=$(echo $OUT_DIR$PREFIX'nocoords.csv')
 # AND NOW LETS LAUNCH RECORDCLEANER
 
 #python ./3_scripts/recordcleaner.py -h
@@ -52,7 +53,7 @@ echo 'going now'
 
 echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 #if STEP2ASWELL='YES' do
-python ./3_scripts/recordfiler.py $INPUT_2 $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR
+python ./3_scripts/recordfiler.py $INPUT_2 $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR $INDETS $NOCOORDS
 #done
 
 

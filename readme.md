@@ -72,9 +72,11 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
   * A4:  Standardise collector names even more by querying the Harvard Univ. Herbarium botanists [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...). Names that are not found in that database are returned in the same format as the regex names (i.e. *Streiff, SJR*), whereas successfully found names are either returned as full names (*Surname, Firstname Any Middlename*) or abbreviated names (*Surname, F. A. M.*). The HUH database query is performed only with the surname, and results filtered with the original label data provided by the input data.
 
 * Step B:
-  * B1: run some statistics on duplicates in the dataset.
-  * B2 remove said duplicates. The duplicates are at the moment identified by the following criteria: If the collector surname, number, number sufix and year are identical, they are flagged as duplicates.
-  Note that records with no collection number (i.e. *s.n.*) are treated separately. Here the combination of Surname, Collection Year, Month and Day and Genus + specific_epithet are used to identify duplicates. This leads to errors, but in my humble opinion it's better than nothing.
+  * B1: run some statistics on duplicates in the dataset. Select and remove all records where the collection number is a variation of <<s.n.>>. These are then treated separately to the others with other criteria to find duplicated specimens.
+  * B2: remove said duplicates. The duplicates are at the moment identified by the following criteria: If the collector surname, number, number sufix and year are identical, they are flagged as duplicates.
+  Note that records with no collection number (i.e. *s.n.*) are treated separately (B3) 
+  * B3: remove duplicates from separated *s.n.* -records. Here more other values are taken into consideration,  the combination of Surname, Collection Year, Month and Day and Genus + specific_epithet are used to identify duplicates. This leads to errors, but in my humble opinion it's better than nothing.
+  * B4: Crossfill country full name and ISO codes (needed later on, and not always complete.)
 
 * Step C:
   * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily within the framework of our project collaborators. With other families the situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.

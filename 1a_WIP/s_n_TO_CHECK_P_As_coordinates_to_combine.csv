@@ -1,0 +1,9 @@
+huh_name;col_year;col_month;col_day;genus;specific_epithet;ddlong;ddlat;long bigger than 0.1;lat bigger than 0.1
+Thorel, Clovis;1862;1;1;Friesodielsia;fornicata;0.01881099999999908;0.11732633333333342;False;True
+Thorel, Clovis;1866;1;1;Artabotrys;intermedius;0.7253065053814055;5.12597186250442;True;True
+Thorel, Clovis;1866;1;1;Dasymaschalon;macrocalyx;1.4729032120284262;0.004379301622829993;True;False
+Thorel, Clovis;1866;1;1;Goniothalamus;tamirensis;0.023466192041762243;1.6813246100561652;False;True
+Thorel, Clovis;1866;1;1;Miliusa;fusca;1.3366176533333383;0.1384329033333323;True;True
+Thorel, Clovis;1866;1;1;Mitrephora;thorelii;0.38456450000000214;1.2640499999999997;True;True
+Thorel, Clovis;1866;1;1;Orophea;polycarpa;3.753049936224617;6.2069480817349225;True;True
+Thorel, Clovis;1866;1;1;Rauwenhoffia;siamensis;0.7432592217907437;0.7231848796649305;True;True

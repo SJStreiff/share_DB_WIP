@@ -120,9 +120,34 @@ def send_to_sql(data, database, host, tablename, schema):
     print('Maybe this worked')
 
     #
-print('Hostname?')
-hostname=input()
-test = fetch_master_db('GLOBAL', hostname, 'phil_test_221209', 'serafin_test')
+# print('Hostname?')
+# hostname=input()
+# test = fetch_master_db('GLOBAL', hostname, 'phil_test_221209', 'serafin_test')
 
 
 #
+
+def indet_rescuer(occs, indet_backlog, verbose=True, debugging=False):
+    """
+    Function that checks incoming data for duplicates within the indet backlog database, and if some updates are found, data is incorporated and inserted into the master database.
+    """
+
+    if verbose:
+        print('Indet rescue:\n I have', len(occs), 'new data.\n I am checking against the backlog of', len(indet_backlog), 'records.')
+    
+
+
+
+
+
+
+
+
+
+
+    return occs, indet_backlog
+
+
+
+
+

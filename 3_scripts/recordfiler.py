@@ -55,6 +55,12 @@ if __name__ == "__main__":
     parser.add_argument('working_directory',
                         help='the working directory for debugging output',
                         type=str)
+    parser.add_argument('indets_backlog',
+                        help='The location of the indets backlog database for crosschecking and indets-rescuing',
+                        type=str)
+    parser.add_argument('no_coords_backlog',
+                        help='The location of the backlog database with records of missing data for crosschecking and duplicate-rescuing',
+                        type=str)
     parser.add_argument('-v', '--verbose',
                         help = 'If true (default), I will print a lot of stuff that might or might not help...',
                         default = True)
@@ -125,6 +131,58 @@ if __name__ == "__main__":
         # print('Master database read successfully!', len(m_DB), 'records downloaded')
         # #
         
+# download databases....
+
+
+    ###---------------------- First test against indets backlog --------------------------------###
+
+    BL_indets = pd.read_csv(args.indets_backlog, sep=';')
+
+
+    # check all occs against indet backlog
+    test_upd_DB = pre_merge.check_premerge(occs, BL_indets, verbose=True)
+    # something really weird happening. Should not be as many duplicates as it gives me.
+
+    occs = dupli.duplicate_cleaner(test_upd_DB, args.working_directory, prefix = 'Integrating_', step='Master', verbose=True, debugging=False)
+    occs = occs[occs.status.notna() ] # NOT NA!
+    indet_to_backlog = occs[occs.status.isna() ] # ==NA !!
+
+    # checkk for indet values, new indet backlog, append new indets
+    indets = pd.read_csv(args.indets, sep=';')
+    
+    indet_to_backlog = pd.concat([indet_to_backlog, indets])
+    # keep indet_to_backlog and send back into server
+
+
+
+    ###---------------------- Then test against coordinate-less data backlog --------------------------------###
+    
+    no_coord_bl = pd.read_csv(args.indets_backlog, sep=';')
+
+
+    # check all occs against indet backlog
+    no_coord_check = pre_merge.check_premerge(occs, no_coord_bl, verbose=True)
+
+
+    occs = dupli.duplicate_cleaner(no_coord_check, args.working_directory, prefix = 'Integrating_', step='Master', verbose=True, debugging=False)
+    occs = occs[occs.ddlat.notna() ] # NOT NA!
+    no_coords_to_backlog = occs[occs.ddlat.isna() ] # ==NA !!
+
+    # checkk for indet values, new indet backlog, append new indets
+    no_coords = pd.read_csv(args.indets, sep=';')
+    
+    no_coords_to_backlog = pd.concat([no_coords_to_backlog, no_coords])
+    # keep no_coords_to_backlog and send back into server
+
+
+
+
+
+
+    ###---------------------- Then merge all with master database. Make backup of previous version. --------------------------------###
+
+
+
 
 
     ###--- Import a local file to make sure it works, GLOBAL seems down at the moment

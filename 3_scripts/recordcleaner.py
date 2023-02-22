@@ -55,20 +55,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print('Arguments:', args)
 
-    #---------------------------------------------------------------------------
-    # step 1:
+    ###------------------------------------------ Step A -------------------------------------------####
+    # Data preprocessing: Column standardisation 
+    # Step A1: Standardise selection  and subset columns....
     tmp_occs = stepA.column_standardiser(args.input_file, args.data_type, verbose = False) # verbose by default true
 
 
-
+    # Step A2: Clean colunms and first step of standardising data (barcodes, event dates, ...)
     tmp_occs_2 = stepA.column_cleaning(tmp_occs, args.data_type, args.working_directory, args.prefix, verbose=True)
 
 
     #print(tmp_occs_2.columns)
 
-    # do we check the nomenclature here?
-
-    # Here we check if the user wants to check the collector names, and if yes, the user can reinsert checked non-conforming names into the workflow
+    
+    # Step A3: Standardise collector names 
+        # Here we check if the user wants to check the collector names, and if yes, the user can reinsert checked non-conforming names into the workflow
     if args.nonamecln == None:
         tmp_occs_3, frame_to_check = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
         # should we reinsert the names we threw out?
@@ -95,30 +96,11 @@ if __name__ == "__main__":
                 #tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
                 # should we reinsert the names we threw out?
         print('\n ................................\n')
-        # dets combined with
-        # 'Would you like to also reinsert the determiner names I couldn\'t handle?',
-        # 'If you would like to reinsertthis too, please indicate the path to your modified file. Otherwise type "n" or "no".')
-        # reinsert=input() #'n' # make back to input()
-        #
-        # if reinsert == 'n' or 'no':
-        #     print('Ok I will continue without any reinsertion')
-        # else:
-        #     # check for fileending etc
-        #     print('reinserting the file', reinsert)
-        #     try:
-        #         tmp_occs_3 = stepA.reinsertion(tmp_occs_3, reinsert)
-        #     except:
-        #         print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
-
 
     # If this step is not wished for, we just continue as if nothing happened
     else:
         tmp_occs_3 = tmp_occs_2
-    #stop
-    # # option of including a fuzzy matching step here. I haven't implemented this yet...
-    print('STEP A complete.')
-    print(tmp_occs_3.columns)
-    #---------------------------------------------------------------------------
+    
     # Here I am blacklisting some herbaria, as I cannot work with their data. (no proper barcodes, mixed up columns)
     # For now this is not much data loss
     HERB_TO_RM = [['AAU']]
@@ -127,36 +109,39 @@ if __name__ == "__main__":
     tmp_occs_3.drop(drop_ind, inplace = True)
     print('After removing dataproblematic institutions:',tmp_occs_3.shape)
 
-   
-
+    # Step A4: Query botannist names to HUH botanists database
     # HUH name query
     tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
+    print('STEP A complete.')
+    print(tmp_occs_3.columns)
 
-    #---------------------------------------------------------------------------
-    # step B:
+###------------------------------------------ Step B -------------------------------------------####
+    # Data deduplication
 
-    #make this optional? No probably just force people to read this mess.
+    # Step B1: Duplication (sensitivity) statistics and separating out of << s.n. >> Collection numbers
     tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
+    
+    # Step B2: deduplicate data: merge duplicate records
     tmp_occs_4 = stepB.duplicate_cleaner(tmp_occs_3, args.working_directory, args.prefix, verbose=False, debugging=False)
     print(len(tmp_occs_4))
+
+    # Double checking duplication stats, should show 0. (i.e. repeat B1)
     stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix)
     print(tmp_occs_4.columns)
 
-    #---------------------------------------------------------------------------
-    # do the same with s.n.
+    # Step B3: s.n. deduplicate
     tmp_s_n_1 = stepB.duplicate_cleaner_s_n(tmp_s_n, args.working_directory, args.prefix, verbose=True)
     print('S.N.:', len(tmp_s_n_1))
-
     # now recombine numbered and s.n. data
     tmp_occs_5 = pd.concat([tmp_occs_4, tmp_s_n_1])
 
-    #---------------------------------------------------------------------------
-
-    # crossfill country names
+    # Step B4: crossfill country names
     tmp_occs_5 = stepB2.country_crossfill(tmp_occs_5, verbose=True)
 
 
-    # step C1, nomenclature check
+###------------------------------------------ Step C -------------------------------------------####
+    # Nomenclature checking
+    # step C1, nomenclature check with POWO/IPNI
     print('\n.........................................\n')
     print('Checking the taxonomy now. This takes a moment!')
     print('Do you want to do this now? [y]/[n]')
@@ -175,20 +160,18 @@ if __name__ == "__main__":
         tmp_occs_6 = tmp_occs_5
         # print(tmp_occs_5.dtypes)
 
+    # output cleaned data to csv
     tmp_occs_6.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
     print("\n\n--------------------------------------\n",
     "The output of this first processing is saved to:",
     args.output_directory+args.prefix+'cleaned.csv',
     '\n---------------------------------------------\n')
 
-    # check coordinates --> R package gridder????
-
-    #coordinate checks
+    #coordinate checks take place in R. This is launched from the bash command file.
     #---------------------------------------------------------------------------
-    # this happens in R, as I have not found an alternative in python. There are known reliable (albeit somewhat problematic) packages available in R.
     print('First cleaning steps completed. Next is Coordinate validation. ')
 
-    # write indets to backlog
+    # write indets to backlog for later analysis
     indets.to_csv(args.output_directory+args.prefix+'indet.csv', index=False, sep=';')
     print("\n\n--------------------------------------\n",
     "The indets file is saved to:",

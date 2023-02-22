@@ -184,10 +184,11 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     # some stats
     if verbose:
         print(len(occs_out), 'records had an ACCEPTED name in the end. \n')
-        print(len(issue_occs), 'records had an ISSUE in their name and could not be assigned any name name. \n',
+        print(len(indet_occs), 'records had an ISSUE in their name and could not be assigned any name name. \n',
     'These are saved to a separate output, please check these, and either rerun them or look for duplicates with a determination.')
+    # deprecated
     #occs.to_csv(out_dir + 'taxonomy_checked.csv', index = False, sep=';')
-    issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')
+    # issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')
 
 
     return occs_out, indet_occs
