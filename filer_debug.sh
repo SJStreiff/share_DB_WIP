@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+# THIS FILE LET'S YOU CONFIGURE YOUR RECORDCLEANER RUN
+
+STEP2ASWELL='YES' # defaults to 'YES'.
+# if you don't want to perform the database merge immediately, change this to anything else
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Step 1 RECORDCLEANER
+# VARIABLES TO MODIFY, REQUIRED!!
+INPUT='/Users/serafin/Sync/1_Annonaceae/Y_DATA/P_herbonautes/csv_to_import/Asie_092021_P.csv' # path to your input file
+DAT_FORM='P'           # format of your input file
+WDIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/1a_WIP/' # directory where intermediate files will be written to
+OUT_DIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/' # directory where final file is written to
+PREFIX='P_As_'          # prefix for all intermediate and final files
+# for GLOBAL I am trying to to data source (i.e. GBIF = G) followed by ISO2 coutry code (e.g. Indonesia=ID)
+
+# OPTIONAL VARIABLES, FACULTATIVE!
+
+VERBOSE='-v 1' # prints intermediate information to STDOUT, which might be helpful for debugging in case of issues.
+               # -v 2 also outputs debugging information
+NOCOLLECTOR='' # if '-nc', the name standardisation step is skipped! Use with caution!
+
+INPUT_2=$(echo $OUT_DIR$PREFIX'cleaned.csv')
+OUT_2=$(echo $OUT_DIR$PREFIX'spatialvalid.csv')
+INDETS=$(echo $OUT_DIR$PREFIX'indet.csv')
+NOCOORDS=$(echo $OUT_DIR$PREFIX'nocoords.csv')
+# AND NOW LETS LAUNCH RECORDCLEANER
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+# Step 2 RECORDFILER
+MASTERDB='GLOBAL'
+HOSTNAME='10.4.91.57'
+TABLE='phil_test_221209'
+SCHEMA='serafin_test'
+LOC='local'
+
+
+
+
+echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+#if STEP2ASWELL='YES' do
+python ./3_scripts/recordfiler.py $INPUT_2 $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR $INDETS $NOCOORDS
+#done
+
+
+
+
+
+# see if this works

@@ -43,14 +43,16 @@ print('Inputfile:')
 print(opt$options$input)
 
 #debugging
-# dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_ID2_cleaned.csv', sep =';', head=T)
+# dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/P_As_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
 dat <- data.frame(dat)  # checking
 
-dat <- dat[!is.na(dat$ddlong),] # checking that all records have coordinates...
 no_coord_dat <- dat[is.na(dat$ddlong),] # subsetting coords with no coordinate value
+no_coord_dat$geo_issues <- NA
+dat <- dat[!is.na(dat$ddlong),] # checking that all records have coordinates...
+
 
 
 
@@ -83,6 +85,11 @@ geo_issues <- tidyr::unite(flags, geo_issues, any_of(newcols), sep = ',', na.rm 
 geo_issues <- geo_issues[,-geo_issues$.summary] # drop the summary col as we have all the info we need in the geo_issue column
 
 write.table(geo_issues, file = out_file, row.names = FALSE, sep=';')
+nc_outfile <- gsub('spatialvalid.csv', 'nocoords.csv', out_file)
+write.table(no_coord_dat, file = nc_outfile, row.names = F, sep=';')
+# write.table(geo_issues, file = '~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/P_As_spatialvalid.csv', row.names = F, sep=';')
+# write.table(no_coord_dat, file = '~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/P_As_nocoords.csv', row.names = F, sep=';')
+
 
 print(paste('Annotated coordinates are written to', out_file))
 
