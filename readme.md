@@ -10,7 +10,7 @@ This pipeline consists (at the moment) of two more or less independent steps:
 
 ## The/A PIPELINE for standardising occurrence records: RECORDCLEANER
 
-![There would be a funny picture here normally](TMP_titleimage.png "")
+<!-- ![There would be a funny picture here normally](TMP_titleimage.png "") -->
 
 
 To launch recordcleaner, you can use the useful bash launcher, in terminal in your directory:
@@ -83,11 +83,17 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
   * Check coordinates. Probably we just check for country centroids and points in the water. This will be done with already available packages, and issues flagged for potential correction in e.g. QGIS (qgis.org)
   This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe). For the moment I just implemented an automatic CoordinateCleaner (https://ropensci.github.io/CoordinateCleaner/index.html)
 
+The resulting data of these cleaning steps are hte following files:
+* FILENAME_cleaned.csv: final output from python processing (up to, including Step C1)
+* FILENAME_spatialvalid.csv: final output with spatialvalid tag from *CoordinateCleaner*. Final data for import into database.
+* FILENAME_indet.csv: final cleaned data with indet at any level. This is later added to the indet section of database.
+* FILENAME_nocoords.csv: final cleaned data without coordinates (or spatial invalid??). This is added to Non-spatialvalid section of database.
+
 RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to integrate it into a pre-existing database
 
 * RECORD-FILER:
   * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and merge these 
-  * **To Come soon**: Check backlog of indets etc for potential duplicates with missing data previously...?
+  * **WIP**: Crosscheck import data with indets and non-spatialvalid data in database, and recover any records potentially matching.
 
 
 ## TODO
