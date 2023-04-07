@@ -105,6 +105,7 @@ RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to
 * **DONE** - implement problem name output and reinsertion, optionally pausing execution
 * **DONE** when do we query POWO/IPNI?? irrelevant in my opinion. We do it before inserting a new bunch of data into the master database. 
 * quantify fast and slow steps and make backup files between, so we can restart at that step (maybe integrate variable to call analysis from step XYZ)
+* make distinction between non-spatialvalid and no coordinate data!! then we can revise non-spatialvalid points in QGIS
 
 * **Implement background files**:
   * indets and similar: before integrating data, check for data previosly set aside because we had no conclusive data...?
