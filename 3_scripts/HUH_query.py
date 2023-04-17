@@ -27,6 +27,8 @@ import codecs
 import os
 import regex as re
 import requests
+import swifter
+
 
 from bs4 import BeautifulSoup
 
@@ -707,11 +709,15 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
 
 
+def huh_apply(mod_data):
+    # function for the apply used below in parallelised fashion.
+    mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
+                                                                                            row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
+    return mod_data
 
 
 
-
-def huh_wrapper(occs, verbose=True, debugging=False):
+def huh_wrapper(occs, verbose=True, debugging=False, n_cores = 4):
     """
     Launches the HUH name checking function, and reintegrates the resulting queried names into occs.
     """
@@ -731,10 +737,11 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     mod_data.col_year = mod_data.col_year.astype(str).str.extract('(\d+)', expand=False)
     mod_data.col_year = mod_data.col_year.astype(float)
 
+
     # run the HUH name function on the mod_data dataframe
-    mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
+    mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.swifter.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
                                                                                             row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
-    # print(mod_data)
+    # # print(mod_data)
     # set index so we can reintegrate the resulting data
     # 
     total = len(mod_data.huh_name)
@@ -761,24 +768,25 @@ def huh_wrapper(occs, verbose=True, debugging=False):
 
     return out_data
 
-    
+
 
 #----------------------- for debugging --------------------#
 #     
 # test_data = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/G_Phil_cleaned.csv', sep =';')
 # print(test_data)
-# test_data = test_data.tail(20)
-# print(test_data.recorded_by)
+# test_data[['huh_name', 'geo_col', 'wiki_url']] = '0'
+# #test_data = test_data.tail(20)
+# print(test_data.huh_name)
 
-
+# # test = parallelise_apply(test_data, huh_wrapper)
 # test = huh_wrapper(test_data)
 # print(test)
 
 
 # # # debugging, but other names are more suitable.
-asagray = "Wilde, WJJO de"
-test1, test2, test3 = get_HUH_names(asagray, 1993, 'Philippines', 'Wilde, WJJO', verbose = True, debugging=True)
-print(test1, test2, test3)
+# asagray = "Wilde, WJJO de"
+# test1, test2, test3 = get_HUH_names(asagray, 1993, 'Philippines', 'Wilde, WJJO', verbose = True, debugging=True)
+# print(test1, test2, test3)
 
 
 

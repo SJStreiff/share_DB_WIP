@@ -24,6 +24,7 @@ import pykew.powo as powo
 import pykew.ipni as ipni
 from pykew.powo_terms import Name, Filters
 import pandas as pd
+import swifter
 
 
 def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
@@ -152,7 +153,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     if verbose:
         print('Number of unique taxa to check:', len(occs_toquery.sp_idx))
 
-    occs_toquery[['status','accepted_name', 'ipni_species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.apply(lambda row: powo_query(row['genus'], 
+    occs_toquery[['status','accepted_name', 'ipni_species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.swifter.apply(lambda row: powo_query(row['genus'], 
                                                                                                                             row['specific_epithet'],
                                                                                                                          distribution=False, verbose=True),
                                                                                                                               axis = 1, result_type='expand')

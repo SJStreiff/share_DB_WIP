@@ -23,6 +23,7 @@ import numpy as np
 import codecs
 import os
 import regex as re
+import swifter
 
 import z_dependencies
 
@@ -262,7 +263,7 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
 
     # https://stackoverflow.com/questions/59697994/what-does-transformfirst-do
     #groupby col and num, and sort more recent det
-    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).swifter.apply(lambda x: x.sort_values('det_year', ascending=False))
 
     #groupby col and num, and transform the rest of the columns
     #we shall create a new column just to keep a trace
@@ -509,7 +510,7 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
 
 
 
-    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).swifter.apply(lambda x: x.sort_values('det_year', ascending=False))
     #print('Intermediate Check: ', occs_dup_col.shape)
     #occs_dup_col = occs_dup_col
     print('CHECKING3:', occs_dup_col.shape)
