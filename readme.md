@@ -31,6 +31,7 @@ RECORDCLEANER takes your raw occurence records and compares them to an existing 
 positional arguments:
   input_file            Raw input file path
   {GBIF,P}              File format. So far I can only handle Darwin core (GBIF) or herbonautes (P)
+  {EXP, NO}             Input file is expert file or not (only arguments {EXP, NO} are accepted)
   working_directory     the directory in which to deposit all intermediate working files. Files that need reviewing start with "TO_CHECK_"
   output_directory      the wished output directory
   prefix                prefix for ouput filenames

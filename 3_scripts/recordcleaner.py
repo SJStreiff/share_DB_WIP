@@ -37,6 +37,10 @@ if __name__ == "__main__":
     parser.add_argument('data_type',
                         help = 'File format. So far I can only handle Darwin core (GBIF) or herbonautes (P)',
                         type = str, choices=['GBIF', 'P']) # modify if anything else becomes available.
+    parser.add_argument('expert_file',
+                         help = 'Specify if input file is of expert source (i.e. all determinations and coordinates etc. are to have priority over other/previous data)',
+                         type = str,
+                         choices = ['EXP', 'NO'] )
     parser.add_argument('working_directory',
                         help = 'the directory in which to deposit all intermediate working files. Files that need reviewing start with "TO_CHECK_"',
                         type = str)

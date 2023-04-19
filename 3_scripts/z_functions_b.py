@@ -113,12 +113,14 @@ def duplicate_stats(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
 
-def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True, debugging=False):
+def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw', verbose=True, debugging=False):
     '''
     This one actually goes and cleans/merges duplicates.
         > occs = occurrence data to de-duplicate
         > working_directory = path to directory to output intermediate files
         > prefix = filename prefix
+        > expert_status = if 'EXP', then dets and coordinates get priority over others
+                          if 'NO', then dets and coordinates consolidated normally.
         > step = {raw, master} = reference for datatype checks
     '''
 
@@ -261,9 +263,10 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
     # cols we to change
     cols = ['genus','specific_epithet','detBy', 'det_year']
 
-    # https://stackoverflow.com/questions/59697994/what-does-transformfirst-do
-    #groupby col and num, and sort more recent det
+
+    #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
     occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).swifter.apply(lambda x: x.sort_values('det_year', ascending=False))
+
 
     #groupby col and num, and transform the rest of the columns
     #we shall create a new column just to keep a trace
@@ -292,6 +295,19 @@ def duplicate_cleaner(occs, working_directory, prefix, step='Raw', verbose=True,
 
     # Here we can still modify which columns we take further, and how they are merged,
     #   i.e. is it record1, record1duplicate or do we discard duplicate data and just take the first record.
+
+
+    ############################################ Here integrate expert flag
+    if expert_status == 'EXP':
+
+
+
+        print('Expert!!!!')
+
+
+
+
+
     occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
         scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
     	genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
