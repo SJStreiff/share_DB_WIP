@@ -32,10 +32,14 @@ if __name__ == "__main__":
                                      epilog='If it doesn\'t work, or you would like to chat, feel free to contact me at serafin.streiff<at>ird.fr')
     parser.add_argument('input_file',
                         help='(Cleaned) input file path',
-                        type = pathlib.Path)
+                        type = pathlib.Path),
     # parser.add_argument('MasterDB',
     #                     help='The location of the master database file.',
     #                     type=str)
+    parser.add_argument('expert_file',
+                         help = 'Specify if input file is of expert source (i.e. all determinations and coordinates etc. are to have priority over other/previous data)',
+                         type = str,
+                         choices = ['EXP', 'NO'] ),
     parser.add_argument('db_local',
                          choices=['local','remote'],
                         help='Is the database saved locally or on a server??',
@@ -90,9 +94,10 @@ if __name__ == "__main__":
 
 
     #---------------------------------------------------------------------------
-    print('Now I would like to \n')
+    print('Now we \n')
     print('\t - Check your new records against indets and for duplicates \n')
-    print('\t - Merge them into the master database')
+    print('\t - Merge them into the master database',
+         '\n---------------------------------------------\n')
 
     # check input data variation: is it just one genus? just one country?
     imp = codecs.open(args.input_file,'r','utf-8') #open for reading with "universal" type set
@@ -135,43 +140,52 @@ if __name__ == "__main__":
 
 
     ###---------------------- First test against indets backlog --------------------------------###
-
-    BL_indets = pd.read_csv(args.indets_backlog, sep=';')
+    BL_indets = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/indet_backlog.csv', sep=';')
+    #BL_indets = pd.read_csv(args.indets_backlog, sep=';')
 
 
     # check all occs against indet backlog
     test_upd_DB = pre_merge.check_premerge(occs, BL_indets, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
 
-    occs = dupli.duplicate_cleaner(test_upd_DB, args.working_directory, prefix = 'Integrating_', step='Master', verbose=True, debugging=False)
+    occs = dupli.duplicate_cleaner(test_upd_DB, args.working_directory, prefix = 'Integrating_', step='Master',
+                                   expert_file = args.expert_file, verbose=True, debugging=False)
     occs = occs[occs.status.notna() ] # NOT NA!
     indet_to_backlog = occs[occs.status.isna() ] # ==NA !!
 
     # checkk for indet values, new indet backlog, append new indets
-    indets = pd.read_csv(args.indets, sep=';')
+    # indets = pd.read_csv(args.indets, sep=';')
     
-    indet_to_backlog = pd.concat([indet_to_backlog, indets])
+    indet_to_backlog = pd.concat([indet_to_backlog])
     # keep indet_to_backlog and send back into server
-
+    indet_to_backlog.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/new_indet_backlog.csv', sep=';')
 
 
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
-    
-    no_coord_bl = pd.read_csv(args.indets_backlog, sep=';')
+    try:
+        no_coord_bl = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/coord_backlog.csv', sep=';')
+    except:
+        print('YAY')
 
+    
+    # geo_issues is the column name for georeferencing issues
 
     # check all occs against indet backlog
     no_coord_check = pre_merge.check_premerge(occs, no_coord_bl, verbose=True)
 
 
-    occs = dupli.duplicate_cleaner(no_coord_check, args.working_directory, prefix = 'Integrating_', step='Master', verbose=True, debugging=False)
+    occs = dupli.duplicate_cleaner(no_coord_check, args.working_directory, expert_file = args.expert_file, prefix = 'Integrating_', step='Master', verbose=True, debugging=False)
+
+    # we remove all records with no coordinate at all. Records with geo_issues can be filtered in the DB and then manually edited in QGIS if so wished, or they can be filtered for later
+
     occs = occs[occs.ddlat.notna() ] # NOT NA!
     no_coords_to_backlog = occs[occs.ddlat.isna() ] # ==NA !!
 
     # checkk for indet values, new indet backlog, append new indets
-    no_coords = pd.read_csv(args.indets, sep=';')
+   # no_coords = pd.read_csv(args.indets, sep=';')
     
-    no_coords_to_backlog = pd.concat([no_coords_to_backlog, no_coords])
+    no_coords_to_backlog.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/new_coord_backlog.csv', sep=';')
+
     # keep no_coords_to_backlog and send back into server
 
 

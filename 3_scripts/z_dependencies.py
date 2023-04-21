@@ -9,9 +9,9 @@ import pandas as pd
 # final columns wished in the final database
 
 # columns required to import data into the final database
-final_cols_for_import = list(['global_id',
-    'childData_id',
-	'accSpecies_id',
+final_cols_for_import = list([#'global_id',
+    #'childData_id',
+	#'accSpecies_id',
     'scientific_name',
 	'genus',
 	'specific_epithet',
@@ -51,9 +51,9 @@ final_cols_for_import = list(['global_id',
     'geo_col',
     'wiki_url'])
 
-final_col_for_import_type = {'global_id': str,
-    'childData_id': str,
-	'accSpecies_id': str,
+final_col_for_import_type = {#'global_id': str,
+    #'childData_id': str,
+	#'accSpecies_id': str,
     'scientific_name': str,
 	'genus': str,
 	'specific_epithet': str,

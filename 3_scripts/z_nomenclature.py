@@ -175,25 +175,22 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     # occs = occs.drop(['ipni_pub'], axis=1)
 
 
-    # if verbose:
-    #     print('I started with', len(occs), 'records. \n')
-
-    # #occs.to_csv(out_dir + 'no_subset.csv', index = False, sep=';')
-
-    indet_occs = occs_out[occs_out['status'].isna()]
-    occs_out = occs_out[occs_out['status'].notna()]
+    # Keep all records together here. We filter for this later....
+    
+    #indet_occs = occs_out[occs_out['status'].isna()]
+    #occs_out = occs_out[occs_out['status'].notna()]
 
     # some stats
     if verbose:
-        print(len(occs_out), 'records had an ACCEPTED name in the end. \n')
-        print(len(indet_occs), 'records had an ISSUE in their name and could not be assigned any name name. \n',
+        print(len(occs_out[occs_out['status'].notna()]), 'records had an ACCEPTED name in the end. \n')
+        print(len(occs_out[occs_out['status'].isna()]), 'records had an ISSUE in their name and could not be assigned any name name. \n',
     'These are saved to a separate output, please check these, and either rerun them or look for duplicates with a determination.')
     # deprecated
     #occs.to_csv(out_dir + 'taxonomy_checked.csv', index = False, sep=';')
     # issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')
 
 
-    return occs_out, indet_occs
+    return occs_out #, indet_occs
 
 
 

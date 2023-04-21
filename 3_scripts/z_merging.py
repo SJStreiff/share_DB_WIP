@@ -32,7 +32,7 @@ def check_premerge(mdb, occs, verbose=True):
     '''
 
     tmp_mast = pd.concat([mdb, occs])
-
+    print('Columns!', tmp_mast.columns)
 
     print('\n \n Some stats about potential duplicates being integrated: \n .................................................\n')
     print('\n By surname, number, sufix and col_year & country ID', 

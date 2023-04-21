@@ -77,6 +77,8 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
     if debugging:
  	      print('\n', 'The columns now are:', occs.columns)
 
+    #occs = occs.replace(';', ',')
+    print(occs)
     #-------------------------------------------------------------------------------
     # add all final columns as empty columns
     # check for missing columns, and then add these, as well as some specific trimming
@@ -337,7 +339,6 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs = occs.rename(columns = {'st_barcode': 'barcode'})
         if debugging:
             print(occs.columns)
-
         # -----------------------------------------------------------------------
         # COLLECTION NUMBERS
         # keep the original colnum column
@@ -346,15 +347,17 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
         try:
-            occs = occs.colnum_full.replace('s.n.', np.nan, inplace=True) # keep s.n. for later?
+            occs.colnum_full = occs.colnum_full.replace('s.n.', pd.NA) # keep s.n. for later?
         except:
             if verbose:
                 print('No plain s.n. values found in the full collection number fields.')
+
         #occs.colnum_full.replace("s. n.", pd.NA, inplace=True)
         if debugging:
-            print(occs.colnum_full)
+            print(occs['colnum_full'])
+
         #create prefix, extract text before the number
-        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([a-zA-Z]*)')
+        occs['prefix'] = occs['colnum_full'].str.extract('^([a-zA-Z]*)')
         ##this code deletes spaces at start or end
         occs['prefix'] = occs['prefix'].str.strip()
 

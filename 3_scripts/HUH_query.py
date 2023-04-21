@@ -717,7 +717,7 @@ def huh_apply(mod_data):
 
 
 
-def huh_wrapper(occs, verbose=True, debugging=False, n_cores = 4):
+def huh_wrapper(occs, verbose=True, debugging=False):
     """
     Launches the HUH name checking function, and reintegrates the resulting queried names into occs.
     """
@@ -727,7 +727,8 @@ def huh_wrapper(occs, verbose=True, debugging=False, n_cores = 4):
     # drop the cols we had for formatting purposes...
 
     occs = occs.drop(['huh_name', 'geo_col', 'wiki_url'], axis = 1)
-
+    # make backup of regexed name
+    occs['recby_regex'] = occs['recorded_by']
     # subset the columns of interest for querying...
     mod_data = occs[['recorded_by', 'col_year', 'country', 'orig_recby']]
     # drop duplicated names
@@ -741,11 +742,11 @@ def huh_wrapper(occs, verbose=True, debugging=False, n_cores = 4):
     # run the HUH name function on the mod_data dataframe
     mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.swifter.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
                                                                                             row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
-    # # print(mod_data)
+    print(mod_data)
     # set index so we can reintegrate the resulting data
     # 
     total = len(mod_data.huh_name)
-    nojoy = len(pd.isna(mod_data.huh_name))
+    nojoy = sum(pd.isna(mod_data.huh_name))
 
     
     mod_data.huh_name = mod_data.huh_name.fillna(mod_data['recorded_by'])
@@ -759,12 +760,18 @@ def huh_wrapper(occs, verbose=True, debugging=False, n_cores = 4):
     # merge queried data into original dataframe
     out_data = occs.join(mod_data)
 
+    # fill recorded_by with out best estimate of name (regex is backed up)
+    out_data = out_data.drop(['recorded_by'], axis = 1)
+    out_data.reset_index(inplace = True)
+
+    out_data['recorded_by'] = out_data['huh_name']
 
     if verbose:
-        print('originally:', out_data.recorded_by)
+        print('originally:', out_data.recby_regex)
         print('\n now', out_data.huh_name)
         print('--------- HUH STATS -----------\n',
         'Total names:', total, '\n NA names:', nojoy, '\n Success ratio', (nojoy/total)*100,'%')
+
 
     return out_data
 

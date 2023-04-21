@@ -113,15 +113,16 @@ def duplicate_stats(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
 
-def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw', verbose=True, debugging=False):
+def duplicate_cleaner(occs, working_directory, prefix, expert_file, step='Raw', verbose=True, debugging=False):
     '''
     This one actually goes and cleans/merges duplicates.
         > occs = occurrence data to de-duplicate
         > working_directory = path to directory to output intermediate files
         > prefix = filename prefix
-        > expert_status = if 'EXP', then dets and coordinates get priority over others
-                          if 'NO', then dets and coordinates consolidated normally.
         > step = {raw, master} = reference for datatype checks
+        > expert_file = if 'EXP' skips certain parts in within dataset cleaning and gives priority as below when integrating in master step.
+            # IF expert_status = 'EXP', then dets and coordinates get priority over others
+                               = 'NO', then dets and coordinates consolidated normally.
     '''
 
     if step=='Master':
@@ -149,7 +150,7 @@ def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw'
     occs_colNum.ddlat.astype(float)
     occs_nocolNum['ddlat'].astype(float)
 
-    #print(occs_colNum['coll_surname'])
+    print(occs_colNum['coll_surname'])
 
     #-------------------------------------------------------------------------------
     occs_dup_col =  occs_colNum.loc[occs_colNum.duplicated(subset=dup_cols, keep=False)]
@@ -162,6 +163,20 @@ def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw'
         len(occs_colNum), ';\n records with no duplicates (occs_unique): ',
         len(occs_unique), ';\n records with duplicates (occs_dup_col): ',
         len(occs_dup_col))
+
+### find duplicated barcodes
+    dupli_bc = occs
+##### To DO on monday.......
+
+
+
+    if len(occs_dup_col) == 0:
+        if verbose:
+            print('Nothing to deduplicate. Returning without any modifications')
+        return occs_unique
+
+
+
 
     #-------------------------------------------------------------------------------
     # Duplicates part 1:
@@ -181,42 +196,51 @@ def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw'
     if verbose:
         print('\n The duplicates subset, before cleaning dups has the shape: ', occs_dup_col.shape)
     # in this aggregation step we calculate the variance between the duplicates.
-    test = occs_dup_col.groupby(dup_cols, as_index = False).agg(
-        ddlong = pd.NamedAgg(column = 'ddlong', aggfunc='var'),
-        ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'))
+    
+    if expert_file ==  'EXP':
+        # as it is expert file, we expect coordinates to match within the file. We check coordinates when integrating into master:
+        # > Do nothing, and then take expert value at final merge.
+        if verbose:
+            print('We have expert file!')
 
-    print(test)
-    # if this variance is above 0.1 degrees
-    if len(test)>0:
-        test.loc[test['ddlong'] >= 0.1, 'long bigger than 0.1'] = 'True'
-        test.loc[test['ddlong'] < 0.1, 'long bigger than 0.1'] = 'False'
+    else:
+        # no expert file, so just do as normal....
+        test = occs_dup_col.groupby(dup_cols, as_index = False).agg(
+            ddlong = pd.NamedAgg(column = 'ddlong', aggfunc='var'),
+            ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'))
 
-        test.loc[test['ddlat'] >= 0.1, 'lat bigger than 0.1'] = 'True'
-        test.loc[test['ddlat'] < 0.1, 'lat bigger than 0.1'] = 'False'
+        print(test)
+        # if this variance is above 0.1 degrees
+        if len(test)>0:
+            test.loc[test['ddlong'] >= 0.1, 'long bigger than 0.1'] = 'True'
+            test.loc[test['ddlong'] < 0.1, 'long bigger than 0.1'] = 'False'
 
-        # filter by large variance.
-        true = test[(test["long bigger than 0.1"] == 'True') | (test["lat bigger than 0.1"] == 'True')]
+            test.loc[test['ddlat'] >= 0.1, 'lat bigger than 0.1'] = 'True'
+            test.loc[test['ddlat'] < 0.1, 'lat bigger than 0.1'] = 'False'
 
-        # write these records to csv for correcting or discarding.
-        true.to_csv(working_directory + 'TO_CHECK_'+prefix+'_coordinates_to_combine.csv', index = False, sep = ';')
+            # filter by large variance.
+            true = test[(test["long bigger than 0.1"] == 'True') | (test["lat bigger than 0.1"] == 'True')]
 
-        # remove the offending rows and spit them out for manual checking or just discarding
-        coord_to_check = occs_dup_col[occs_dup_col.index.isin(true.index)]
-        occs_dup_col = occs_dup_col[~ occs_dup_col.index.isin(true.index)]
-        coord_to_check.to_csv(working_directory + 'TO_CHECK_'+prefix+'coordinate_issues.csv', index = False, sep = ';')
+            # write these records to csv for correcting or discarding.
+            true.to_csv(working_directory + 'TO_CHECK_'+prefix+'_coordinates_to_combine.csv', index = False, sep = ';')
+
+            # remove the offending rows and spit them out for manual checking or just discarding
+            coord_to_check = occs_dup_col[occs_dup_col.index.isin(true.index)]
+            occs_dup_col = occs_dup_col[~ occs_dup_col.index.isin(true.index)]
+            coord_to_check.to_csv(working_directory + 'TO_CHECK_'+prefix+'coordinate_issues.csv', index = False, sep = ';')
+            #print(occs_dup_col.shape)
+
+             # print summary
+            if verbose:
+                print('\n Input records: ', len(occs_colNum),
+                ';\n records with no duplicates (occs_unique): ', len(occs_unique),
+                ';\n duplicate records with very disparate coordinates removed:', len(coord_to_check),
+                '\n If you want to check them, I saved them to', working_directory + 'TO_CHECK_'+prefix+ 'coordinate_issues.csv')
+
+        # fo r smaller differences, take the mean value...
+        occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlat'].transform('mean')
+        occs_dup_col['ddlong'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlong'].transform('mean')
         #print(occs_dup_col.shape)
-
-    # print summary
-    if verbose:
-        print('\n Input records: ', len(occs_colNum),
-        ';\n records with no duplicates (occs_unique): ', len(occs_unique),
-        ';\n duplicate records with very disparate coordinates removed:', len(coord_to_check),
-        '\n If you want to check them, I saved them to', working_directory + 'TO_CHECK_'+prefix+ 'coordinate_issues.csv')
-
-    # for smaller differences, take the mean value...
-    occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlat'].transform('mean')
-    occs_dup_col['ddlong'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlong'].transform('mean')
-    #print(occs_dup_col.shape)
 
 
     #---------------------------------
@@ -265,13 +289,14 @@ def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw'
 
 
     #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
-    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).swifter.apply(lambda x: x.sort_values('det_year', ascending=False))
+    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
 
 
     #groupby col and num, and transform the rest of the columns
     #we shall create a new column just to keep a trace
 
     occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
+    print('HERE')
     occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
 
     #save a csv with all duplicates beside each other but otherwise cleaned, allegedly.
@@ -279,11 +304,7 @@ def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw'
     print('\n I have saved a checkpoint file of all cleaned and processed duplicates, nicely beside each other, to:',
     working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv')
 
-    #-------------------------------------------------------------------------------
-    # not sure how to integrate revisions just yet... this might be something
-    # for when integrating new data into the established database, when we already
-    # have revision datasets present and we can compare these...
-    #-------------------------------------------------------------------------------
+
 
     #-------------------------------------------------------------------------------
     # DE-DUPLICATE AND THEN MERGE
@@ -298,61 +319,287 @@ def duplicate_cleaner(occs, working_directory, prefix, expert_status, step='Raw'
 
 
     ############################################ Here integrate expert flag
-    if expert_status == 'EXP':
+    if step == 'master':
+        # Expert level deduplication only between datasets, not in single dataset!
+        if expert_file == 'EXP':
+            # We have an expert dataset being integrated into the database.
+
+            # first handle duplicates with all expert values (expert duplicates)
+            expert_rows = occs_dup_col[occs_dup_col['expert_det'].isin('EXP')]
+
+            expert_merged = expert_rows.groupby(dup_cols, as_index = False).agg(
+                scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
+                genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
+                specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+                species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+                collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+                recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+                colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
+                prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
+                colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
+                sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
+                col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+                col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+                col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+                col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+                det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+                det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+                det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+                det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+                det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+                country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
+                country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
+                continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
+                locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
+                coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
+                ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
+                ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
+                institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
+                herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
+                barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
+                orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
+                coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
+                huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
+                geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+                wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
+                expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                status = 'ACCEPTED',
+                accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
+                ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
+                ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
+                )
+            # here quite some data might get lost, so we need to check where we want to just join first,
+            # and where we add all values, and then decide on the columns we really want in the final
+            # database!!!
+
+            # de-duplicated duplicates sorting to get them ready for merging
+            expert_merged = expert_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+
+            if verbose:
+                print('EXPERT-EXPERT deduplicated')     
+                print('\n There were', len(expert_rows), 'duplicated specimens')
+                print('\n There are', len(expert_merged), 'unique records after merging.')
 
 
+            # then normally handle duplicates with no expert values at all
+            non_exp_rows = occs_dup_col[occs_dup_col['expert_det'].notin('EXP') ]
 
-        print('Expert!!!!')
+            non_exp_merged = expert_rows.groupby(dup_cols, as_index = False).agg(
+                scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
+                genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
+                specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+                species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+                collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+                recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+                colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
+                prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
+                colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
+                sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
+                col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+                col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+                col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+                col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+                det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+                det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+                det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+                det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+                det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+                country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
+                country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
+                continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
+                locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
+                coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
+                ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
+                ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
+                institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
+                herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
+                barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
+                orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
+                coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
+                huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
+                geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+                wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
+                expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                status = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
+                ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
+                ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
+            )
 
+            # here quite some data might get lost, so we need to check where we want to just join first,
+            # and where we add all values, and then decide on the columns we really want in the final
+            # database!!!
 
+            # de-duplicated duplicates sorting to get them ready for merging
+            non_exp_merged = non_exp_merged.sort_values(dup_cols, ascending = (True, True, False, False))
 
+            if verbose:
+                print('EXPERT-EXPERT deduplicated')     
+                print('\n There were', len(non_exp_rows), 'duplicated specimens')
+                print('\n There are', len(non_exp_merged), 'unique records after merging.')
 
+            # SANITY CHECK
+            if (len(expert_rows) + len(non_exp_rows)) != len(occs_dup_col):
+                print('SOMETHINGS WRONG HERE!!')
 
-    occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
-        scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
-    	genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
-    	specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
-    	species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
-    	collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
-        recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
-        colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
-    	prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
-    	colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
-    	sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
-        col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
-        col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
-        col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
-        col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
-    	det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
-    	det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
-        det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
-        det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
-        det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
-    	country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
-    	country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
-    	continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
-    	locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
-    	coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
-    	ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
-        ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
-    	institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
-        herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
-        barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
-        orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
-        coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
-        huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
-        geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
-        wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
-        )
-    # here quite some data might get lost, so we need to check where we want to just join first,
-    # and where we add all values, and then decide on the columns we really want in the final
-    # database!!!
+            # now merge expert-only and non-expert-only parts together and deduplicate
 
-    # de-duplicated duplicates sorting to get them ready for merging
-    occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+            # once deduplicated dataframe
+            one_dd_done = pd.concat(expert_merged, non_exp_merged)
 
-    print('\n There were', len(occs_dup_col), 'duplicated specimens')
-    print('\n There are', len(occs_merged), 'unique records after merging.')
+            # now merge duplicates with expert & non-expert  values (only one of each left if everything above went to plan..)
+            occs_merged = one_dd_done.groupby(dup_cols, as_index = False).agg(
+                scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
+                genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
+                specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+                species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+                collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+                recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+                colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc = 'first' ),
+                prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
+                colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
+                sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
+                col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+                col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+                col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+                col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+                det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+                det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+                det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+                det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+                det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+                country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
+                country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
+                continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
+                locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
+                coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
+                ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
+                ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
+                institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
+                herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
+                barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
+                orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
+                coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
+                huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
+                geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+                wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
+                expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                status = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
+                ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
+                ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
+                )
+            # here quite some data might get lost, so we need to check where we want to just join first,
+            # and where we add all values, and then decide on the columns we really want in the final
+            # database!!!
+
+            # de-duplicated duplicates sorting to get them ready for merging
+            occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+
+            print('\n There were', len(occs_dup_col), 'duplicated specimens')
+            print('\n There are', len(occs_merged), 'unique records after merging.')
+
+            ########################## end of expert non expert mess
+
+        else:
+            # master but not expert. proceed as normal.
+                occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
+                    scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
+                    genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
+                    specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+                    species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+                    collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+                    recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+                    colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
+                    prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
+                    colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
+                    sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
+                    col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+                    col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+                    col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+                    col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+                    det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+                    det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+                    det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+                    det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+                    det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+                    country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
+                    country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
+                    continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
+                    locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
+                    coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
+                    ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
+                    ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
+                    institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
+                    herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
+                    barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
+                    orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
+                    coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
+                    huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
+                    geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+                    wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
+                    )
+                # here quite some data might get lost, so we need to check where we want to just join first,
+                # and where we add all values, and then decide on the columns we really want in the final
+                # database!!!
+
+                # de-duplicated duplicates sorting to get them ready for merging
+                occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+
+                print('\n There were', len(occs_dup_col), 'duplicated specimens')
+                print('\n There are', len(occs_merged), 'unique records after merging.')
+
+        ########### END of expert/non expert if/else
+
+    else:
+        # not master
+        occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
+            scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
+            genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
+            specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+            species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+            collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+            recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+            colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
+            prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
+            colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
+            sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
+            col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+            col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+            col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+            col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+            det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+            det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+            det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+            det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+            det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+            country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
+            country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
+            continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
+            locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
+            coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
+            ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
+            ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
+            institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
+            herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
+            barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
+            orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
+            coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
+            huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
+            geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+            wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
+            )
+        # here quite some data might get lost, so we need to check where we want to just join first,
+        # and where we add all values, and then decide on the columns we really want in the final
+        # database!!!
+
+        # de-duplicated duplicates sorting to get them ready for merging
+        occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+
+        print('\n There were', len(occs_dup_col), 'duplicated specimens')
+        print('\n There are', len(occs_merged), 'unique records after merging.')
+
+    ######### END of if/else master 
 
     print('\n \n FINAL DUPLICATE STATS:')
     print('-------------------------------------------------------------------------')
@@ -526,7 +773,7 @@ def duplicate_cleaner_s_n(occs, working_directory, prefix, step='Raw', verbose=T
 
 
 
-    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).swifter.apply(lambda x: x.sort_values('det_year', ascending=False))
+    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
     #print('Intermediate Check: ', occs_dup_col.shape)
     #occs_dup_col = occs_dup_col
     print('CHECKING3:', occs_dup_col.shape)
