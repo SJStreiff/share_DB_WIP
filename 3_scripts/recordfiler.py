@@ -19,7 +19,8 @@ import z_dependencies
 import argparse, os, pathlib, codecs
 import pandas as pd
 import numpy as np
-from datetime import date
+import datetime 
+from getpass import getpass
 
 
 print(os.getcwd())
@@ -103,6 +104,27 @@ if __name__ == "__main__":
     imp = codecs.open(args.input_file,'r','utf-8') #open for reading with "universal" type set
     occs = pd.read_csv(imp, sep = ';',  dtype = z_dependencies.final_col_for_import_type) # read the data
     print(occs)
+
+
+    print('\n ................................\n',
+    'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
+    'Please type the USERNAME used to connect to the database:')
+    username=input() #'n' # make back to input()
+    print('\n ................................\n',
+    'Please type the PASSWORD used to connect to the database for user', username)
+    password=getpass() #'n' # make back to input()
+    print('\n ................................\n',
+    'Please type the PORT required to connect to the database:')
+    port=input() #'n' # make back to input()
+
+
+    # give data a (time??)stamp
+    date = date = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+    occs['modified'] = username + '_' + date
+
+
+
+
     # if just one small group, then do some sort of subsetting
 
 
@@ -138,8 +160,10 @@ if __name__ == "__main__":
         
 # download databases....
 
-
     ###---------------------- First test against indets backlog --------------------------------###
+    print('INDET STEP')
+    print('------------------------------------------------')
+
     BL_indets = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/indet_backlog.csv', sep=';')
     #BL_indets = pd.read_csv(args.indets_backlog, sep=';')
 
@@ -148,7 +172,10 @@ if __name__ == "__main__":
     test_upd_DB = pre_merge.check_premerge(occs, BL_indets, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
 
-    occs = dupli.duplicate_cleaner(test_upd_DB, args.working_directory, prefix = 'Integrating_', step='Master',
+    #make sn data...
+######## SEPARATE OUT ALL S.N. AND CLEAN SEPARATELY WITH DUPLI PARAMETER IN duplicate_cleasner() AND REPEAT FOR ALL STEPTS HERE
+
+    occs = dupli.duplicate_cleaner(test_upd_DB, dupli = , args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                    expert_file = args.expert_file, verbose=True, debugging=False)
     occs = occs[occs.status.notna() ] # NOT NA!
     indet_to_backlog = occs[occs.status.isna() ] # ==NA !!
@@ -162,6 +189,9 @@ if __name__ == "__main__":
 
 
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
+    print('COORDINATE STEP')
+    print('------------------------------------------------')
+
     try:
         no_coord_bl = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/coord_backlog.csv', sep=';')
     except:
@@ -174,7 +204,8 @@ if __name__ == "__main__":
     no_coord_check = pre_merge.check_premerge(occs, no_coord_bl, verbose=True)
 
 
-    occs = dupli.duplicate_cleaner(no_coord_check, args.working_directory, expert_file = args.expert_file, prefix = 'Integrating_', step='Master', verbose=True, debugging=False)
+    occs = dupli.duplicate_cleaner(no_coord_check, args.working_directory, expert_file = args.expert_file, prefix = 'Integrating_', 
+                                User = username, step='Master', verbose=True, debugging=False)
 
     # we remove all records with no coordinate at all. Records with geo_issues can be filtered in the DB and then manually edited in QGIS if so wished, or they can be filtered for later
 
@@ -189,12 +220,10 @@ if __name__ == "__main__":
     # keep no_coords_to_backlog and send back into server
 
 
-
-
-
-
     ###---------------------- Then merge all with master database. Make backup of previous version. --------------------------------###
 
+    print('ALL INCLUDED STEP')
+    print('------------------------------------------------')
 
 
 
@@ -210,11 +239,13 @@ if __name__ == "__main__":
     test_upd_DB = pre_merge.check_premerge(m_DB, occs, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
 
-    deduplid = dupli.duplicate_cleaner(test_upd_DB, args.working_directory, prefix = 'Integrating_', step='Master', verbose=True, debugging=False)
+    deduplid = dupli.duplicate_cleaner(test_upd_DB, args.working_directory, expert_file = args.expert_file, prefix = 'Integrating_', 
+                                        User = username, step='Master', verbose=True, debugging=False)
 
     print(deduplid)
 
-    date = str(date.today())
+    date = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+
     print(date)
 
     # print the old database back into new backup table

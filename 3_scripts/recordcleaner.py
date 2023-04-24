@@ -128,19 +128,28 @@ if __name__ == "__main__":
     # Data deduplication
 
     # Step B1: Duplication (sensitivity) statistics and separating out of << s.n. >> Collection numbers
-    tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
-    
-    # Step B2: deduplicate data: merge duplicate records
-    tmp_occs_4 = stepB.duplicate_cleaner(tmp_occs_3, args.working_directory, args.prefix, args.expert_file, verbose=False, debugging=False)
+    tmp_colnum, tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
+
+    # for records with a collection number
+    dup_cols = ['recorded_by', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
+
+
+     # Step B2: deduplicate data: merge duplicate records
+    tmp_occs_4 = stepB.duplicate_cleaner(tmp_colnum, dupli = dup_cols, args.working_directory, args.prefix, User='NA', args.expert_file, verbose=False, debugging=False)
     print(len(tmp_occs_4))
 
     # Double checking duplication stats, should show 0. (i.e. repeat B1)
-    stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix)
+    stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix, out = False)
     print(tmp_occs_4.columns)
+   
+    # only for records with no Collection number
+    dup_cols = ['huh_name', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
+
 
     # Step B3: s.n. deduplicate
-    tmp_s_n_1 = stepB.duplicate_cleaner_s_n(tmp_s_n, args.working_directory, args.prefix, verbose=True)
+    tmp_s_n_1 = stepB.duplicate_cleaner(tmp_s_n, dupli = dup_cols, args.working_directory, args.prefix, User='NA', args.expert_file, verbose=False, debugging=False)
     print('S.N.:', len(tmp_s_n_1))
+
     # now recombine numbered and s.n. data
     tmp_occs_5 = pd.concat([tmp_occs_4, tmp_s_n_1])
 

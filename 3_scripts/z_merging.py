@@ -45,6 +45,8 @@ def check_premerge(mdb, occs, verbose=True):
     print('\n By barcode', tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)].shape)
 
     print('\n .................................................\n')
+    if len(tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)]) != 0:
+        print(tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)]['barcode'])
 
     print(len(mdb), 'the master_db download')
     print(len(occs), 'cleaned occurences')
