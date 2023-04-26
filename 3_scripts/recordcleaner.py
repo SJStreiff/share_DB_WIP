@@ -143,7 +143,7 @@ if __name__ == "__main__":
     print(tmp_occs_4.columns)
    
     # only for records with no Collection number
-    dup_cols = ['huh_name', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
+    dup_cols = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
 
 
     # Step B3: s.n. deduplicate

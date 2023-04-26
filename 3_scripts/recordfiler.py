@@ -172,11 +172,21 @@ if __name__ == "__main__":
     test_upd_DB = pre_merge.check_premerge(occs, BL_indets, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
 
-    #make sn data...
-######## SEPARATE OUT ALL S.N. AND CLEAN SEPARATELY WITH DUPLI PARAMETER IN duplicate_cleasner() AND REPEAT FOR ALL STEPTS HERE
+    # separate data with colNum and no colNum
+    occs_s_n = test_upd_DB[test_upd_DB['colnum_full'].isna()]
+    occs_num = test_upd_DB.dropna(how='all', subset=['colnum_full'])
 
-    occs = dupli.duplicate_cleaner(test_upd_DB, dupli = , args.working_directory, prefix = 'Integrating_', User = username, step='Master',
+    # deduplicate (x2)
+    occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
+                                    args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                    expert_file = args.expert_file, verbose=True, debugging=False)
+    occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], 
+                                    args.working_directory, prefix = 'Integrating_', User = username, step='Master',
+                                   expert_file = args.expert_file, verbose=True, debugging=False)
+    # recombine data 
+    occs = pd.concat([occs_s_n, occs_s_n_dd], axis=0)
+   
+    # check nomencl. status
     occs = occs[occs.status.notna() ] # NOT NA!
     indet_to_backlog = occs[occs.status.isna() ] # ==NA !!
 

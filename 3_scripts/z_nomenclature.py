@@ -40,7 +40,9 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
              'native_to' POWO range information
     '''
     #print('Checking uptodate-ness of nomenclature in your dataset...')
-    
+    distribution1 = distribution
+
+
     if pd.notna(gen) and pd.notna(sp):
         # annoying error when no det associated with a record
         query = {Name.genus: gen, Name.species: sp}
