@@ -30,11 +30,11 @@ NOCOORDS=$(echo $OUT_DIR$PREFIX'nocoords.csv')
 # AND NOW LETS LAUNCH RECORDCLEANER
 
 # working for now, commented out...
- #python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM $EXPERT $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
+python ./3_scripts/recordcleaner.py $INPUT $DAT_FORM $EXPERT $WDIR $OUT_DIR $PREFIX $NOCOLLECTOR $VERBOSE
 
 echo "Here comes an R script for checking coordinates... WIP...  but first do SQL stuff"
 echo "R script tests"
-#Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
+Rscript 3_scripts/r_coordinate_check.R --input $INPUT_2 --output $OUT_2
 echo "How are we doing??"
 
 
@@ -49,11 +49,11 @@ LOC='local'
 
 
 
-echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
-#if STEP2ASWELL='YES' do
-echo 'python ./3_scripts/recordfiler.py' $INPUT_2 $EXPERT $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR $INDETS $NOCOORDS
+# echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+# #if STEP2ASWELL='YES' do
+# echo 'python ./3_scripts/recordfiler.py' $INPUT_2 $EXPERT $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR $INDETS $NOCOORDS
 
-python ./3_scripts/recordfiler.py $INPUT_2 $EXPERT $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR $INDETS $NOCOORDS
+python ./3_scripts/recordfiler.py $OUT_2 $EXPERT $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR $INDETS $NOCOORDS
 #done
 
 

@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
 
      # Step B2: deduplicate data: merge duplicate records
-    tmp_occs_4 = stepB.duplicate_cleaner(tmp_colnum, dupli = dup_cols, args.working_directory, args.prefix, User='NA', args.expert_file, verbose=False, debugging=False)
+    tmp_occs_4 = stepB.duplicate_cleaner(tmp_colnum, dupli = dup_cols, working_directory = args.working_directory, prefix = args.prefix, User='NA', expert_file = args.expert_file, verbose=False, debugging=False)
     print(len(tmp_occs_4))
 
     # Double checking duplication stats, should show 0. (i.e. repeat B1)
@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
 
     # Step B3: s.n. deduplicate
-    tmp_s_n_1 = stepB.duplicate_cleaner(tmp_s_n, dupli = dup_cols, args.working_directory, args.prefix, User='NA', args.expert_file, verbose=False, debugging=False)
+    tmp_s_n_1 = stepB.duplicate_cleaner(tmp_s_n, dupli = dup_cols, working_directory= args.working_directory, prefix= args.prefix, User='NA', expert_file= args.expert_file, verbose=False, debugging=False)
     print('S.N.:', len(tmp_s_n_1))
 
     # now recombine numbered and s.n. data

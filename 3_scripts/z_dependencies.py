@@ -52,7 +52,8 @@ final_cols_for_import = list([#'global_id',
     'wiki_url',
     'expert_det',
     'ipni_species_author',
-    'modified'])
+    'modified',
+    'geo_issues'])
 
 final_col_for_import_type = {#'global_id': str,
     #'childData_id': str,
@@ -97,7 +98,8 @@ final_col_for_import_type = {#'global_id': str,
     'wiki_url': str,
     'expert_det' : str, # NO/ pd.NA or EXP
     'ipni_species_author': str, #not sure we need this, but easier to throw out later
-    'modified': str # last modified list.
+    'modified': str, # last modified list.
+    'geo_issues': str
     }
 
 
