@@ -197,17 +197,21 @@ if __name__ == "__main__":
                                    expert_file = args.expert_file, verbose=True, debugging=False)
     # recombine data 
     occs = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
-   
+    occs = occs.replace('nan', pd.NA)
+
+
     # check nomencl. status
     occs = occs[occs.status.notna() ] # NOT NA!
-    indet_to_backlog = occs[occs.status.isna() ] # ==NA !!
-
+    print(occs.status, 'should not be any NA!!')
+    indet_to_backlog = occs[occs.specific_epithet.isna() ] # ==NA !!
+    print(indet_to_backlog.status, 'should only be NA!!')
     # checkk for indet values, new indet backlog, append new indets
     # indets = pd.read_csv(args.indets, sep=';')
     
     indet_to_backlog = pd.concat([indet_to_backlog])
     # keep indet_to_backlog and send back into server
     indet_to_backlog.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/new_indet_backlog.csv', sep=';')
+
 
 
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
@@ -249,7 +253,6 @@ if __name__ == "__main__":
     except:
         print('No coordinate-less records found.')
         # occs remains unchanged
-
 
 
     ###---------------------- Then merge all with master database. Make backup of previous version. --------------------------------###

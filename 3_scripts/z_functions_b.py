@@ -134,7 +134,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         occs=occs.astype(z_dependencies.final_col_for_import_type)
     else:
         occs = occs.astype(z_dependencies.final_col_type) # double checking
-    print(occs.dtypes)
+    
     #occs = occs.replace('nan', pd.NA)
 
     dup_cols = dupli #['recorded_by', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
@@ -151,20 +151,51 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     bc_dupli_split = occs1['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
 
+
+    bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip()) # make sure no leading/trailing whitespace
+    # we now have a dataframe with just barcodes and just one single barcode per cell. Epty values are 'None'
+
+    # fill empty values with barcode of that row.
+    bc_dupli_split = bc_dupli_split.fillna(method = 'pad', axis = 1)
+
+####### TODO:
+# now rows should have at least one value which fits, now just need to find a way how to take this and merge those rows.../flag those rows
+    duplicates = None
+    for column in bc_dupli_split.columns:
+        duplicates_in_column = bc_dupli_split[bc_dupli_split.duplicated(subset=[column], keep=False)]
+        print('COLUMN', column, '\n !!!', duplicates_in_column)
+        if not duplicates_in_column.empty:
+            duplicates = pd.concat([duplicates, duplicates_in_column])
+
+    print('YAYAYA', duplicates)
+    
+  
     # crossfill barcodes for duplicate
-    bc_mask = bc_dupli_split.duplicated(keep=False)
+    bc_mask = bc_dupli_split.duplicated(keep=False) # find duplicated lines
+    print(bc_mask)
     # Use ffill and bfill methods to fill in missing values within each group of duplicates
-    bc_dupli_split.loc[bc_mask] = bc_dupli_split.loc[bc_mask].ffill().bfill()
+    bc_dupli_split.loc[bc_mask] = bc_dupli_split.loc[bc_mask].ffill().bfill() 
+    print('seconod here:', bc_dupli_split)
+  
+
+    find_id = bc_dupli_split.apply(pd.Series.duplicated, axis = 1) 
+    print(find_id)
+    bc_dupli_split = bc_dupli_split.mask(find_id)
+    print(bc_dupli_split)
+
+    print('Now filled!!:', bc_dupli_split)
 
     # now all duplicated barcodes are crossfilled
 
     # re-merge barcodes into original dataframe
     occs1['barcode'] = bc_dupli_split.apply(lambda row: ','.join(row.dropna().astype(str)), axis = 1)
-
+    print('3 here:', occs1.barcode)
 
     duplic_barcodes = occs1[occs1.duplicated(subset=['barcode'], keep=False)] # gets us all same barcodes
+    print('BARCODES DUPLICATED:', duplic_barcodes.shape)
+   # print(occs1.barcode)
     cl_barcodes = occs1.drop_duplicates(subset=['barcode'], keep=False) # throws out all duplicated rows
-
+    print('NO BARCODES DUPLICATED:', cl_barcodes.shape)
 
     # ----------- only duplicate barcodes being merged!
     # all other duplicates follow below.
@@ -256,7 +287,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
             institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
             herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
-            barcode = pd.NamedAgg(column = 'barcode', aggfunc=lambda x: ', '.join(x)),
+            barcode = pd.NamedAgg(column = 'barcode', aggfunc='first'),
             orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
             coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
             huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
@@ -283,6 +314,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     ### and re merge deduplicated barcodes and unique barcodes
     occs_dd_bc = pd.concat([cl_barcodes, barcode_merged], axis=0) ###CHECK axis assignments
 
+    return occs_dd_bc
 
     #-------------------------------------------------------------------------------
     occs_dup_col =  occs1.loc[occs1.duplicated(subset=dup_cols, keep=False)]
@@ -376,6 +408,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     # expert_list ??? it might be a nice idea to gather a list of somewhat recent identifiers
     # to  use them to force through dets? Does that make sense? We do update the
     # taxonomy at a later date, so dets to earlier concepts might not be a massive issue?
+
+    occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('sp.', '')
+    occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('indet.', '') 
 
     dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year','colnum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','specific_epithet','genus'],keep=False)]
     dups_diff_species = dups_diff_species.sort_values(['col_year','colnum_full'], ascending = (True, True))
@@ -491,7 +526,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                 geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
-                modified = '0' # is filled wioth new value at the end of deduplication
+                modified = np.nan # is filled wioth new value at the end of deduplication
                 )
             # here quite some data might get lost, so we need to check where we want to just join first,
             # and where we add all values, and then decide on the columns we really want in the final
@@ -550,7 +585,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                 geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
-                modified = '0' # is filled wioth new value at the end of deduplication
+                modified = np.nan # is filled wioth new value at the end of deduplication
             )
 
             # here quite some data might get lost, so we need to check where we want to just join first,
@@ -616,7 +651,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                 geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
-                modified = '0' # is filled wioth new value at the end of deduplication
+                modified = np.nan # is filled wioth new value at the end of deduplication
                 )
             # here quite some data might get lost, so we need to check where we want to just join first,
             # and where we add all values, and then decide on the columns we really want in the final
@@ -673,7 +708,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                     ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                     ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                     geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
-                    modified = '0' # is filled wioth new value at the end of deduplication
+                    modified = np.nan # is filled wioth new value at the end of deduplication
                     )
                 # here quite some data might get lost, so we need to check where we want to just join first,
                 # and where we add all values, and then decide on the columns we really want in the final
