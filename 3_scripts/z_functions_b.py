@@ -155,8 +155,21 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip()) # make sure no leading/trailing whitespace
     # we now have a dataframe with just barcodes and just one single barcode per cell. Epty values are 'None'
 
+
+
+
+
+
+
+
     # fill empty values with barcode of that row.
     bc_dupli_split = bc_dupli_split.fillna(method = 'pad', axis = 1)
+
+
+
+
+
+
 
 ####### TODO:
 # now rows should have at least one value which fits, now just need to find a way how to take this and merge those rows.../flag those rows
@@ -166,22 +179,54 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         print('COLUMN', column, '\n !!!', duplicates_in_column)
         if not duplicates_in_column.empty:
             duplicates = pd.concat([duplicates, duplicates_in_column])
-
+            print('duplic:', duplicates)
+        print('yes')    
     print('YAYAYA', duplicates)
     
-  
+    #bc_dupli_split = bc_dupli_split.reset_index()
+    print('first index reset:\n', bc_dupli_split)
     # crossfill barcodes for duplicate
     bc_mask = bc_dupli_split.duplicated(keep=False) # find duplicated lines
-    print(bc_mask)
+    #bc_dupli_split = bc_dupli_split.reset_index()
+    print('Mask:', bc_mask)
     # Use ffill and bfill methods to fill in missing values within each group of duplicates
-    bc_dupli_split.loc[bc_mask] = bc_dupli_split.loc[bc_mask].ffill().bfill() 
+    #bc_dupli_split.loc[bc_mask] = bc_dupli_split.loc[bc_mask].ffill().bfill() 
     print('seconod here:', bc_dupli_split)
-  
+        
+    # # ab = pd.DataFrame(bc_dupli_split.index)
+    # print('INDEX:', ab) 
+
+    for i in range(bc_dupli_split.shape[1]):
+        print('Loop:', i)
+        dufr = bc_dupli_split.duplicated(subset = bc_dupli_split.columns[i])
+        
+        #ab[f'col_{i}'] = dufr
+        if i == 0:
+            ab = dufr
+        else:
+            ab = pd.concat([ab, dufr], axis = 1)
+        print(ab)
+        print('Hello')
+
+    print(ab.dtypes)
+    # print(ab.dtypes == bool)
+    # ab = ab[ab.loc[ab.dtypes == bool]]
+    # print(ab)
+    #ab = ab.drop(ab.loc[0], axis=1)
+    sum_bool = pd.DataFrame(ab.sum(axis = 1))
+    print(sum_bool)
+    final_tally = (sum_bool >= 1)
+    print('tally:', final_tally)
+
 
     find_id = bc_dupli_split.apply(pd.Series.duplicated, axis = 1) 
-    print(find_id)
+    print('1\n', find_id)
+    
+
+
+
     bc_dupli_split = bc_dupli_split.mask(find_id)
-    print(bc_dupli_split)
+    print('2\n', bc_dupli_split)
 
     print('Now filled!!:', bc_dupli_split)
 
@@ -797,6 +842,12 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     return occs_cleaned
 
 
+testdata = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB/testest.csv', sep=';')
+test = duplicate_cleaner(testdata, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
+                                working_directory =  '/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/', prefix = 'Integrating_', User = 'username', step='Master',
+                                expert_file = 'NO', verbose=True, debugging=True) 
+
+print('FINAL OUTPUT:\n', test.barcode)
 # s-n cleaner integrated in duplicate_cleaner()
 # remove when ready.
 

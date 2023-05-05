@@ -43,7 +43,7 @@ print('Inputfile:')
 print(opt$options$input)
 
 #debugging
- dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/exp_debug_cleaned.csv', sep =';', head=T)
+# dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/exp_debug_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
