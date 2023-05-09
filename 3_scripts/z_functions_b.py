@@ -148,22 +148,12 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     #-------------------------------------------------------------------------------
     # find duplicated barcodes before we do anything
 
-    bc_dupli_split = occs1['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
-    bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
+#     bc_dupli_split = occs1['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
+#     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
 
 
-    bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip()) # make sure no leading/trailing whitespace
-    # we now have a dataframe with just barcodes and just one single barcode per cell. Epty values are 'None'
-
-
-
-
-
-
-
-
-    # fill empty values with barcode of that row.
-    bc_dupli_split = bc_dupli_split.fillna(method = 'pad', axis = 1)
+#     bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip()) # make sure no leading/trailing whitespace
+#     # we now have a dataframe with just barcodes and just one single barcode per cell. Epty values are 'None'
 
 
 
@@ -171,70 +161,84 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
 
 
-####### TODO:
-# now rows should have at least one value which fits, now just need to find a way how to take this and merge those rows.../flag those rows
-    duplicates = None
-    for column in bc_dupli_split.columns:
-        duplicates_in_column = bc_dupli_split[bc_dupli_split.duplicated(subset=[column], keep=False)]
-        print('COLUMN', column, '\n !!!', duplicates_in_column)
-        if not duplicates_in_column.empty:
-            duplicates = pd.concat([duplicates, duplicates_in_column])
-            print('duplic:', duplicates)
-        print('yes')    
-    print('YAYAYA', duplicates)
+
+#     # fill empty values with barcode of that row.
+#     bc_dupli_split = bc_dupli_split.fillna(method = 'pad', axis = 1)
+
+
+
+
+
+
+
+# ####### TODO:
+# # now rows should have at least one value which fits, now just need to find a way how to take this and merge those rows.../flag those rows
+#     duplicates = None
+#     for column in bc_dupli_split.columns:
+#         duplicates_in_column = bc_dupli_split[bc_dupli_split.duplicated(subset=[column], keep=False)]
+#         print('COLUMN', column, '\n !!!', duplicates_in_column)
+#         if not duplicates_in_column.empty:
+#             duplicates = pd.concat([duplicates, duplicates_in_column])
+#             print('duplic:', duplicates)
+#         print('yes')    
+#     print('YAYAYA', duplicates)
     
-    #bc_dupli_split = bc_dupli_split.reset_index()
-    print('first index reset:\n', bc_dupli_split)
-    # crossfill barcodes for duplicate
-    bc_mask = bc_dupli_split.duplicated(keep=False) # find duplicated lines
-    #bc_dupli_split = bc_dupli_split.reset_index()
-    print('Mask:', bc_mask)
-    # Use ffill and bfill methods to fill in missing values within each group of duplicates
-    #bc_dupli_split.loc[bc_mask] = bc_dupli_split.loc[bc_mask].ffill().bfill() 
-    print('seconod here:', bc_dupli_split)
+#     #bc_dupli_split = bc_dupli_split.reset_index()
+#     print('first index reset:\n', bc_dupli_split)
+#     # crossfill barcodes for duplicate
+#     bc_mask = bc_dupli_split.duplicated(keep=False) # find duplicated lines
+#     #bc_dupli_split = bc_dupli_split.reset_index()
+#     print('Mask:', bc_mask)
+#     # Use ffill and bfill methods to fill in missing values within each group of duplicates
+#     #bc_dupli_split.loc[bc_mask] = bc_dupli_split.loc[bc_mask].ffill().bfill() 
+#     print('seconod here:', bc_dupli_split)
         
-    # # ab = pd.DataFrame(bc_dupli_split.index)
-    # print('INDEX:', ab) 
+#     # # ab = pd.DataFrame(bc_dupli_split.index)
+#     # print('INDEX:', ab) 
 
-    for i in range(bc_dupli_split.shape[1]):
-        print('Loop:', i)
-        dufr = bc_dupli_split.duplicated(subset = bc_dupli_split.columns[i])
+#     for i in range(bc_dupli_split.shape[1]):
+#         print('Loop:', i)
+#         dufr = bc_dupli_split.duplicated(subset = bc_dupli_split.columns[i])
         
-        #ab[f'col_{i}'] = dufr
-        if i == 0:
-            ab = dufr
-        else:
-            ab = pd.concat([ab, dufr], axis = 1)
-        print(ab)
-        print('Hello')
+#         #ab[f'col_{i}'] = dufr
+#         if i == 0:
+#             ab = dufr
+#         else:
+#             ab = pd.concat([ab, dufr], axis = 1)
+#         print(ab)
+#         print('Hello')
 
-    print(ab.dtypes)
-    # print(ab.dtypes == bool)
-    # ab = ab[ab.loc[ab.dtypes == bool]]
-    # print(ab)
-    #ab = ab.drop(ab.loc[0], axis=1)
-    sum_bool = pd.DataFrame(ab.sum(axis = 1))
-    print(sum_bool)
-    final_tally = (sum_bool >= 1)
-    print('tally:', final_tally)
+#     print(ab.dtypes)
+#     # print(ab.dtypes == bool)
+#     # ab = ab[ab.loc[ab.dtypes == bool]]
+#     # print(ab)
+#     #ab = ab.drop(ab.loc[0], axis=1)
+#     sum_bool = pd.DataFrame(ab.sum(axis = 1))
+#     print(sum_bool)
+#     final_tally = (sum_bool >= 1)
+#     print('tally:', final_tally)
 
 
-    find_id = bc_dupli_split.apply(pd.Series.duplicated, axis = 1) 
-    print('1\n', find_id)
+#     find_id = bc_dupli_split.apply(pd.Series.duplicated, axis = 1) 
+#     print('1\n', find_id)
     
 
 
 
-    bc_dupli_split = bc_dupli_split.mask(find_id)
-    print('2\n', bc_dupli_split)
+#     bc_dupli_split = bc_dupli_split.mask(find_id)
+#     print('2\n', bc_dupli_split)
 
-    print('Now filled!!:', bc_dupli_split)
+#     print('Now filled!!:', bc_dupli_split)
 
-    # now all duplicated barcodes are crossfilled
+#     # now all duplicated barcodes are crossfilled
+    #-------------------------------------------------------------------------------
+
+
+
 
     # re-merge barcodes into original dataframe
-    occs1['barcode'] = bc_dupli_split.apply(lambda row: ','.join(row.dropna().astype(str)), axis = 1)
-    print('3 here:', occs1.barcode)
+    # occs1['barcode'] = bc_dupli_split.apply(lambda row: ','.join(row.dropna().astype(str)), axis = 1)
+    # print('3 here:', occs1.barcode)
 
     duplic_barcodes = occs1[occs1.duplicated(subset=['barcode'], keep=False)] # gets us all same barcodes
     print('BARCODES DUPLICATED:', duplic_barcodes.shape)

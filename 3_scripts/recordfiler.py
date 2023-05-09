@@ -46,7 +46,7 @@ if __name__ == "__main__":
                         help='Is the database saved locally or on a server??',
                         type = str)
     parser.add_argument('database_name',
-                        help='The name of the SQL database to access',
+                        help='The name of the SQL database to access, or if db_local = \'local\', then the directory of database',
                         type = str)
     parser.add_argument('hostname',
                         help= 'The hostname for the SQL database',
@@ -165,19 +165,27 @@ if __name__ == "__main__":
         # 
         # print('Master database read successfully!', len(m_DB), 'records downloaded')
         # #
-        
-# download databases....
+    elif args.db_local == 'local':
+        print('Reading local database')
+        mdb_dir = args.database_name
+
+        BL_indets = pd.read_csv(mdb_dir+'/indet_backlog.csv', sep=';')
+        #print(BL_indets)
+        try:
+            no_coord_bl = pd.read_csv(mdb_dir + '/coord_backlog.csv', sep=';')
+        except:
+            #nothing
+            a = 1
+        m_DB = pd.read_csv(mdb_dir + '/master_db.csv', sep =';')
+
 
     ###---------------------- First test against indets backlog --------------------------------###
     print('INDET STEP')
     print('------------------------------------------------')
 
-    BL_indets = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/indet_backlog.csv', sep=';')
-    #BL_indets = pd.read_csv(args.indets_backlog, sep=';')
-
 
     # check all occs against indet backlog
-    test_upd_DB = pre_merge.check_premerge(occs, BL_indets, verbose=True)
+    test_upd_DB = pre_merge.check_premerge(mdb = BL_indets, occs = occs, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
 
     print(test_upd_DB.dtypes)
@@ -221,7 +229,7 @@ if __name__ == "__main__":
 
 
     try:
-        no_coord_bl = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/coord_backlog.csv', sep=';')
+        #no_coord_bl = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/coord_backlog.csv', sep=';')
         # check all occs against indet backlog
         no_coord_check = pre_merge.check_premerge(occs, no_coord_bl, verbose=True)
 
@@ -265,7 +273,6 @@ if __name__ == "__main__":
 
     ###--- Import a local file to make sure it works, GLOBAL is down at the moment
 
-    m_DB = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/master_db.csv', sep =';')
     # to make it look like the masterdb I will add all the final columns
     miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
     m_DB[miss_col] = '0'
@@ -306,6 +313,7 @@ if __name__ == "__main__":
     for col in deduplid.columns:
         deduplid[col] = deduplid[col].astype(str).str.replace('nan', '')
 
+    print(deduplid.barcode)
 
     # this is now the new master database...
     deduplid.to_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/master_db.csv', sep=';', index=False)

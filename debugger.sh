@@ -9,6 +9,8 @@ STEP2ASWELL='YES' # defaults to 'YES'.
 # Step 1 RECORDCLEANER
 # VARIABLES TO MODIFY, REQUIRED!!
 INPUT='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/1_data_raw/test0120.csv' # path to your input file
+
+
 DAT_FORM='GBIF'           # format of your input file
 WDIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/1a_WIP/' # directory where intermediate files will be written to
 OUT_DIR='/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/' # directory where final file is written to
@@ -40,7 +42,7 @@ NOCOORDS=$(echo $OUT_DIR$PREFIX'nocoords.csv')
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Step 2 RECORDFILER
-MASTERDB='GLOBAL'
+MASTERDB='/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/'
 HOSTNAME='10.4.91.57'
 TABLE='phil_test_221209'
 SCHEMA='serafin_test'
@@ -49,7 +51,7 @@ LOC='local'
 
 
 
-# echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
+ echo $INPUT_2 $MASTERDB $HOSTNAME $TABLE $SCHEMA
 # #if STEP2ASWELL='YES' do
 # echo 'python ./3_scripts/recordfiler.py' $INPUT_2 $EXPERT $LOC $MASTERDB $HOSTNAME $TABLE $SCHEMA $WDIR $INDETS $NOCOORDS
 
