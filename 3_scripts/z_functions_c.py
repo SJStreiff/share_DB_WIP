@@ -51,8 +51,8 @@ def get_HUH_names(recordedBy, verbose=True):
     mid_insert = re.sub(r'([A-Z])', '', firstnames).strip()
     # key_first = {: r''}
     firstnames = re.sub(r'([a-z]{0,3})', '', firstnames)
-
-    print(firstnames, lastname, 'MID=', mid_insert)
+    if verbose:
+        print(firstnames, lastname, 'MID=', mid_insert)
 
 
     # add points and plus into firstnames string
@@ -68,7 +68,8 @@ def get_HUH_names(recordedBy, verbose=True):
 
 
         Firstname_query = s.strip()
-    print(Firstname_query)
+    if verbose:
+        print(Firstname_query)
 
     # create name=<string> for insertion into url for query.
     lastname=lastname.strip()
@@ -76,19 +77,22 @@ def get_HUH_names(recordedBy, verbose=True):
         name_string = Firstname_query+lastname
     else:
         name_string = Firstname_query+mid_insert+'+'+lastname
-    print(name_string)
+    if verbose:
+        print(name_string)
     name_string=name_string.strip() # just to make sure no leadin/trailing whitespace
     # do query
 
     url = "https://kiki.huh.harvard.edu/databases/botanist_search.php?name="+name_string+"&individual=on&json=y"
-    print('The URL is:', url)
+    if verbose:
+        print('The URL is:', url)
     response = requests.get(url)
-    print(f"The response is: {response.text}")
+    if verbose:
+        print(f"The response is: {response.text}")
 
 
 
 
-    return 'Yay maybe'
+    return 'Working now.'
 #
 # test = get_HUH_names(recordedBy)
 # print(test)
@@ -105,7 +109,8 @@ def country_crossfill(occs, verbose=True):
     occs['country'] = occs.country.fillna(cc.pandas_convert(series = occs.country_id, to='name_short'))
     occs['country_iso3'] = cc.pandas_convert(series = occs.country, to='ISO3') # needed for later in coordinate cleaner
 
-    print('it should now be all good?', occs.country)
+    if verbose:
+        print('Countries all filled:', occs.country)
 
     return occs
 

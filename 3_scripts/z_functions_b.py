@@ -24,7 +24,7 @@ import codecs
 import os
 import regex as re
 import swifter
-from datetime import date
+from datetime import datetime
 
 
 import z_dependencies
@@ -56,6 +56,7 @@ def duplicate_stats(occs, working_directory, prefix, out=True, verbose=True, deb
     # MISSING collector information and number
     # remove empty collector and coll num
     occs1 = occs.dropna(how='all', subset = ['recorded_by']) # no collector information is impossible.
+    #occs1 = occs1[occs1.recorded_by != 'nan']
     print('Deleted', len(occs.index) - len(occs1.index),
      'rows with no collector and no number; \n',
      len(occs1.index), 'records left')
@@ -78,9 +79,9 @@ def duplicate_stats(occs, working_directory, prefix, out=True, verbose=True, deb
     occs_colNum['coll_surname'] = occs_colNum['recorded_by'].str.split(',', expand=True)[0]
     print(occs_colNum['coll_surname'])
 
-    if len(occs_nocolNum)>0:
-        occs_nocolNum.to_csv(working_directory+prefix+'s_n.csv', index = False, sep = ';' )
-        print('\n The data with no collector number was saved to', working_directory+prefix+'s_n.csv', '\n')
+    #if len(occs_nocolNum)>0:
+    #    occs_nocolNum.to_csv(working_directory+prefix+'s_n.csv', index = False, sep = ';' )
+    #    print('\n The data with no collector number was saved to', working_directory+prefix+'s_n.csv', '\n')
 
     #-------------------------------------------------------------------------------
     # Perform some nice stats, just to get an idea what we have
@@ -134,8 +135,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         occs=occs.astype(z_dependencies.final_col_for_import_type)
     else:
         occs = occs.astype(z_dependencies.final_col_type) # double checking
-    
-    #occs = occs.replace('nan', pd.NA)
+    print(occs.dtypes)
+    #occs = occs.replace(np.nan, pd.NA)
 
     dup_cols = dupli #['recorded_by', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
 
@@ -147,119 +148,83 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
     #-------------------------------------------------------------------------------
     # find duplicated barcodes before we do anything
+    # this step only takes place in master step.
+    if step=='Master':
+        duplic_barcodes = occs1[occs1.duplicated(subset=['barcode'], keep=False)] # gets us all same barcodes
+        print('BARCODES DUPLICATED:', duplic_barcodes.shape)
+    # print(occs1.barcode)
+        cl_barcodes = occs1.drop_duplicates(subset=['barcode'], keep=False) # throws out all duplicated rows
+        print('NO BARCODES DUPLICATED:', cl_barcodes.shape)
 
-#     bc_dupli_split = occs1['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
-#     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
+        # ----------- only duplicate barcodes being merged!
+        # all other duplicates follow below.
+        if expert_file == 'EXP':
+            # if expert we need to take care we integrate the expert data properly
+            if verbose:
+                print('Merging duplicated barcodes, EXPERT file')
+            barcode_merged = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
+                    scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
+                    genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
+                    specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
+                    species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
+                    collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
+                    recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
+                    colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
+                    prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
+                    colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
+                    sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
+                    col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
+                    col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
+                    col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
+                    col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
+                    det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
+                    det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
+                    det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
+                    det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
+                    det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
+                    country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
+                    country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
+                    continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
+                    locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
+                    coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
+                    ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
+                    ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
+                    institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
+                    herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
+                    barcode = pd.NamedAgg(column = 'barcode', aggfunc='first'), # as we have premerged all barcodes above, it doesn't matter which one we take
+                    orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
+                    coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
+                    huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
+                    geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+                    wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'))
 
-
-#     bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip()) # make sure no leading/trailing whitespace
-#     # we now have a dataframe with just barcodes and just one single barcode per cell. Epty values are 'None'
-
-
-
-
-
-
-
-
-#     # fill empty values with barcode of that row.
-#     bc_dupli_split = bc_dupli_split.fillna(method = 'pad', axis = 1)
-
-
-
-
-
-
-
-# ####### TODO:
-# # now rows should have at least one value which fits, now just need to find a way how to take this and merge those rows.../flag those rows
-#     duplicates = None
-#     for column in bc_dupli_split.columns:
-#         duplicates_in_column = bc_dupli_split[bc_dupli_split.duplicated(subset=[column], keep=False)]
-#         print('COLUMN', column, '\n !!!', duplicates_in_column)
-#         if not duplicates_in_column.empty:
-#             duplicates = pd.concat([duplicates, duplicates_in_column])
-#             print('duplic:', duplicates)
-#         print('yes')    
-#     print('YAYAYA', duplicates)
-    
-#     #bc_dupli_split = bc_dupli_split.reset_index()
-#     print('first index reset:\n', bc_dupli_split)
-#     # crossfill barcodes for duplicate
-#     bc_mask = bc_dupli_split.duplicated(keep=False) # find duplicated lines
-#     #bc_dupli_split = bc_dupli_split.reset_index()
-#     print('Mask:', bc_mask)
-#     # Use ffill and bfill methods to fill in missing values within each group of duplicates
-#     #bc_dupli_split.loc[bc_mask] = bc_dupli_split.loc[bc_mask].ffill().bfill() 
-#     print('seconod here:', bc_dupli_split)
-        
-#     # # ab = pd.DataFrame(bc_dupli_split.index)
-#     # print('INDEX:', ab) 
-
-#     for i in range(bc_dupli_split.shape[1]):
-#         print('Loop:', i)
-#         dufr = bc_dupli_split.duplicated(subset = bc_dupli_split.columns[i])
-        
-#         #ab[f'col_{i}'] = dufr
-#         if i == 0:
-#             ab = dufr
-#         else:
-#             ab = pd.concat([ab, dufr], axis = 1)
-#         print(ab)
-#         print('Hello')
-
-#     print(ab.dtypes)
-#     # print(ab.dtypes == bool)
-#     # ab = ab[ab.loc[ab.dtypes == bool]]
-#     # print(ab)
-#     #ab = ab.drop(ab.loc[0], axis=1)
-#     sum_bool = pd.DataFrame(ab.sum(axis = 1))
-#     print(sum_bool)
-#     final_tally = (sum_bool >= 1)
-#     print('tally:', final_tally)
+            if step == 'master':
+                # add master columns to the mix
+                if verbose:
+                    print('Merging duplicated barcodes, EXPERT file and master step.')
+                master_add_cols = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
+                        expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                        status = 'ACCEPTED',
+                        accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
+                        ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
+                        ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
+                        )
+                # merge in master columns to the rest.
+                barcode_merged = pd.concat([barcode_merged, master_add_cols], axis=1) # add master columns.
 
 
-#     find_id = bc_dupli_split.apply(pd.Series.duplicated, axis = 1) 
-#     print('1\n', find_id)
-    
-
-
-
-#     bc_dupli_split = bc_dupli_split.mask(find_id)
-#     print('2\n', bc_dupli_split)
-
-#     print('Now filled!!:', bc_dupli_split)
-
-#     # now all duplicated barcodes are crossfilled
-    #-------------------------------------------------------------------------------
-
-
-
-
-    # re-merge barcodes into original dataframe
-    # occs1['barcode'] = bc_dupli_split.apply(lambda row: ','.join(row.dropna().astype(str)), axis = 1)
-    # print('3 here:', occs1.barcode)
-
-    duplic_barcodes = occs1[occs1.duplicated(subset=['barcode'], keep=False)] # gets us all same barcodes
-    print('BARCODES DUPLICATED:', duplic_barcodes.shape)
-   # print(occs1.barcode)
-    cl_barcodes = occs1.drop_duplicates(subset=['barcode'], keep=False) # throws out all duplicated rows
-    print('NO BARCODES DUPLICATED:', cl_barcodes.shape)
-
-    # ----------- only duplicate barcodes being merged!
-    # all other duplicates follow below.
-    if expert_file == 'EXP':
-        # if expert we need to take care we integrate the expert data properly
-        if verbose:
-            print('Merging duplicated barcodes, EXPERT file')
-        barcode_merged = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
+        else:
+            # if not EXP, just bung the data together....
+            if verbose:
+                print('Merging duplicated barcodes')
+            barcode_merged = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
                 scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
                 genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
                 specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
                 species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
                 collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
                 recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
-                colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
+                colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc='first'),
                 prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
                 colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
                 sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
@@ -281,89 +246,34 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
                 institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
                 herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
-                barcode = pd.NamedAgg(column = 'barcode', aggfunc='first'), # as we have premerged all barcodes above, it doesn't matter which one we take
+                barcode = pd.NamedAgg(column = 'barcode', aggfunc='first'),
                 orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
                 coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
                 huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
                 geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
-                wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'))
+                wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
+                )
 
-        if step == 'master':
-            # add master columns to the mix
-            if verbose:
-                print('Merging duplicated barcodes, EXPERT file and master step.')
-            master_add_cols = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
-                    expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                    status = 'ACCEPTED',
-                    accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
-                    ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
-                    ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
-                    )
-            # merge in master columns to the rest.
-            barcode_merged = pd.concat([barcode_merged, master_add_cols], axis=1) # add master columns.
-
-
-    else:
-        # if not EXP, just bung the data together....
-        if verbose:
-            print('Merging duplicated barcodes')
-        barcode_merged = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
-            scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
-            genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
-            specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
-            species_author = pd.NamedAgg(column = 'species_author', aggfunc = 'first' ),
-            collector_id = pd.NamedAgg(column = 'collector_id', aggfunc = 'first' ),
-            recorded_by = pd.NamedAgg(column = 'recorded_by', aggfunc = 'first' ),
-            colnum_full = pd.NamedAgg(column = 'colnum_full', aggfunc=lambda x: ', '.join(x)),
-            prefix = pd.NamedAgg(column = 'prefix', aggfunc = 'first' ),
-            colnum = pd.NamedAgg(column = 'colnum', aggfunc = 'first' ),
-            sufix = pd.NamedAgg(column = 'sufix', aggfunc =  'first'),
-            col_date = pd.NamedAgg(column = 'col_date', aggfunc = 'first' ),
-            col_day = pd.NamedAgg(column = 'col_day', aggfunc = 'first' ),
-            col_month = pd.NamedAgg(column = 'col_month', aggfunc = 'first' ),
-            col_year = pd.NamedAgg(column = 'col_year', aggfunc = 'first' ),
-            det_by = pd.NamedAgg(column = 'det_by', aggfunc = lambda x: ', '.join(x) ),
-            det_date = pd.NamedAgg(column = 'det_date', aggfunc = 'first' ),
-            det_day = pd.NamedAgg(column = 'det_day', aggfunc = 'first' ),
-            det_month = pd.NamedAgg(column = 'det_month', aggfunc = 'first' ),
-            det_year = pd.NamedAgg(column = 'det_year', aggfunc = 'first' ),
-            country_id = pd.NamedAgg(column = 'country_id', aggfunc = 'first' ),
-            country = pd.NamedAgg(column = 'country', aggfunc = 'first' ),
-            continent = pd.NamedAgg(column = 'continent', aggfunc = 'first' ),
-            locality = pd.NamedAgg(column = 'locality', aggfunc = 'first' ),
-            coordinate_id = pd.NamedAgg(column = 'coordinate_id', aggfunc = 'first' ),
-            ddlong = pd.NamedAgg(column = 'ddlong', aggfunc = 'first' ),
-            ddlat = pd.NamedAgg(column = 'ddlat', aggfunc = 'first' ),
-            institute = pd.NamedAgg(column = 'institute', aggfunc = lambda x: ', '.join(x)),
-            herbarium_code = pd.NamedAgg(column = 'herbarium_code', aggfunc = lambda x: ', '.join(x)),
-            barcode = pd.NamedAgg(column = 'barcode', aggfunc='first'),
-            orig_bc = pd.NamedAgg(column = 'orig_bc', aggfunc=lambda x: ', '.join(x)),
-            coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
-            huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
-            geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
-            wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
-            )
-
-        if step == 'master':
-            if verbose:
-                print('Merging duplicated barcodes, master step')
-            # add master columns to the mix
-            master_add_cols = duplic_barcodes.groupby(subset = ['barcode'], as_index = False).agg(
-                    expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                    status = 'ACCEPTED',
-                    accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
-                    ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
-                    ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
-                    )
-            # merge in master columns to the rest.
-            barcode_merged = pd.concat([barcode_merged, master_add_cols], axis=1) # add master columns.
+            if step == 'master':
+                if verbose:
+                    print('Merging duplicated barcodes, master step')
+                # add master columns to the mix
+                master_add_cols = duplic_barcodes.groupby(subset = ['barcode'], as_index = False).agg(
+                        expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                        status = 'ACCEPTED',
+                        accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
+                        ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
+                        ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
+                        )
+                # merge in master columns to the rest.
+                barcode_merged = pd.concat([barcode_merged, master_add_cols], axis=1) # add master columns.
 
 
 
-    ### and re merge deduplicated barcodes and unique barcodes
-    occs_dd_bc = pd.concat([cl_barcodes, barcode_merged], axis=0) ###CHECK axis assignments
+        ### and re merge deduplicated barcodes and unique barcodes
+        occs1 = pd.concat([cl_barcodes, barcode_merged], axis=0) ###CHECK axis assignments
 
-    return occs_dd_bc
+        
 
     #-------------------------------------------------------------------------------
     occs_dup_col =  occs1.loc[occs1.duplicated(subset=dup_cols, keep=False)]
@@ -394,8 +304,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     convert_dict = {'ddlat': float,
                     'ddlong': float}
     occs_dup_col = occs_dup_col.astype(convert_dict)
-    print(occs_dup_col)
-
+    print('HERE',occs_dup_col)
+    # data in sn step still here TODO
 
     if verbose:
         print('\n The duplicates subset, before cleaning dups has the shape: ', occs_dup_col.shape)
@@ -413,7 +323,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             ddlong = pd.NamedAgg(column = 'ddlong', aggfunc='var'),
             ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'))
 
-        print(test)
+        print('TEST', test)
         # if this variance is above 0.1 degrees
         if len(test)>0:
             test.loc[test['ddlong'] >= 0.1, 'long bigger than 0.1'] = 'True'
@@ -426,12 +336,14 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             true = test[(test["long bigger than 0.1"] == 'True') | (test["lat bigger than 0.1"] == 'True')]
 
             # write these records to csv for correcting or discarding.
-            true.to_csv(working_directory + 'TO_CHECK_'+prefix+'_coordinates_to_combine.csv', index = False, sep = ';')
-
+            if debugging:
+                true.to_csv(working_directory + 'TO_CHECK_'+prefix+'_coordinates_to_combine.csv', index = False, sep = ';')
+                print('Wrote a dataframe of coordinate duplicates to check., ending "_coordinates_to_combine.csv". ')
             # remove the offending rows and spit them out for manual checking or just discarding
             coord_to_check = occs_dup_col[occs_dup_col.index.isin(true.index)]
             occs_dup_col = occs_dup_col[~ occs_dup_col.index.isin(true.index)]
-            coord_to_check.to_csv(working_directory + 'TO_CHECK_'+prefix+'coordinate_issues.csv', index = False, sep = ';')
+            if debugging:
+                coord_to_check.to_csv(working_directory + 'TO_CHECK_'+prefix+'coordinate_issues.csv', index = False, sep = ';')
             #print(occs_dup_col.shape)
 
              # print summary
@@ -492,7 +404,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
 
     # cols we to change
-    cols = ['genus','specific_epithet','detBy', 'det_year']
+    # cols = ['genus','specific_epithet','detBy', 'det_year']
 
 
     #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
@@ -502,14 +414,17 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     #groupby col and num, and transform the rest of the columns
     #we shall create a new column just to keep a trace
 
+    occs_dup_col.reset_index(drop=True, inplace=True)
     occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
-    print('HERE')
+    ###### HERE no data left in sn step... TODO
+    print('HERE', occs_dup_col)
     occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
 
     #save a csv with all duplicates beside each other but otherwise cleaned, allegedly.
-    occs_dup_col.to_csv(working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv', index = False, sep = ';')
-    print('\n I have saved a checkpoint file of all cleaned and processed duplicates, nicely beside each other, to:',
-    working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv')
+    if debugging:
+        occs_dup_col.to_csv(working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv', index = False, sep = ';')
+        print('\n I have saved a checkpoint file of all cleaned and processed duplicates, nicely beside each other, to:',
+        working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv')
 
 
 
@@ -772,6 +687,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         ########### END of expert/non expert if/else
 
     else:
+        occs_dup_col['colnum_full'] = occs_dup_col['colnum_full'].fillna('')
         # not master
         occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
             scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
@@ -813,11 +729,15 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         # and where we add all values, and then decide on the columns we really want in the final
         # database!!!
 
-        # de-duplicated duplicates sorting to get them ready for merging
-        occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+    # de-duplicated duplicates sorting to get them ready for merging
+    print(len(dupli))
+    length = len(dupli)-2
+    order_vec = tuple([True, True] + [False]*length)
+    print(order_vec)
+    occs_merged = occs_merged.sort_values(dup_cols, ascending = order_vec)
 
-        print('\n There were', len(occs_dup_col), 'duplicated specimens')
-        print('\n There are', len(occs_merged), 'unique records after merging.')
+    print('\n There were', len(occs_dup_col), 'duplicated specimens')
+    print('\n There are', len(occs_merged), 'unique records after merging.')
 
     ######### END of if/else master 
 
@@ -840,18 +760,17 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     occs_cleaned = occs_cleaned.sort_values(dup_cols, ascending = (True, True, False, False))
     #print(occs_cleaned.head(50))
 
-    occs_cleaned.to_csv(working_directory+prefix+'deduplicated.csv', index = False, sep = ';', )
-    print('\n The output was saved to', working_directory+prefix+'deduplicated.csv', '\n')
+    if debugging:
+        occs_cleaned.to_csv(working_directory+prefix+'deduplicated.csv', index = False, sep = ';', )
+        print('\n The output was saved to', working_directory+prefix+'deduplicated.csv', '\n')
 
     return occs_cleaned
 
 
-testdata = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB/testest.csv', sep=';')
-test = duplicate_cleaner(testdata, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
-                                working_directory =  '/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/', prefix = 'Integrating_', User = 'username', step='Master',
-                                expert_file = 'NO', verbose=True, debugging=True) 
 
-print('FINAL OUTPUT:\n', test.barcode)
+
+
+# DEPRECATED!
 # s-n cleaner integrated in duplicate_cleaner()
 # remove when ready.
 

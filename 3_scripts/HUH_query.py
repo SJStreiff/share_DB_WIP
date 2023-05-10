@@ -30,6 +30,7 @@ import requests
 import swifter
 
 
+
 from bs4 import BeautifulSoup
 
 # to silence the copy/view pandas warnings.
@@ -62,7 +63,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
     if verbose:
         print('HUH name checker checking the botanist', recordedBy, '\n .........................\n')
-
+    else:
+        print(recordedBy)
     recby_length = len(recordedBy.split())
     if debugging:
         print(recby_length)
@@ -709,11 +711,11 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
 
 
-def huh_apply(mod_data):
-    # function for the apply used below in parallelised fashion.
-    mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
-                                                                                            row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
-    return mod_data
+# def huh_apply(mod_data):
+#     # function for the apply used below in parallelised fashion.
+#     mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
+#                                                                                             row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
+#     return mod_data
 
 
 
@@ -721,7 +723,7 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     """
     Launches the HUH name checking function, and reintegrates the resulting queried names into occs.
     """
-
+    print('HUH query starting.')
     # reset index, so we can reintegrate data later....
     occs.set_index(occs.recorded_by, inplace=True)
     # drop the cols we had for formatting purposes...
@@ -742,6 +744,7 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     # run the HUH name function on the mod_data dataframe
     mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.swifter.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
                                                                                             row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
+    
     print(mod_data)
     # set index so we can reintegrate the resulting data
     # 

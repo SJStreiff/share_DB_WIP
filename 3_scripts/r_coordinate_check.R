@@ -7,7 +7,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 rm(list = ls()) # just making sure the environment is clean
-
+print('#> C: Coordinate checking')
 package_list <- c('optparse',
                   'rnaturalearthdata',
                   'CoordinateCleaner') # or geocodeR etc.; ShinyCCleaner is not findable yet... Unpublished
@@ -43,7 +43,7 @@ print('Inputfile:')
 print(opt$options$input)
 
 #debugging
-# dat <- read.csv('~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/exp_debug_cleaned.csv', sep =';', head=T)
+dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230509_Phil_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
@@ -54,12 +54,14 @@ dat <- data.frame(dat)  # checking
 no_coord_dat <- dat[is.na(dat$ddlong),] # subsetting coords with no coordinate value
 if(length(no_coord_dat[,1]) != 0){
   no_coord_dat$geo_issues <- 'no_coordinate'
+  no_coord_dat$summary <- 'FALSE'
 }
 dat <- dat[!is.na(dat$ddlong),] # checking that all records have coordinates...
 
 
 dat[dat == 'nan'] <- ''
 dat[dat == '<NA>'] <- ''
+dat[dat == '<NA> nan'] <- ''
 dat[dat == '0'] <- ''
 dat[is.na(dat)] <- ''
 
@@ -90,7 +92,10 @@ for(j in newcols){
 #if(sum(flags))
 # make a new column with all issues collated together... in one cell.
 geo_issues <- tidyr::unite(flags, geo_issues, any_of(newcols), sep = ',', na.rm = TRUE)
-geo_issues <- geo_issues[,-geo_issues$.summary] # drop the summary col as we have all the info we need in the geo_issue column
+names(geo_issues)[names(geo_issues) == '.summary'] <- 'summary'
+
+
+#geo_issues <- geo_issues[, -"summary"] # drop the summary col as we have all the info we need in the geo_issue column
 geo_issues <- rbind(geo_issues, no_coord_dat)
 
 
@@ -102,5 +107,6 @@ nc_outfile <- gsub('spatialvalid.csv', 'nocoords.csv', out_file)
 
 
 print(paste('Annotated coordinates are written to', out_file))
+print('#> C: Coordinate checking - complete')
 
 # end

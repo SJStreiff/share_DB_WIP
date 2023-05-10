@@ -97,6 +97,12 @@ RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to
   * **WIP**: Crosscheck import data with indets and non-spatialvalid data in database, and recover any records potentially matching.
 
 
+
+## verbose and debugging options
+
+...tbd
+
+
 ## TODO
 
 * Keep readme uptodate with new developments and changes

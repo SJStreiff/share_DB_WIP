@@ -326,7 +326,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             na_bc = occs[occs['st_barcode'].isna()]
             na_bc.to_csv(working_directory + prefix + 'NA_barcodes.csv', index = False, sep = ';', )
             if verbose:
-                print('I have saved', len(na_bc), 'occurences to the file', working_directory+'NA_barcodes.csv for corrections')
+                print('I have saved', len(na_bc), 'occurences to the file', working_directory+prefix +'NA_barcodes.csv for corrections')
             if verbose:
                 print('I am continuing without these.')
             occs = occs[occs['st_barcode'].notna()]
@@ -766,7 +766,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
     occs_newnames = occs_newnames.astype(z_dependencies.final_col_type)
     # save to file
-    occs_newnames.to_csv(working_directory+prefix+'names_standardised.csv', index = False, sep = ';', )
+    #occs_newnames.to_csv(working_directory+prefix+'names_standardised.csv', index = False, sep = ';', )
     occs_newnames['coll_surname'] = occs_newnames['recorded_by'].str.split(',', expand=True)[0]
 
     if debugging:
@@ -780,7 +780,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 
 
 
-def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, verbose=True):
+def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, verbose=True, debugging=False):
     '''
     Quickly read in data for reinsertion, test that nothing went too wrong, and append to the data already in the system.
     '''
