@@ -439,7 +439,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     # Here we can still modify which columns we take further, and how they are merged,
     #   i.e. is it record1, record1duplicate or do we discard duplicate data and just take the first record.
 
-
+    occs_dup_col.colnum_full = occs_dup_col.colnum_full.fillna('s.n.')
     ############################################ Here integrate expert flag
     if step == 'master':
         # Expert level deduplication only between datasets, not in single dataset!
@@ -728,12 +728,25 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         # here quite some data might get lost, so we need to check where we want to just join first,
         # and where we add all values, and then decide on the columns we really want in the final
         # database!!!
+    try:
+        occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n.', pd.NA)
+        print('1 s.n. found')
+        occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n., s.n.', pd.NA)
+        print('2 s.n. found')
+        occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n., s.n., s.n.', pd.NA)
+        print('3 s.n. found')
+        occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n., s.n., s.n., s.n.', pd.NA)
+        print('4 s.n. found')
+    except:
+        print('no s.n. found')
+
 
     # de-duplicated duplicates sorting to get them ready for merging
     print(len(dupli))
     length = len(dupli)-2
     order_vec = tuple([True, True] + [False]*length)
-    print(order_vec)
+    print(order_vec, len(order_vec))
+
     occs_merged = occs_merged.sort_values(dup_cols, ascending = order_vec)
 
     print('\n There were', len(occs_dup_col), 'duplicated specimens')
@@ -757,7 +770,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         
     #    occs_cleaned = pd.merge(pd.merge(occs_merged,occs_unique,how='outer'))#,occs_nocolNum ,how='outer')
     occs_cleaned = pd.concat([occs_merged, occs_unique])
-    occs_cleaned = occs_cleaned.sort_values(dup_cols, ascending = (True, True, False, False))
+    occs_cleaned = occs_cleaned.sort_values(dup_cols, ascending = order_vec)
     #print(occs_cleaned.head(50))
 
     if debugging:

@@ -8,6 +8,11 @@ This pipeline consists (at the moment) of two more or less independent steps:
 * RECORDCLEANER: This step takes raw occurrence records and cleans them to a somewhat acceptable standard. The main feature here is that we merge duplicate collections, while retaining all the information of the different iso-specimens.
 * RECORD-FILER: This step integrates the data cleaned in RECORDCLEANER into a specified database (might at some point be automatically into a postgres/SQL database).
 
+## Installation
+
+In your terminal window navigate to your folder with the enclosed *'environment.yml'* file. Once there, execute the command *conda env create -f environment.yml*.
+
+
 ## The/A PIPELINE for standardising occurrence records: RECORDCLEANER
 
 <!-- ![There would be a funny picture here normally](TMP_titleimage.png "") -->

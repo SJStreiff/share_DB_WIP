@@ -141,11 +141,11 @@ if __name__ == "__main__":
     # Step A4: Query botanist names to HUH botanists database
     # HUH name query
     print('\n#> A4: HUH name query\n')
-    print('SKIPPED. REINSTATE')
+    
     # print('This takes a moment to initialise...')
-    # tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
-    # print('\n #> STEP A complete.\n')
-    tmp_occs_3 = tmp_occs_3.reset_index(drop=True)
+   # tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
+   # tmp_occs_3 = tmp_occs_3.reset_index(drop=True)
+    print('\n #> STEP A complete.\n')
 
 
     ###------------------------------------------ Step B -------------------------------------------####

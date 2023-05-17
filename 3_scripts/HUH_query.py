@@ -96,6 +96,9 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         print('Querying for:', name_string)
     name_string=name_string.strip() # just to make sure no leadin/trailing whitespace again
     
+    if name_string == 'nan': # break function without searching.
+        return 
+
     # do query
     url = "https://kiki.huh.harvard.edu/databases/botanist_search.php?name="+name_string+"&individual=on"
     if debugging:
