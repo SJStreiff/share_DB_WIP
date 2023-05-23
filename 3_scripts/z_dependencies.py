@@ -235,7 +235,7 @@ gbif_key = {'gbifID': 'source_id',
     'scientificName':'scientific_name'}
 
 
-gbif_subset_cols =(['source_id'
+gbif_subset_cols =(['source_id',
     'scientific_name',
     'genus',
     'species-tobesplit',
