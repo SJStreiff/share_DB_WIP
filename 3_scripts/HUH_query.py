@@ -96,7 +96,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         print('Querying for:', name_string)
     name_string=name_string.strip() # just to make sure no leadin/trailing whitespace again
     
-    if name_string == 'nan': # break function without searching.
+
+    if name_string == 'nan': # break function without searching if collector NA
         return 
 
     # do query

@@ -12,6 +12,7 @@ import pandas as pd
 final_cols_for_import = list([#'global_id',
     #'childData_id',
 	#'accSpecies_id',
+    'source_id',
     'scientific_name',
 	'genus',
 	'specific_epithet',
@@ -58,6 +59,7 @@ final_cols_for_import = list([#'global_id',
 final_col_for_import_type = {#'global_id': str,
     #'childData_id': str,
 	#'accSpecies_id': str,
+    'source_id': str,
     'scientific_name': str,
 	'genus': str,
 	'specific_epithet': str,
@@ -104,7 +106,8 @@ final_col_for_import_type = {#'global_id': str,
 
 
 
-final_cols = list(['scientific_name',
+final_cols = list(['source_id',
+    'scientific_name',
 	'genus',
 	'specific_epithet',
 	'species_author',
@@ -136,7 +139,8 @@ final_cols = list(['scientific_name',
     'geo_col',
     'wiki_url'])
 
-final_col_type = {'scientific_name': str,
+final_col_type = {'source_id': str,
+    'scientific_name': str,
 	'genus': str,
 	'specific_epithet': str,
 	'species_author': str,
@@ -211,7 +215,8 @@ herbo_subset_cols = (['recorded_by',
 	'genus',
 	'specific_epithet'])
 
-gbif_key = {'genus': 'genus',
+gbif_key = {'gbifID': 'source_id',
+    'genus': 'genus',
     'species': 'species-tobesplit',
     'countryCode': 'country_id',
     'stateProvince': 'region',
@@ -230,7 +235,7 @@ gbif_key = {'genus': 'genus',
     'scientificName':'scientific_name'}
 
 
-gbif_subset_cols =([
+gbif_subset_cols =(['source_id'
     'scientific_name',
     'genus',
     'species-tobesplit',

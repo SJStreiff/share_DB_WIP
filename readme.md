@@ -12,6 +12,7 @@ This pipeline consists (at the moment) of two more or less independent steps:
 
 In your terminal window navigate to your folder with the enclosed *'environment.yml'* file. Once there, execute the command *conda env create -f environment.yml*.
 
+More details to come.
 
 ## The/A PIPELINE for standardising occurrence records: RECORDCLEANER
 
@@ -21,8 +22,8 @@ In your terminal window navigate to your folder with the enclosed *'environment.
 To launch recordcleaner, you can use the useful bash launcher, in terminal in your directory:
 
 ```
-# chmod +x recordcleaner.sh
-./recordcleaner.sh
+# chmod +x launch.sh
+./launch.sh
 ```
 
 This handy script let's you specify your input and output options, as well as other important parameters.
@@ -87,7 +88,7 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 * Step C:
   * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily within the framework of our project collaborators. With other families the situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
   * Check coordinates. Probably we just check for country centroids and points in the water. This will be done with already available packages, and issues flagged for potential correction in e.g. QGIS (qgis.org)
-  This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe). For the moment I just implemented an automatic CoordinateCleaner (https://ropensci.github.io/CoordinateCleaner/index.html)
+  This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe). For the moment we implemented an automatic CoordinateCleaner (https://ropensci.github.io/CoordinateCleaner/index.html)
 
 The resulting data of these cleaning steps are hte following files:
 * FILENAME_cleaned.csv: final output from python processing (up to, including Step C1)
@@ -105,6 +106,8 @@ RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to
 
 ## verbose and debugging options
 
+-v 
+debugging
 ...tbd
 
 

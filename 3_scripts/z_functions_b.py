@@ -196,6 +196,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                     coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
                     huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
                     geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+                    source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                     wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'))
 
             if step == 'master':
@@ -251,7 +252,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
                 huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
                 geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
-                wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
+                wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
+                source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x))
                 )
 
             if step == 'master':
@@ -490,6 +492,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                 geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                 modified = np.nan # is filled wioth new value at the end of deduplication
                 )
             # here quite some data might get lost, so we need to check where we want to just join first,
@@ -549,6 +552,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                 geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                 modified = np.nan # is filled wioth new value at the end of deduplication
             )
 
@@ -614,6 +618,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                 geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                 modified = np.nan # is filled wioth new value at the end of deduplication
                 )
@@ -672,6 +677,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                     ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                     ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                     geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                    source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                     modified = np.nan # is filled wioth new value at the end of deduplication
                     )
                 # here quite some data might get lost, so we need to check where we want to just join first,
@@ -723,6 +729,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             coll_surname = pd.NamedAgg(column = 'coll_surname', aggfunc = 'first'),
             huh_name = pd.NamedAgg(column = 'huh_name', aggfunc = 'first'),
             geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
+            source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
             wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first')
             )
         # here quite some data might get lost, so we need to check where we want to just join first,
@@ -731,14 +738,23 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     try:
         occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n.', pd.NA)
         print('1 s.n. found')
+    except:
+        print('1 s.n. NOT found')
+    try:
         occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n., s.n.', pd.NA)
         print('2 s.n. found')
+    except:
+        print('2 s.n. NOT found')
+    try:
         occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n., s.n., s.n.', pd.NA)
         print('3 s.n. found')
+    except:
+        print('3 s.n. NOT found')
+    try:
         occs_dup_col.colnum_full = occs_dup_col.colnum_full.replace('s.n., s.n., s.n., s.n.', pd.NA)
         print('4 s.n. found')
     except:
-        print('no s.n. found')
+        print('4 s.n. NOT found')
 
 
     # de-duplicated duplicates sorting to get them ready for merging

@@ -101,7 +101,7 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                     if verbose:
                         print('NO MATCHES FOUND!')
                     #out_barcode = pd.DataFrame([bar])
-
+                    
                     # in this case we do not modify anything!
                     
                 else:
@@ -114,25 +114,35 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                         print('i is:', i)
                         print('Input:', new_occs.at[i, 'barcode'])
                         print('Master:', out_barcode[0]) # these are the barcodes retreived from the master file
-                   
-                    new_occs.at[i, 'barcode'] = out_barcode[0] # replace original value with new value
+                    input = str(new_occs.at[i, 'barcode'])
+                    master = str(out_barcode[0])
+                    new = input + ', ' + master
+                    print('NEWNEWNEW:', new)
+
+                    #new_occs.at[i, 'barcode'] = (new_occs.at[i, 'barcode'] + ', ' + out_barcode).astype(str) # replace original value with new value
+                    new = ', '.join(set(new.split(', ')))
+                    print('NEWNEW 22222', new)
+                    new_occs.at[i, 'barcode'] = new
+                    
                     # print('the replaced value:',  new_occs.at[i, 'barcode'])
                     # print('the replaced value:',  type(new_occs.at[i, 'barcode']))
 
                 # <- end of bar==None condition
 
+    new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
     if verbose:
         print(new_occs.barcode, 'FINISHED')
+
  
         # done.
     return new_occs
 
 
 
-# master_db = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/master_db.csv', sep =';')
-# new_occs = pd.read_csv('/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/exp_debug_spatialvalid.csv' , sep = ';')
+#master_db = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/master_db.csv', sep =';')
+#new_occs = pd.read_csv('/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2_data_out/exp_debug_spatialvalid.csv' , sep = ';')
 
-# test = duplicated_barcodes(master_db=master_db, new_occs=new_occs)
+#test = duplicated_barcodes(master_db=master_db, new_occs=new_occs)
 
 
 
