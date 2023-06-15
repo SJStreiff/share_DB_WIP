@@ -19,7 +19,7 @@ final_cols_for_import = list([#'global_id',
 	'species_author',
 	'collector_id',
     'recorded_by',
-    'colnum_full'
+    'colnum_full',
 	'prefix',
 	'colnum',
 	'sufix',

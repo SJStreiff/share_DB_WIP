@@ -11,6 +11,7 @@ PREFIX "Y_" for scripts
 #import y_sql_functions as sql
 import z_merging as pre_merge
 import z_functions_b as dupli
+import z_cleanup as cleanup
 
 import z_dependencies
 
@@ -71,9 +72,9 @@ if __name__ == "__main__":
                         default = True)
     args = parser.parse_args()
     # optional, but for debugging. Maybe make it prettier
-    print('Arguments:', args)
+    #print('Arguments:', args)
 
-#    print('-----------------------------------------------------------\n')
+    print('-----------------------------------------------------------\n')
     print('#> This is the RECORD FILER step of the pipeline\n',
           'Arguments supplied are:\n',
           'INPUT FILE:', args.input_file,
@@ -119,7 +120,8 @@ if __name__ == "__main__":
     imp = codecs.open(args.input_file,'r','utf-8') #open for reading with "universal" type set
     occs = pd.read_csv(imp, sep = ';',  dtype = z_dependencies.final_col_for_import_type) # read the data
     # #print(occs)
-
+    occs = occs.fillna(pd.NA)
+    print('NA filled!')
     # print('\n ................................\n',
     # 'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
     print('Please type the USERNAME used to annotate changes in the records:')
@@ -183,13 +185,18 @@ if __name__ == "__main__":
         mdb_dir = args.database_name
 
         BL_indets = pd.read_csv(mdb_dir+'/indet_backlog.csv', sep=';')
+        BL_indets = BL_indets.fillna(pd.NA)
+        print('NA filled!')
         #print(BL_indets)
         try:
             no_coord_bl = pd.read_csv(mdb_dir + '/coord_backlog.csv', sep=';')
+            no_coord_bl = no_coord_bl.fillna(pd.NA)
+
         except:
             #nothing
             a = 1
         m_DB = pd.read_csv(mdb_dir + '/master_db.csv', sep =';')
+        m_DB = m_DB.fillna(pd.NA)
 
 
     ###---------------------- First test against indets backlog --------------------------------###
@@ -217,14 +224,14 @@ if __name__ == "__main__":
                                    expert_file = args.expert_file, verbose=True, debugging=False)
     # recombine data 
     occs = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
-    occs = occs.replace('nan', pd.NA)
+    #occs = occs.replace('\'nan\'', pd.NA)
 
 
     # check nomencl. status
     occs = occs[occs.status.notna() ] # NOT NA!
-    #print(occs.status, 'should not be any NA!!')
-    indet_to_backlog = occs[occs.accepted_name.isna() ] # ==NA !!
-    #print(indet_to_backlog.status, 'should only be NA!!')
+    print(occs.status, 'should not be any NA!!')
+    indet_to_backlog = occs[occs.status.isna() ] # ==NA !!
+    print(indet_to_backlog.status, 'should only be NA!!')
     # checkk for indet values, new indet backlog, append new indets
     # indets = pd.read_csv(args.indets, sep=';')
     
@@ -232,8 +239,7 @@ if __name__ == "__main__":
     # keep indet_to_backlog and send back into server
     indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';')
 
-
-
+    
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
     print('\n#> COORDINATE consolidation')
     print('------------------------------------------------')
@@ -269,7 +275,7 @@ if __name__ == "__main__":
     
     no_coords_to_backlog.to_csv(mdb_dir + 'coord_backlog.csv', sep=';')
 
-
+  
     #print('No coordinate-less records found.')
         # occs remains unchanged
 
@@ -278,6 +284,8 @@ if __name__ == "__main__":
 
     print('\n#> FINAL master database consolidation')
     print('------------------------------------------------')
+
+    #print(' size:', len(occs), 'With columns:', occs.columns)
 
 
 
@@ -288,7 +296,6 @@ if __name__ == "__main__":
     miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
     m_DB[miss_col] = '0'
     m_DB = m_DB.astype(dtype = z_dependencies.final_col_for_import_type)
-    
     upd_DB = pre_merge.check_premerge(m_DB, occs, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
 
@@ -301,14 +308,18 @@ if __name__ == "__main__":
 
     # deduplicate (x2)
     occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
-                                working_directory =  args.working_directory, prefix = 'Integrating_', User = username, step='Master',
+                                working_directory =  args.working_directory, prefix = 'Integrating_', User = username, step='master',
                                 expert_file = args.expert_file, verbose=True, debugging=False)
+    #print(' size:', len(occs_num_dd), 'With columns:', occs_num_dd.columns)
+
     occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], 
-                                working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='Master',
+                                working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='master',
                                 expert_file = args.expert_file, verbose=True, debugging=False)
-    
+    #print(' size:', len(occs_s_n_dd), 'With columns:', occs_s_n_dd.columns)
+
     # recombine data 
     deduplid = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
+
 
     #print(deduplid)
 
@@ -325,14 +336,19 @@ if __name__ == "__main__":
 
     for col in deduplid.columns:
         deduplid[col] = deduplid[col].astype(str).str.replace('nan', '')
+    deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc'], verbose=True)
 
-    
-    #print(deduplid.barcode)
     print('\n#> Merging steps complete.')
+    print('------------------------------------------------')
+
+    print('Trimming master database before writing:', len(deduplid))
+    deduplid = deduplid[z_dependencies.final_cols_for_import]
+    print('Final size:', len(deduplid), 'With columns:', deduplid.columns)
 
     # this is now the new master database...
     deduplid.to_csv(mdb_dir + 'master_db.csv', sep=';', index=False)
- 
-    print('\n#> Records filed away into master database.')
+    print('------------------------------------------------') 
+    print('\n#> Records filed away into master database.\n')
+    print('------------------------------------------------')
 
 # needs more finetuning.

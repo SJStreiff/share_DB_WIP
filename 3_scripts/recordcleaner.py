@@ -201,6 +201,7 @@ if __name__ == "__main__":
         if goahead == 'y':
             tmp_occs_6 = stepC.kew_query(tmp_occs_5, args.working_directory, verbose=True)
             # as i filter later for det or not, re-merge the data   
+    
 
     else:
         if args.expert_file != 'EXP':
@@ -221,14 +222,14 @@ if __name__ == "__main__":
                 print('As you have an EXPERT file i did not crosscheck the taxonomy (some spp. might not yet be on POWO)',
                 'therefore some columns are missing: \n',
                 'I will fill them with <NA>!')
-
+        
         tmp_occs_6 = tmp_occs_5
         # print(tmp_occs_5.dtypes)
+
 
     print('#> C: Taxonomy done.')
     
     #-----------------------------------------------
-
     # output cleaned data to csv
     tmp_occs_6.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
     print("\n\n---------------------------------------------\n",

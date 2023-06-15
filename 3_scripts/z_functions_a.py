@@ -51,6 +51,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         if verbose:
             print('\n','data type P')
         occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
+        occs = occs.fillna(pd.NA)
         occs = occs.rename(columns = z_dependencies.herbo_key) # rename columns
         occs = occs[z_dependencies.herbo_subset_cols] # subset just required columns
         occs.source_id = 'P_herbonautes'
@@ -68,6 +69,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         # here we a column species-tobesplit, as there is no single species columns with only epithet
         occs = occs.rename(columns = z_dependencies.gbif_key) # rename
         occs = occs[z_dependencies.gbif_subset_cols] # and subset
+        occs = occs.fillna(pd.NA)
 
     else:
         if verbose:
@@ -225,7 +227,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs['tmp_det_date'] = occs['det_date'].str.split('T', expand=True)[0]
         try:
             occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True,)
-            occs.drop(['tmp_det_date'], axis='columns', inplace=True)
+            occs = occs.drop(['tmp_det_date'], axis='columns')
         except:
             if debugging:
                 print('no det dates available...')

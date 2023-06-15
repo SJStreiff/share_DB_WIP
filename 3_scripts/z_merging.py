@@ -41,6 +41,11 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
     be identified. 
     """
 
+    # first some housekeeping: remove duplicated barcodes in input i.e. [barcode1, barcode2, barcode1] becomes [barcode1, barcode2]
+    new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
+    master_db.barcode = master_db.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
+
+
     # split new record barcode fields (just to check if there are multiple barcodes there)
     bc_dupli_split = new_occs['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
@@ -62,14 +67,14 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
     # then iterate through all barcodes of the new occurrences
     # for every row
     for i in range(len(new_occs)):
-        if verbose:
-            print('working on row', i)
-            print('BC to test:' ,bc_dupli_split.loc[i])
         barcode = list(bc_dupli_split.loc[i].astype(str))
-        
+        print('BARCODE1:', barcode)
         # if multiple barcodes in the barcode field, iterate across them
         for x in  range(len(barcode)):
             bar = barcode[x]
+            if verbose:
+                print('working on row', i)
+                print('BC to test:', bc_dupli_split.iloc[i]) # TODO
 
             if bar == 'None':
             # this happens a lot. skip if this is the case.
@@ -96,7 +101,7 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                 sel_sum = sel_sum >= 1 # any value >1 is a True => match 
                 if verbose:
                     print('this should be our final selection object length:', sel_sum.sum())
-    
+                    print('Selcetion:', sel_sum)
                 if sel_sum.sum() == 0:
                     if verbose:
                         print('NO MATCHES FOUND!')
@@ -123,13 +128,15 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                     new = ', '.join(set(new.split(', ')))
                     print('NEWNEW 22222', new)
                     new_occs.at[i, 'barcode'] = new
-                    
-                    # print('the replaced value:',  new_occs.at[i, 'barcode'])
-                    # print('the replaced value:',  type(new_occs.at[i, 'barcode']))
+                    master_db.barcode[sel_sum] = new
+                    print(master_db.barcode[sel_sum])
+                    print('the replaced value:',  new_occs.at[i, 'barcode'])
+                    print('the replaced value:',  type(new_occs.at[i, 'barcode']))
 
                 # <- end of bar==None condition
-
+    print('Final barcode in new data:', new_occs.barcode)
     new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
+    print('Final barcode in master data:', master_db.barcode)
     if verbose:
         print(new_occs.barcode, 'FINISHED')
 
@@ -155,15 +162,18 @@ def check_premerge(mdb, occs, verbose=True, debugging=False):
 
     occs.reset_index(drop = True, inplace = True)
     mdb.reset_index(drop = True, inplace = True)
-    print('NEW:', occs.barcode)
-    print('MASTER:', mdb.barcode)
+    if verbose:
+        print('NEW:', occs.barcode)
+        print('MASTER:', mdb.barcode)
     # modify the barcodes to standardise...
-    occs = duplicated_barcodes(mdb, occs, verbose=verbose, debugging=False)
-    
+        print('SIZE BEFORE BARCODE STEPS', len(occs))
+    occs = duplicated_barcodes(master_db = mdb, new_occs = occs, verbose=False, debugging=False)
+    if verbose:
+        print('SIZE AFTER BARCODE STEPS', len(occs))
 
     # 
     tmp_mast = pd.concat([mdb, occs])
-    print('Columns!', tmp_mast.columns)
+    #print('Columns!', tmp_mast.columns)
 
     print('\n \n Some stats about potential duplicates being integrated: \n .................................................\n')
     print('\n By surname, number, sufix and col_year & country ID', 
@@ -183,6 +193,7 @@ def check_premerge(mdb, occs, verbose=True, debugging=False):
     print(len(occs), 'cleaned occurences')
 
     print(len(tmp_mast), 'combined')
+    tmp_mast = tmp_mast[z_dependencies.final_cols_for_import]
 
 
     return tmp_mast
