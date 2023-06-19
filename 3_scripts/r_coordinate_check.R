@@ -64,7 +64,7 @@ dat[dat == '<NA>'] <- ''
 dat[dat == '<NA> nan'] <- ''
 dat[dat == '0'] <- ''
 dat[is.na(dat)] <- ''
-
+#dat[dat == ''] <- NULL
 
 flags <- clean_coordinates(x = dat,
                            lon = "ddlong",

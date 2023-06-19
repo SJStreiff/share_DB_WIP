@@ -147,15 +147,24 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     dup_cols = dupli #['recorded_by', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
 
     #-------------------------------------------------------------------------------
-    # MISSING collector information and number
+   # Housekeeping. Clean up problematic types and values...
+
+   # MISSING collector information and number
     # remove empty collector 
     occs1 = occs.dropna(how='all', subset = ['recorded_by']) #, 'colnum', 'colnum_full'
+    
+    # NA problems as we want string, so fillna
+    occs1.modified = occs1.modified.fillna('')
+
+
+
 
     #-------------------------------------------------------------------------------
     # find duplicated BARCODES before we do anything
     # this step only takes place in master step.
     if step=='Master':
-
+        if verbose:
+            print('Deduplication: MASTER-1')
         # ONLY RETAIN DUPLICATED BARCODES 
         duplic_barcodes = occs1[occs1.duplicated(subset=['barcode'], keep=False)] # gets us all same barcodes
         if verbose:
@@ -171,7 +180,11 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         if expert_file == 'EXP':
             # if expert we need to take care we integrate the expert data properly
             if verbose:
+                print('Deduplication: MASTER-1, expert')
+            if verbose:
                 print('Merging duplicated barcodes, EXPERT file')
+            duplic_barcodes = duplic_barcodes.sort_values(['barcode', 'expert_det'], ascending = [False, False])
+            print(duplic_barcodes[['barcode', 'recorded_by', 'colnum', 'expert_det']], '\n--------------\n')
             barcode_merged = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
                     scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
                     genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
@@ -209,17 +222,31 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                     source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                     wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                     expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                    status = 'ACCEPTED',
+                    status = pd.NamedAgg(column = 'expert_det', aggfunc = lambda x: 'ACCEPTED'),
                     accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                     ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                     ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
                     )
+            print(barcode_merged[['barcode', 'recorded_by', 'colnum',  'expert_det']])
+            barcode_merged
+            if verbose:
+                print('********* Adding timestamp *******')
+            date = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+            barcode_merged['modified'] = User + '_' + date
+            print(barcode_merged.modified)
+
+
+            print('deduplocated barcodes:', barcode_merged.shape,
+                  barcode_merged.modified)
+            
                 # merge in master columns to the rest.
             
 
 
         else:
             # if not EXP, just bung the data together....
+            if verbose:
+                print('Deduplication: MASTER-1 non-expert')
             if verbose:
                 print('Merging duplicated barcodes')
             barcode_merged = duplic_barcodes.groupby(['barcode'], as_index = False).agg(
@@ -259,7 +286,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                 source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                 expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                status = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                status = pd.NamedAgg(column = 'status', aggfunc = 'first'),
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first')
@@ -272,7 +299,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
         ### and re merge deduplicated barcodes and unique barcodes
         occs1 = pd.concat([cl_barcodes, barcode_merged], axis=0) ###CHECK axis assignments
-
+        print('After deduplocated barcodes entire data:', occs1.shape)
     # END of  if/else step=MASTER
         
     #-------------------------------------------------------------------------------
@@ -290,7 +317,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
     if len(occs_dup_col) == 0:
         if verbose:
-            print('Nothing to deduplicate. Returning without any modifications')
+            print('Nothing to deduplicate anymore. Either barcodes took care of it, or there were no duplicates.')
+            print(occs_unique.modified)
         return occs_unique
 
 
@@ -369,35 +397,66 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     # to  use them to force through dets? Does that make sense? We do update the
     # taxonomy at a later date, so dets to earlier concepts might not be a massive issue?
 
-    occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('sp.', '')
-    occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('indet.', '') 
+    if step =='Master':
+        # if Master, we merge the accepted name field.
+        dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year','colnum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','accepted_name'],keep=False)]
+        print('DUPLICATED SPECIES?\n', dups_diff_species[['recorded_by', 'barcode', 'accepted_name', 'det_year']])
+        dups_diff_species = dups_diff_species.sort_values(['col_year','colnum_full'], ascending = (True, True))
 
-    dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year','colnum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','specific_epithet','genus'],keep=False)]
-    dups_diff_species = dups_diff_species.sort_values(['col_year','colnum_full'], ascending = (True, True))
+        if verbose:
+            print('\n We have', len(dups_diff_species),
+            'duplicate specimens with diverging identification.')
 
-    if verbose:
-        print('\n We have', len(dups_diff_species),
-        'duplicate specimens with diverging identification.')
+        # # backup the old dets
+        # occs_dup_col['genus_old'] = occs_dup_col['genus']
+        # occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
 
-    # backup the old dets
-    occs_dup_col['genus_old'] = occs_dup_col['genus']
-    occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
-
-    #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
-    occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+        #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
+        occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values(['det_year'], ascending=False))
 
 
-    occs_dup_col.reset_index(drop=True, inplace=True)
-    occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
-    ###### HERE no data left in sn step... TODO
-    print('HERE', occs_dup_col)
-    occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
+        #occs_dup_col.reset_index(drop=True, inplace=True)
+        occs_dup_col['accepted_name'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['accepted_name'].transform('first')
+        occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
+        occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
 
-    #save a csv with all duplicates beside each other but otherwise cleaned, allegedly.
-    if debugging:
-        occs_dup_col.to_csv(working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv', index = False, sep = ';')
-        print('\n I have saved a checkpoint file of all cleaned and processed duplicates, nicely beside each other, to:',
-        working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv')
+        ###### HERE no data left in sn step... 
+        #print('HERE', occs_dup_col)
+
+        
+
+
+
+    else:
+        occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('sp.', '')
+        occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('indet.', '') 
+
+        dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year','colnum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','specific_epithet','genus'],keep=False)]
+        dups_diff_species = dups_diff_species.sort_values(['col_year','colnum_full'], ascending = (True, True))
+
+        if verbose:
+            print('\n We have', len(dups_diff_species),
+            'duplicate specimens with diverging identification.')
+
+        # backup the old dets
+        occs_dup_col['genus_old'] = occs_dup_col['genus']
+        occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
+
+        #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
+        occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+
+
+        occs_dup_col.reset_index(drop=True, inplace=True)
+        occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
+        ###### HERE no data left in sn step... TODO
+        print('HERE', occs_dup_col)
+        occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
+
+        #save a csv with all duplicates beside each other but otherwise cleaned, allegedly.
+        if debugging:
+            occs_dup_col.to_csv(working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv', index = False, sep = ';')
+            print('\n I have saved a checkpoint file of all cleaned and processed duplicates, nicely beside each other, to:',
+            working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv')
 
     #-------------------------------------------------------------------------------
     # DE-DUPLICATE AND THEN MERGE
@@ -410,14 +469,22 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     # s.n. needed for deduplication and error reduction. removed later...
     occs_dup_col.colnum_full = occs_dup_col.colnum_full.fillna('s.n.')
     ############################################ Here integrate expert flag
-    if step == 'master':
+    if step == 'Master':
+        if verbose:
+            print('Deduplication: MASTER-2')
         # Expert level deduplication only between datasets, not in single dataset!
         if expert_file == 'EXP':
+            if verbose:
+                print('Deduplication: MASTER-2 expert')
             # We have an expert dataset being integrated into the database.
 
             # first handle duplicates with all expert values (expert duplicates)
-            expert_rows = occs_dup_col[occs_dup_col['expert_det'].isin('EXP')]
+            expert_rows = occs_dup_col[occs_dup_col['expert_det'] == 'expert_det_file']
+            expert_rows = expert_rows.sort_values(['status', 'expert_det'], ascending = [True, True])
+            
+            expert_rows.modified = expert_rows.modified.fillna('')
 
+            
             expert_merged = expert_rows.groupby(dup_cols, as_index = False).agg(
                 scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
                 genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
@@ -454,7 +521,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
                 wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                 expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                status = 'ACCEPTED',
+                status = pd.NamedAgg(column = 'status', aggfunc=lambda x: 'ACCEPTED'),
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
@@ -467,7 +534,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             # database!!!
 
             # de-duplicated duplicates sorting to get them ready for merging
-            expert_merged = expert_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+            length = len(dup_cols)-2
+            order_vec = tuple([True, True] + [False]*length)
+            expert_merged = expert_merged.sort_values(dup_cols, ascending = order_vec)
 
             if verbose:
                 print('EXPERT-EXPERT deduplicated')     
@@ -476,9 +545,13 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
 
             # then normally handle duplicates with no expert values at all
-            non_exp_rows = occs_dup_col[occs_dup_col['expert_det'].notin('EXP') ]
+            non_exp_rows = occs_dup_col[occs_dup_col['expert_det'] != 'expert_det_file' ]
+            non_exp_rows = non_exp_rows.sort_values(['status', 'det_year'], ascending = [True, False])
 
-            non_exp_merged = expert_rows.groupby(dup_cols, as_index = False).agg(
+            non_exp_rows.modified = non_exp_rows.modified.fillna('')
+
+
+            non_exp_merged = non_exp_rows.groupby(dup_cols, as_index = False).agg(
                 scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
                 genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
                 specific_epithet = pd.NamedAgg(column = 'specific_epithet', aggfunc = 'first' ),
@@ -514,7 +587,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
                 wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                 expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                status = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                status = pd.NamedAgg(column = 'status', aggfunc = 'first'),
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
@@ -528,7 +601,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             # database!!!
 
             # de-duplicated duplicates sorting to get them ready for merging
-            non_exp_merged = non_exp_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+            length = len(dup_cols)-2
+            order_vec = tuple([True, True] + [False]*length)
+            non_exp_merged = non_exp_merged.sort_values(dup_cols, ascending = order_vec)
 
             if verbose:
                 print('EXPERT-EXPERT deduplicated')     
@@ -542,7 +617,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             # now merge expert-only and non-expert-only parts together and deduplicate
 
             # once deduplicated dataframe
-            one_dd_done = pd.concat(expert_merged, non_exp_merged)
+            one_dd_done = pd.concat([expert_merged, non_exp_merged])
+
+            one_dd_done = one_dd_done.sort_values(['status', 'expert_det'], ascending = [True, True])
 
             # now merge duplicates with expert & non-expert  values (only one of each left if everything above went to plan..)
             occs_merged = one_dd_done.groupby(dup_cols, as_index = False).agg(
@@ -581,7 +658,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
                 wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                 expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                status = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                status = pd.NamedAgg(column = 'status', aggfunc = 'first'),
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
@@ -594,7 +671,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             # database!!!
 
             # de-duplicated duplicates sorting to get them ready for merging
-            occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
+            length = len(dup_cols)-2
+            order_vec = tuple([True, True] + [False]*length)
+            occs_merged = occs_merged.sort_values(dup_cols, ascending = order_vec)
 
             print('\n There were', len(occs_dup_col), 'duplicated specimens')
             print('\n There are', len(occs_merged), 'unique records after merging.')
@@ -602,6 +681,12 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             ########################## end of expert non expert mess
 
         else:
+            if verbose:
+                print('Deduplication: MASTER-2 no expert')
+                #print(occs_dup_col.status)
+            
+            occs_dup_col = occs_dup_col.sort_values(['status', 'expert_det'], ascending = [True, True])
+            print(occs_dup_col.accepted_name)
             # master but not expert. proceed as normal.
             occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
                     scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
@@ -639,7 +724,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                     geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
                     wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                     expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                    status = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
+                    status = pd.NamedAgg(column = 'status', aggfunc = 'first'),
                     accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                     ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                     ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
@@ -652,8 +737,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 # database!!!
            
                 # de-duplicated duplicates sorting to get them ready for merging
-            occs_merged = occs_merged.sort_values(dup_cols, ascending = (True, True, False, False))
-
+            length = len(dup_cols)-2
+            order_vec = tuple([True, True] + [False]*length)
+            occs_merged = occs_merged.sort_values(dup_cols, ascending = order_vec)
             print('\n There were', len(occs_dup_col), 'duplicated specimens')
             print('\n There are', len(occs_merged), 'unique records after merging.')
             print('The deduplicated one is:\n', occs_merged)
@@ -662,8 +748,12 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         # end of if master
 
     else:
+        if verbose:
+            print('Deduplication: RAW-1')
         occs_dup_col['colnum_full'] = occs_dup_col['colnum_full'].fillna('')
         # not master
+        occs_dup_col = occs_dup_col.sort_values(['status', 'expert_det'], ascending = [True, True])
+
         occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
             scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
             genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
@@ -751,10 +841,13 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     len(occs) - (len(occs_merged) + len(occs_unique)))
     print('-------------------------------------------------------------------------')
 
-    if step=='master':
-         date = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
-         occs_merged['modified'] = User + '_' + date
-        
+    if step=='Master':
+        if verbose:
+            print('********* Adding timestamp *******')
+        date = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+        occs_merged['modified'] = User + '_' + date
+        print(occs_merged.modified)
+        occs_unique['modified']
     #    occs_cleaned = pd.merge(pd.merge(occs_merged,occs_unique,how='outer'))#,occs_nocolNum ,how='outer')
     occs_cleaned = pd.concat([occs_merged, occs_unique])
     occs_cleaned = occs_cleaned.sort_values(dup_cols, ascending = order_vec)

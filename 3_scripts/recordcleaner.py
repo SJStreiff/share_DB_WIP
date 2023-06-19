@@ -21,6 +21,7 @@ import z_dependencies
 import argparse, os, pathlib, codecs
 import pandas as pd
 import numpy as np
+import logging
 
 
 print(os.getcwd())
@@ -56,10 +57,28 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose',
                         help = 'If true (default), I will print a lot of stuff that might or might not help...',
                         default = True)
+    parser.add_argument('-l', '--log_file',
+                        help = 'path specifying a location for the output logfile.',
+                        default = True)
     args = parser.parse_args()
 
-    print('-----------------------------------------------------------\n')
-    print('This is the RECORD CLEANER step of the pipeline\n',
+    print('-----------------------------------------------------------\n',
+          'This is the RECORD CLEANER step of the pipeline\n',
+          'Arguments supplied are:\n',
+          'INPUT FILE:', args.input_file,
+          '\n Data type:', args.data_type,
+          '\n Expert status:', args.expert_file,
+          '\n Working directory:', args.working_directory,
+          '\n Output directory:', args.output_directory,
+          '\n Prefix:', args.prefix,
+          '\n Names being cleaned?:', args.nonamecln,
+          '\n verbose:', args.verbose,
+          '\n Log file:', args.log_file,
+
+    
+    logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG)
+    logging.info('-----------------------------------------------------------\n')
+    logging.info('This is the RECORD CLEANER step of the pipeline\n',
           'Arguments supplied are:\n',
           'INPUT FILE:', args.input_file,
           '\n Data type:', args.data_type,
@@ -69,8 +88,7 @@ if __name__ == "__main__":
           '\n Prefix:', args.prefix,
           '\n Names being cleaned?:', args.nonamecln,
           '\n verbose:', args.verbose)
-    print('-----------------------------------------------------------\n')
-
+    logging.info('-----------------------------------------------------------\n')
 
 
     ###------------------------------------------ Step A -------------------------------------------####
@@ -197,27 +215,34 @@ if __name__ == "__main__":
         print('\n.........................................\n')
         print('Checking the taxonomy now. This takes a moment!')
         print('Do you want to do this now? [y]/[n]')
-        goahead=input()
+        #goahead=input()
+        goahead = 'y'
         if goahead == 'y':
             tmp_occs_6 = stepC.kew_query(tmp_occs_5, args.working_directory, verbose=True)
             # as i filter later for det or not, re-merge the data   
     
 
     else:
-        if args.expert_file != 'EXP':
-            print('Nomenclature remains unchecked!!')
+        # if args.expert_file != 'EXP':
+        #     print('Nomenclature remains unchecked!!')
 
-            miss_col = [i for i in z_dependencies.final_cols_for_import if i not in tmp_occs_4.columns]
-            tmp_occs_5[miss_col] = pd.NA
-            tmp_occs_5 = tmp_occs_5.astype(dtype = z_dependencies.final_col_for_import_type)
-            if args.verbose:
-                print('As you do not want to check your taxonomy (although this is strongly recommended), some columns are missing: \n',
-                'I will fill them with <NA>!')
-        if args.expert_file != 'EXP':
+        #     miss_col = [i for i in z_dependencies.final_cols_for_import if i not in tmp_occs_4.columns]
+        #     tmp_occs_5[miss_col] = pd.NA
+        #     tmp_occs_5 = tmp_occs_5.astype(dtype = z_dependencies.final_col_for_import_type)
+        #     if args.verbose:
+        #         print('As you do not want to check your taxonomy (although this is strongly recommended), some columns are missing: \n',
+        #         'I will fill them with <NA>!')
+        if args.expert_file == 'EXP':
             tmp_occs_5['status'] = 'ACCEPTED'
             miss_col = [i for i in z_dependencies.final_cols_for_import if i not in tmp_occs_4.columns]
             tmp_occs_5[miss_col] = pd.NA
             tmp_occs_5 = tmp_occs_5.astype(dtype = z_dependencies.final_col_for_import_type)
+
+            tmp_occs_5.accepted_name = tmp_occs_5.genus + ' ' + tmp_occs_5.specific_epithet
+            tmp_occs_5.status = 'ACCEPTED'
+
+
+
             if args.verbose:
                 print('As you have an EXPERT file i did not crosscheck the taxonomy (some spp. might not yet be on POWO)',
                 'therefore some columns are missing: \n',

@@ -128,14 +128,15 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                     new = ', '.join(set(new.split(', ')))
                     print('NEWNEW 22222', new)
                     new_occs.at[i, 'barcode'] = new
-                    master_db.barcode[sel_sum] = new
-                    print(master_db.barcode[sel_sum])
-                    print('the replaced value:',  new_occs.at[i, 'barcode'])
-                    print('the replaced value:',  type(new_occs.at[i, 'barcode']))
+
+                    master_db.loc[sel_sum, 'barcode'] = new
+                    print(master_db.loc[sel_sum, 'barcode'])
+                    #print('the replaced value:',  new_occs.at[i, 'barcode'])
+                    #print('the replaced value:',  type(new_occs.at[i, 'barcode']))
 
                 # <- end of bar==None condition
     print('Final barcode in new data:', new_occs.barcode)
-    new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
+    new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(sorted(x.split(', ')))))    # this combines all duplicated barcodes within a cell
     print('Final barcode in master data:', master_db.barcode)
     if verbose:
         print(new_occs.barcode, 'FINISHED')

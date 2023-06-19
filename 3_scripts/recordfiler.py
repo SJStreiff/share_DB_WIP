@@ -125,8 +125,8 @@ if __name__ == "__main__":
     # print('\n ................................\n',
     # 'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
     print('Please type the USERNAME used to annotate changes in the records:')
-    username=input() 
-
+    #username=input() 
+    username = 'testing'
     # print('\n ................................\n',
     # 'Please type the PASSWORD used to connect to the database for user', username)
     # password=getpass() #'n' # make back to input()
@@ -184,20 +184,25 @@ if __name__ == "__main__":
         print('Reading local database')
         mdb_dir = args.database_name
 
-        BL_indets = pd.read_csv(mdb_dir+'/indet_backlog.csv', sep=';')
+        BL_indets = pd.read_csv(mdb_dir+'/indet_backlog.csv', sep=';', dtype= z_dependencies.final_col_for_import_type, na_values=pd.NA)
         BL_indets = BL_indets.fillna(pd.NA)
+        # for col in BL_indets.columns:
+        #     BL_indets[col] = BL_indets[col].astype(str).str.replace('nan', '<NA>')
         print('NA filled!')
         #print(BL_indets)
         try:
-            no_coord_bl = pd.read_csv(mdb_dir + '/coord_backlog.csv', sep=';')
+            no_coord_bl = pd.read_csv(mdb_dir + '/coord_backlog.csv', sep=';', dtype= z_dependencies.final_col_for_import_type)
             no_coord_bl = no_coord_bl.fillna(pd.NA)
+            # for col in no_coord_bl.columns:
+            #     no_coord_bl[col] = no_coord_bl[col].astype(str).str.replace('nan', '<NA>')
 
         except:
             #nothing
             a = 1
-        m_DB = pd.read_csv(mdb_dir + '/master_db.csv', sep =';')
+        m_DB = pd.read_csv(mdb_dir + '/master_db.csv', sep =';', dtype= z_dependencies.final_col_for_import_type, na_values=pd.NA)
         m_DB = m_DB.fillna(pd.NA)
-
+        # for col in m_DB.columns:
+        #     m_DB[col] = m_DB[col].astype(str).str.replace('nan', '<NA>')
 
     ###---------------------- First test against indets backlog --------------------------------###
     print('\n#> INDET consolidation')
@@ -206,15 +211,19 @@ if __name__ == "__main__":
 
     # check all occs against indet backlog
     test_upd_DB = pre_merge.check_premerge(mdb = BL_indets, occs = occs, verbose=True)
-    # something really weird happening. Should not be as many duplicates as it gives me.
 
-    
     test_upd_DB=test_upd_DB.astype(z_dependencies.final_col_for_import_type)
 
+    test_upd_DB.colnum = test_upd_DB.colnum.replace('nan', pd.NA)
+    test_upd_DB.colnum = pd.to_numeric(test_upd_DB.colnum, errors='coerce').astype(pd.Int64Dtype())
+    #print(test_upd_DB.colnum)
+    #print(test_upd_DB.colnum.isna())
+    # TODO s.n. not recognised properly...
+    
     # separate data with colNum and no colNum
-    occs_s_n = test_upd_DB[test_upd_DB['colnum_full'].isna()]
-    occs_num = test_upd_DB.dropna(how='all', subset=['colnum_full'])
-
+    occs_s_n = test_upd_DB[test_upd_DB.colnum.isna()]
+    occs_num = test_upd_DB.dropna(how='all', subset=['colnum'])
+    
     # deduplicate (x2)
     occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
                                     working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='Master',
@@ -225,21 +234,21 @@ if __name__ == "__main__":
     # recombine data 
     occs = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
     #occs = occs.replace('\'nan\'', pd.NA)
-
-
+    #print(occs.status)
+    occs.status = occs.status.replace('nan', None)
+    occs.status = occs.status.replace('<NA>', None)
     # check nomencl. status
+    print('INDET:::::\n', occs[~occs.status.notna()])
+    indet_to_backlog = occs[~occs.status.notna()] # ==NA !!
     occs = occs[occs.status.notna() ] # NOT NA!
-    print(occs.status, 'should not be any NA!!')
-    indet_to_backlog = occs[occs.status.isna() ] # ==NA !!
-    print(indet_to_backlog.status, 'should only be NA!!')
-    # checkk for indet values, new indet backlog, append new indets
-    # indets = pd.read_csv(args.indets, sep=';')
+    print(occs.status.notna())
+    print(indet_to_backlog.status.notna())
     
-    indet_to_backlog = pd.concat([indet_to_backlog])
+    #indet_to_backlog = pd.concat([indet_to_backlog])
     # keep indet_to_backlog and send back into server
-    indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';')
-
-    
+    #indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';')
+    print(occs.status)
+    print(occs.accepted_name)
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
     print('\n#> COORDINATE consolidation')
     print('------------------------------------------------')
@@ -249,7 +258,7 @@ if __name__ == "__main__":
 
     #no_coord_bl = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/coord_backlog.csv', sep=';')
     # check all occs against indet backlog
-    no_coord_check = pre_merge.check_premerge(occs, no_coord_bl, verbose=True)
+    no_coord_check = pre_merge.check_premerge(mdb=no_coord_bl, occs=occs, verbose=True)
 
     #print(no_coord_check.dtypes)
     no_coord_check=no_coord_check.astype(z_dependencies.final_col_for_import_type)
@@ -270,15 +279,15 @@ if __name__ == "__main__":
     occs = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
 
 
-    occs = occs[occs.ddlat.notna() ] # NOT NA!
     no_coords_to_backlog = occs[occs.ddlat.isna() ] # ==NA !!
+    occs = occs[occs.ddlat.notna() ] # NOT NA!
     
     no_coords_to_backlog.to_csv(mdb_dir + 'coord_backlog.csv', sep=';')
 
   
     #print('No coordinate-less records found.')
         # occs remains unchanged
-
+    print(occs.accepted_name)
 
     ###---------------------- Then merge all with master database. Make backup of previous version. --------------------------------###
 
@@ -296,30 +305,35 @@ if __name__ == "__main__":
     miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
     m_DB[miss_col] = '0'
     m_DB = m_DB.astype(dtype = z_dependencies.final_col_for_import_type)
-    upd_DB = pre_merge.check_premerge(m_DB, occs, verbose=True)
+    upd_DB = pre_merge.check_premerge(mdb = m_DB, occs = occs, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
-
 
     upd_DB=upd_DB.astype(z_dependencies.final_col_for_import_type)
     #print(upd_DB.dtypes)
 
     occs_s_n = upd_DB[upd_DB['colnum_full'].isna()]
     occs_num = upd_DB.dropna(how='all', subset=['colnum_full'])
-
+    
+    
     # deduplicate (x2)
     occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
-                                working_directory =  args.working_directory, prefix = 'Integrating_', User = username, step='master',
+                                working_directory =  args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                 expert_file = args.expert_file, verbose=True, debugging=False)
-    #print(' size:', len(occs_num_dd), 'With columns:', occs_num_dd.columns)
+    
+    
+    if len(occs_s_n) != 0:
+        occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], 
+                                            working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='Master',
+                                            expert_file = args.expert_file, verbose=True, debugging=False)
+    
+    
 
-    occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], 
-                                working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='master',
-                                expert_file = args.expert_file, verbose=True, debugging=False)
-    #print(' size:', len(occs_s_n_dd), 'With columns:', occs_s_n_dd.columns)
-
-    # recombine data 
-    deduplid = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
-
+        # recombine data 
+        deduplid = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
+    
+    else:
+        deduplid = occs_num_dd
+    #print(deduplid.status)
 
     #print(deduplid)
 
@@ -336,8 +350,11 @@ if __name__ == "__main__":
 
     for col in deduplid.columns:
         deduplid[col] = deduplid[col].astype(str).str.replace('nan', '')
-    deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc'], verbose=True)
+        deduplid[col] = deduplid[col].fillna('')
 
+    # reduce duplicated information within cells     
+    deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc', 'det_by'], verbose=True)
+    
     print('\n#> Merging steps complete.')
     print('------------------------------------------------')
 
@@ -348,7 +365,7 @@ if __name__ == "__main__":
     # this is now the new master database...
     deduplid.to_csv(mdb_dir + 'master_db.csv', sep=';', index=False)
     print('------------------------------------------------') 
-    print('\n#> Records filed away into master database.\n')
+    print('\n#>', len(deduplid),'Records filed away into master database.\n')
     print('------------------------------------------------')
 
 # needs more finetuning.
