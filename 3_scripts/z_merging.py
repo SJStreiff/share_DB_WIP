@@ -24,6 +24,7 @@ import numpy as np
 import codecs
 import os
 import regex as re
+import logging
 
 #custom dependencies
 import z_dependencies
@@ -50,48 +51,47 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
     bc_dupli_split = new_occs['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
     bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip())
-    if debugging: # some information if there are issues
-        print('NEW OCCS:\n', bc_dupli_split)
-        print('NEW OCCS:\n', type(bc_dupli_split))
+     # some information if there are issues
+    logging.debug(f'NEW OCCS:\n {bc_dupli_split}')
+    logging.debug(f'NEW OCCS:\n {type(bc_dupli_split)}')
     master_bc_split = master_db['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
     master_bc_split.columns = [f'bc_{i}' for i in range(master_bc_split.shape[1])]
     master_bc_split = master_bc_split.apply(lambda x: x.str.strip())  #important to strip all leading/trailing white spaces!
-    if debugging: # some information if there are issues
-        print('master OCCS:\n', master_bc_split)
-        print('master OCCS:\n', master_bc_split.dtypes)
+    
+    logging.debug(f'master OCCS:\n {master_bc_split}')
+    logging.debug(f'master OCCS:\n {master_bc_split.dtypes}')
 
-
-    if debugging: # some information if there are issues
-        print('Shape of new_occs', len(new_occs))
+     # some information if there are issues
+    logging.debug(f'Shape of new_occs {len(new_occs)}')
 
     # then iterate through all barcodes of the new occurrences
     # for every row
     for i in range(len(new_occs)):
         barcode = list(bc_dupli_split.loc[i].astype(str))
-        print('BARCODE1:', barcode)
+        logging.info(f'BARCODE1: {barcode}')
         # if multiple barcodes in the barcode field, iterate across them
         for x in  range(len(barcode)):
             bar = barcode[x]
-            if verbose:
-                print('working on row', i)
-                print('BC to test:', bc_dupli_split.iloc[i]) # TODO
+            
+            logging.info(f'working on row {i}')
+            logging.info(f'BC to test:{bc_dupli_split.iloc[i]}') # TODO
 
             if bar == 'None':
             # this happens a lot. skip if this is the case.
-                if verbose:
-                    print('Values <None> are skipped.')
+                
+                logging.info('Values <None> are skipped.')
             else:
                 # -> keep working with the barcode
-                if verbose:
-                    print('Working on barcode:\n', bar)
+                
+                logging.info(f'Working on barcode:\n {bar}')
             
 
                 selection_frame = pd.DataFrame()  # df to hold resulting True/False mask  
                 # now iterate over columns to find any matches
                 for col in master_bc_split.columns:
                     # iterate through rows. the 'in' function doesn't work otherwise
-                    if verbose:
-                        print('checking master columns')
+                    
+                    logging.info('checking master columns')
                     f1 = master_bc_split[col] == bar # get true/false column
                     selection_frame = pd.concat([selection_frame, f1], axis=1) # and merge with previos columns
                 # end of loop over columns
@@ -99,12 +99,12 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                 # when selection frame finished, get out the rows we need including master value
                 sel_sum = selection_frame.sum(axis = 1)
                 sel_sum = sel_sum >= 1 # any value >1 is a True => match 
-                if verbose:
-                    print('this should be our final selection object length:', sel_sum.sum())
-                    print('Selcetion:', sel_sum)
+                
+                logging.info(f'this should be our final selection object length: {sel_sum.sum()}')
+                logging.info(f'Selection: {sel_sum}')
                 if sel_sum.sum() == 0:
-                    if verbose:
-                        print('NO MATCHES FOUND!')
+                    
+                    logging.info('NO MATCHES FOUND!')
                     #out_barcode = pd.DataFrame([bar])
                     
                     # in this case we do not modify anything!
@@ -115,31 +115,29 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                    
       
         # replace i-th element of the new barcodes with the matched complete range of barcodes from master
-                    if verbose:
-                        print('i is:', i)
-                        print('Input:', new_occs.at[i, 'barcode'])
-                        print('Master:', out_barcode[0]) # these are the barcodes retreived from the master file
+                    logging.info(f'i is: {i}')
+                    #logging.info(f'Input: {new_occs.at[i, 'barcode']}')
+                    logging.info(f'Master: {out_barcode[0]}') # these are the barcodes retreived from the master file
                     input = str(new_occs.at[i, 'barcode'])
                     master = str(out_barcode[0])
                     new = input + ', ' + master
-                    print('NEWNEWNEW:', new)
+                    logging.debug('New value pre processing: {new}')
 
                     #new_occs.at[i, 'barcode'] = (new_occs.at[i, 'barcode'] + ', ' + out_barcode).astype(str) # replace original value with new value
                     new = ', '.join(set(new.split(', ')))
-                    print('NEWNEW 22222', new)
+                    logging.info('New value after processing {new}')
                     new_occs.at[i, 'barcode'] = new
 
                     master_db.loc[sel_sum, 'barcode'] = new
-                    print(master_db.loc[sel_sum, 'barcode'])
+                    # print(master_db.loc[sel_sum, 'barcode'])
                     #print('the replaced value:',  new_occs.at[i, 'barcode'])
                     #print('the replaced value:',  type(new_occs.at[i, 'barcode']))
 
                 # <- end of bar==None condition
-    print('Final barcode in new data:', new_occs.barcode)
+    logging.info(f'Final barcode in new data: {new_occs.barcode}')
     new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(sorted(x.split(', ')))))    # this combines all duplicated barcodes within a cell
-    print('Final barcode in master data:', master_db.barcode)
-    if verbose:
-        print(new_occs.barcode, 'FINISHED')
+    logging.info(f'Final barcode in master data: {master_db.barcode}')
+    logging.info(f'{new_occs.barcode} FINISHED')
 
  
         # done.
@@ -163,37 +161,36 @@ def check_premerge(mdb, occs, verbose=True, debugging=False):
 
     occs.reset_index(drop = True, inplace = True)
     mdb.reset_index(drop = True, inplace = True)
-    if verbose:
-        print('NEW:', occs.barcode)
-        print('MASTER:', mdb.barcode)
+    logging.info(f'NEW: {occs.barcode}')
+    logging.info(f'MASTER: {mdb.barcode}')
     # modify the barcodes to standardise...
-        print('SIZE BEFORE BARCODE STEPS', len(occs))
+    logging.info(f'SIZE BEFORE BARCODE STEPS {len(occs)}')
     occs = duplicated_barcodes(master_db = mdb, new_occs = occs, verbose=False, debugging=False)
-    if verbose:
-        print('SIZE AFTER BARCODE STEPS', len(occs))
+    
+    logging.info(f'SIZE AFTER BARCODE STEPS {len(occs)}')
 
     # 
     tmp_mast = pd.concat([mdb, occs])
     #print('Columns!', tmp_mast.columns)
+    if debugging:
+        print('\n \n Some stats about potential duplicates being integrated: \n .................................................\n')
+        print('\n By surname, number, sufix and col_year & country ID', 
+        tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum', 'sufix', 'col_year', 'country_id' ], keep=False)].shape)
+        print('\n By surname & full collectionnumber', 
+        tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum_full' ], keep=False)].shape)
+        print('\n By surname, number, genus & specific epithet', 
+        tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum', 'genus', 'specific_epithet' ], keep=False)].shape)
 
-    print('\n \n Some stats about potential duplicates being integrated: \n .................................................\n')
-    print('\n By surname, number, sufix and col_year & country ID', 
-    tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum', 'sufix', 'col_year', 'country_id' ], keep=False)].shape)
-    print('\n By surname & full collectionnumber', 
-    tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum_full' ], keep=False)].shape)
-    print('\n By surname, number, genus & specific epithet', 
-    tmp_mast[tmp_mast.duplicated(subset=[ 'coll_surname', 'colnum', 'genus', 'specific_epithet' ], keep=False)].shape)
+        print('\n By barcode', tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)].shape)
 
-    print('\n By barcode', tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)].shape)
-
-    print('\n .................................................\n')
+        print('\n .................................................\n')
     if len(tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)]) != 0:
         print(tmp_mast[tmp_mast.duplicated(subset=['barcode'], keep=False)]['barcode'])
+    if debugging:
+        print(len(mdb), 'the master_db download')
+        print(len(occs), 'cleaned occurences')
 
-    print(len(mdb), 'the master_db download')
-    print(len(occs), 'cleaned occurences')
-
-    print(len(tmp_mast), 'combined')
+        print(len(tmp_mast), 'combined')
     tmp_mast = tmp_mast[z_dependencies.final_cols_for_import]
 
 

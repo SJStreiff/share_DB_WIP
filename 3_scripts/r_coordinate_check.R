@@ -43,7 +43,7 @@ print('Inputfile:')
 print(opt$options$input)
 
 #debugging
-dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230509_Phil_cleaned.csv', sep =';', head=T)
+#dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230509_Phil_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')

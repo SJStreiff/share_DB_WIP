@@ -51,15 +51,15 @@ if __name__ == "__main__":
     parser.add_argument('prefix',
                         help = 'prefix for ouput filenames',
                         type = str)
-    parser.add_argument('--nonamecln',
-                        help = 'if specified, collector names are expected in the format <Surname>, <F>irstname, or if deviating standardised to be identical across all datasets. The collector names will not be standardised! Use with caution!',
-                        type = int)
+    # parser.add_argument('--nonamecln',
+    #                     help = 'if specified, collector names are expected in the format <Surname>, <F>irstname, or if deviating standardised to be identical across all datasets. The collector names will not be standardised! Use with caution!',
+    #                     type = int)
     parser.add_argument('-v', '--verbose',
                         help = 'If true (default), I will print a lot of stuff that might or might not help...',
                         default = True)
     parser.add_argument('-l', '--log_file',
                         help = 'path specifying a location for the output logfile.',
-                        default = True)
+                        type = str)
     args = parser.parse_args()
 
     print('-----------------------------------------------------------\n',
@@ -71,34 +71,33 @@ if __name__ == "__main__":
           '\n Working directory:', args.working_directory,
           '\n Output directory:', args.output_directory,
           '\n Prefix:', args.prefix,
-          '\n Names being cleaned?:', args.nonamecln,
           '\n verbose:', args.verbose,
           '\n Log file:', args.log_file,
-
+          '\n-----------------------------------------------------------\n')
     
     logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.DEBUG)
     logging.info('-----------------------------------------------------------\n')
-    logging.info('This is the RECORD CLEANER step of the pipeline\n',
-          'Arguments supplied are:\n',
-          'INPUT FILE:', args.input_file,
-          '\n Data type:', args.data_type,
-          '\n Expert status:', args.expert_file,
-          '\n Working directory:', args.working_directory,
-          '\n Output directory:', args.output_directory,
-          '\n Prefix:', args.prefix,
-          '\n Names being cleaned?:', args.nonamecln,
-          '\n verbose:', args.verbose)
-    logging.info('-----------------------------------------------------------\n')
+
+    logging.info('This is the RECORD CLEANER step of the pipeline\n')
+    logging.info('Arguments supplied are:')
+    logging.info(f'INPUT FILE: {args.input_file}')
+    logging.info(f'Data type: {args.data_type}')
+    logging.info(f'Expert status: {args.expert_file}')
+    logging.info(f' Working directory: {args.working_directory}')
+    logging.info(f' Output directory: {args.output_directory}')
+    logging.info(f' Prefix: {args.prefix}')
+    logging.info(f' verbose: {args.verbose}')
+    logging.info('-----------------------------------------------------------')
 
 
     ###------------------------------------------ Step A -------------------------------------------####
-    print('\n#> A1: Column standardisation\n')
+    logging.info('#> A1: Column standardisation')
     # Data preprocessing: Column standardisation 
     # Step A1: Standardise selection  and subset columns....
     tmp_occs = stepA.column_standardiser(args.input_file, args.data_type, verbose = True, debugging = False) # verbose by default true
 
     #-----------------------------------------------
-    print('\n#> A2: Column cleaning\n')
+    logging.info('\n#> A2: Column cleaning\n')
     # Step A2: Clean colunms and first step of standardising data (barcodes, event dates, ...)
     tmp_occs_2 = stepA.column_cleaning(tmp_occs, args.data_type, args.working_directory, args.prefix, verbose=True, debugging=False)
 
@@ -108,68 +107,63 @@ if __name__ == "__main__":
         tmp_occs_2['expert_det'] = pd.NA
 
     #-----------------------------------------------
-    print('\n#> A3: Collector name processing\n')
+    logging.info('\n#> A3: Collector name processing\n')
     # Step A3: Standardise collector names 
         # Here we check if the user wants to check the collector names, 
         # and if yes, the user can reinsert checked non-conforming names into the workflow
-    if args.nonamecln == None:
-        tmp_occs_3, frame_to_check = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=False)
-        # should we reinsert the names we could not deal with?
+    tmp_occs_3, frame_to_check = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=False)
+    # should we reinsert the names we could not deal with?
 
-        print('\n ................................\n',
-        'Would you like to reinsert the collector names I couldn\'t handle?',
-        'Please take care of encoding (usually best is UTF-8) when opening (especially in Microsoft Excel!!)',
-        'If you would like to reinsert your checked names, please indicate the path to your modified file. Otherwise type "n"')
-        reinsert=input() #'n' # make back to input()
-        print('-> Your input:', reinsert)
+    print('\n ................................\n',
+    'Would you like to reinsert the collector names I couldn\'t handle?',
+    'Please take care of encoding (usually best is UTF-8) when opening (especially in Microsoft Excel!!)',
+    'If you would like to reinsert your checked names, please indicate the path to your modified file. Otherwise type "n"')
+    reinsert=input() #'n' # make back to input()
+    logging.info(f'-> Your input for name reconciling: {reinsert}')
 
-        if reinsert == 'n':
-            print('Ok I will continue without any reinsertion')
-        else:
-            # check for fileending etc
-            print('reinserting the file', reinsert)
-            #print('How is it separated? (e.g. ";" or ","...)')
-            #separ = input()
-            try:
-                print('\n#> Reintegrating data\n')
-                tmp_occs_3 = stepA.reinsertion(tmp_occs_3, frame_to_check, reinsert, debugging=False)
-                print('Reintegration successful!')
-            except:
-                print('ERROR: I couldn\'t read the file from the path you provided. Try again.')
-                
-                #tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
-                # should we reinsert the names we threw out?
-        print('\n ................................\n')
-    
-    # If this step is not wished for, we just continue as if nothing happened 
+    if reinsert == 'n':
+        logging.info('Ok I will continue without any reinsertion')
     else:
-        print('No reintegration took place!!!')
-        tmp_occs_3 = tmp_occs_2
+        # check for fileending etc
+        logging.info(f'reinserting the file {reinsert}')
+        #print('How is it separated? (e.g. ";" or ","...)')
+        #separ = input()
+        try:
+            logging.info('\n#> Reintegrating data\n')
+            tmp_occs_3 = stepA.reinsertion(tmp_occs_3, frame_to_check, reinsert, debugging=False)
+            logging.info('Reintegration successful!')
+        except:
+            logging.error('ERROR: I couldn\'t read the file from the path you provided. Try again.')
+            
+            #tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
+            # should we reinsert the names we threw out?
+    logging.info('\n ................................\n')
+    
     
     #-----------------------------------------------
     # Here I am blacklisting some herbaria, as I cannot work with their data. (no proper barcodes, mixed up columns)
     # For now this is not much data loss. Update as necessary.
     HERB_TO_RM = [['AAU']]
-    print('Before removing dataproblematic institutions:', tmp_occs_3.shape)
+    logging.info(f'Before removing dataproblematic institutions: {tmp_occs_3.shape}')
     drop_ind = tmp_occs_3[(tmp_occs_3['institute'] == 'AAU')].index
     tmp_occs_3.drop(drop_ind, inplace = True)
-    print('After removing dataproblematic institutions:',tmp_occs_3.shape)
+    logging.info(f'After removing dataproblematic institutions: {tmp_occs_3.shape}')
 
     #-----------------------------------------------
     # Step A4: Query botanist names to HUH botanists database
     # HUH name query
-    print('\n#> A4: HUH name query\n')
+    logging.info('\n#> A4: HUH name query\n')
     
     # print('This takes a moment to initialise...')
    # tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
    # tmp_occs_3 = tmp_occs_3.reset_index(drop=True)
-    print('\n #> STEP A complete.\n')
+    logging.info('\n #> STEP A complete.\n')
 
 
     ###------------------------------------------ Step B -------------------------------------------####
     # Data deduplication
 
-    print('\n#> B1: Duplication statistics etc\n')
+    logging.info('\n#> B1: Duplication statistics etc\n')
     # Step B1: Duplication (sensitivity) statistics and separating out of << s.n. >> Collection numbers
     tmp_colnum, tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
 
@@ -177,38 +171,38 @@ if __name__ == "__main__":
     dup_cols = ['recorded_by', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
 
     #-----------------------------------------------
-    print('\n#> B2: Duplicates - merge duplicate records \n')
+    logging.info('\n#> B2: Duplicates - merge duplicate records \n')
      # Step B2: deduplicate data: merge duplicate records
     tmp_occs_4 = stepB.duplicate_cleaner(tmp_colnum, dupli = dup_cols, working_directory = args.working_directory, prefix = args.prefix, User='NA', expert_file = args.expert_file, verbose=False, debugging=False)
-    print(len(tmp_occs_4))
+    logging.info(f'Length of TMP 4:{len(tmp_occs_4)}')
 
 
     # Double checking duplication stats, should show 0. (i.e. repeat B1)
-    print('\n#> B2: Duplicates - stats after first merge \n')
+    logging.info('\n#> B2: Duplicates - stats after first merge \n')
     stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix, out = False)
-    print(tmp_occs_4.columns)
+    #logging.info(tmp_occs_4.columns)
    
     #-----------------------------------------------
     # only for records with no Collection number
     dup_cols1 = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
-    print('\n#> B3: Duplicates - merge <s.n.> duplicate records \n')
+    logging.info('\n#> B3: Duplicates - merge <s.n.> duplicate records \n')
     # Step B3: s.n. deduplicate
     tmp_s_n_1 = stepB.duplicate_cleaner(tmp_s_n, dupli = dup_cols1, working_directory= args.working_directory, prefix= args.prefix, User='NA', expert_file= args.expert_file, verbose=False, debugging=False)
-    print('S.N.:', len(tmp_s_n_1))
+    logging.info(f'S.N.: {len(tmp_s_n_1)}')
 
     # now recombine numbered and s.n. data
     tmp_occs_5 = pd.concat([tmp_occs_4, tmp_s_n_1])
 
     #-----------------------------------------------
     # Step B4: crossfill country names
-    print('\n#> B4: Crossfill country values\n')
+    logging.info('\n#> B4: Crossfill country values\n')
     tmp_occs_5 = stepB2.country_crossfill(tmp_occs_5, verbose=True)
 
 
     ###------------------------------------------ Step C -------------------------------------------####
     # Nomenclature checking
     # This step is skipped if input file is expert determined!
-    print('\n#> C: Taxonomy - POWO - check\n')
+    logging.info('\n#> C: Taxonomy - POWO - check\n')
 
     if args.expert_file != 'EXP':
         # step C1, nomenclature check with POWO/IPNI
@@ -241,33 +235,25 @@ if __name__ == "__main__":
             tmp_occs_5.accepted_name = tmp_occs_5.genus + ' ' + tmp_occs_5.specific_epithet
             tmp_occs_5.status = 'ACCEPTED'
 
-
-
             if args.verbose:
-                print('As you have an EXPERT file i did not crosscheck the taxonomy (some spp. might not yet be on POWO)',
-                'therefore some columns are missing: \n',
-                'I will fill them with <NA>!')
+                logging.info('As you have an EXPERT file i did not crosscheck the taxonomy (some spp. might not yet be on POWO)')
+                logging.info('therefore some columns are missing: I will fill them with <NA>!')
         
         tmp_occs_6 = tmp_occs_5
         # print(tmp_occs_5.dtypes)
 
 
-    print('#> C: Taxonomy done.')
+    logging.info('#> C: Taxonomy done.')
     
     #-----------------------------------------------
     # output cleaned data to csv
     tmp_occs_6.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
-    print("\n\n---------------------------------------------\n",
-    "The output of this first processing is saved to:",
-    args.output_directory+args.prefix+'cleaned.csv',
-    '\n---------------------------------------------\n')
+    logging.info(f'\n\n---------------------------------------------\n The output of this first processing is saved to: {args.output_directory+args.prefix}cleaned.csv\n---------------------------------------------\n')
 
     #coordinate checks take place in R. This is launched from the bash command file.
     #---------------------------------------------------------------------------
-    print('#> First cleaning steps completed. Next is Coordinate validation. ')
-
-    if args.verbose:
-         print('Thanks for cleaning your records ;-)')
+    logging.info('#> First cleaning steps completed. Next is Coordinate validation. ')
+    logging.info('\n\n------------------****** R *****-----------------------\n\n')
 
 
 ###-------- END OF RECORDCLEANER ------###

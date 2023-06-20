@@ -22,6 +22,7 @@ import pandas as pd
 import numpy as np
 import datetime 
 from getpass import getpass
+import logging
 
 
 print(os.getcwd())
@@ -70,6 +71,10 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose',
                         help = 'If true (default), I will print a lot of stuff that might or might not help...',
                         default = True)
+    parser.add_argument('-l', '--log_file',
+                        help = 'path specifying a location for the output logfile.',
+                        type = str)
+    
     args = parser.parse_args()
     # optional, but for debugging. Maybe make it prettier
     #print('Arguments:', args)
@@ -89,6 +94,25 @@ if __name__ == "__main__":
           '\n No coordinate backlog:', args.no_coords_backlog,
           '\n verbose:', args.verbose)
     print('-----------------------------------------------------------\n')
+
+
+    logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.INFO)
+    logging.info('-----------------------------------------------------------\n')
+
+    logging.info('#> This is the RECORD FILER step of the pipeline\n')
+    logging.info('Arguments supplied are:')
+    logging.info(f'INPUT FILE: {args.input_file}')
+    logging.info(f'Expert status: {args.expert_file}')
+    logging.info(f'Database location (local or remote): {args.db_local}')
+    logging.info(f'Database name: {args.database_name}')
+    logging.info(f'\n Hostname: {args.hostname}')
+    logging.info(f'Table name: {args.tablename}')
+    logging.info(f'Schema name: {args.schema}')
+    logging.info(f' Working directory: {args.working_directory}')
+    logging.info(f' Indet backlog location: {args.indets_backlog}')
+    logging.info(f' No coordinate backlog: {args.no_coords_backlog}')
+    logging.info(f' verbose: {args.verbose}')
+    logging.info('-----------------------------------------------------------')
 
 
     """
@@ -111,17 +135,16 @@ if __name__ == "__main__":
 
 
     #---------------------------------------------------------------------------
-    print('\n#> Now we \n')
-    print('\t - Check your new records against indets and for duplicates \n')
-    print('\t - Merge them into the master database',
-         '\n---------------------------------------------\n')
+    logging.info('\n#> Now we \n')
+    logging.info('\t - Check your new records against indets and for duplicates \n')
+    logging.info('\t - Merge them into the master database\n---------------------------------------------\n')
 
     # check input data variation: is it just one genus? just one country?
     imp = codecs.open(args.input_file,'r','utf-8') #open for reading with "universal" type set
     occs = pd.read_csv(imp, sep = ';',  dtype = z_dependencies.final_col_for_import_type) # read the data
     # #print(occs)
     occs = occs.fillna(pd.NA)
-    print('NA filled!')
+    logging.info('NA filled!')
     # print('\n ................................\n',
     # 'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
     print('Please type the USERNAME used to annotate changes in the records:')
@@ -150,8 +173,8 @@ if __name__ == "__main__":
     # SQL.send_to_sql(occs ,args.database_name, args.hostname, args.tablename, args.schema)
 
     if args.db_local == 'remote':
-         print("Trying to read remote database...")
-         print('Not today')
+         logging.info("Trying to read remote database...")
+         logging.info('Not today')
         # TEMPORARILY NOT HAPPENING AS I JUST WANT OT DEBUG THE MERGING OF DATASETS.
         # Step D1
         # # - get database extract from the GLOBAL database.
@@ -181,14 +204,14 @@ if __name__ == "__main__":
         # #
     # working with a local database...    
     elif args.db_local == 'local':
-        print('Reading local database')
+        logging.info('Reading local database')
         mdb_dir = args.database_name
 
         BL_indets = pd.read_csv(mdb_dir+'/indet_backlog.csv', sep=';', dtype= z_dependencies.final_col_for_import_type, na_values=pd.NA)
         BL_indets = BL_indets.fillna(pd.NA)
         # for col in BL_indets.columns:
         #     BL_indets[col] = BL_indets[col].astype(str).str.replace('nan', '<NA>')
-        print('NA filled!')
+        logging.info('NA filled!')
         #print(BL_indets)
         try:
             no_coord_bl = pd.read_csv(mdb_dir + '/coord_backlog.csv', sep=';', dtype= z_dependencies.final_col_for_import_type)
@@ -205,8 +228,8 @@ if __name__ == "__main__":
         #     m_DB[col] = m_DB[col].astype(str).str.replace('nan', '<NA>')
 
     ###---------------------- First test against indets backlog --------------------------------###
-    print('\n#> INDET consolidation')
-    print('------------------------------------------------')
+    logging.info('\n#> INDET consolidation')
+    logging.info('------------------------------------------------')
 
 
     # check all occs against indet backlog
@@ -238,20 +261,19 @@ if __name__ == "__main__":
     occs.status = occs.status.replace('nan', None)
     occs.status = occs.status.replace('<NA>', None)
     # check nomencl. status
-    print('INDET:::::\n', occs[~occs.status.notna()])
+    logging.debug(f'INDET:::::\n {occs[~occs.status.notna()]}')
     indet_to_backlog = occs[~occs.status.notna()] # ==NA !!
     occs = occs[occs.status.notna() ] # NOT NA!
-    print(occs.status.notna())
-    print(indet_to_backlog.status.notna())
+    logging.info(f'{occs.status.notna()}')
+    logging.info(f'{indet_to_backlog.status.notna()}')
     
     #indet_to_backlog = pd.concat([indet_to_backlog])
     # keep indet_to_backlog and send back into server
     #indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';')
-    print(occs.status)
-    print(occs.accepted_name)
+    logging.info(f'{occs.status}')
+    logging.info(f'{occs.accepted_name}')
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
-    print('\n#> COORDINATE consolidation')
-    print('------------------------------------------------')
+    logging.info('\n#> COORDINATE consolidation\n------------------------------------------------')
         # geo_issues is the column name for georeferencing issues
 
 
@@ -287,12 +309,12 @@ if __name__ == "__main__":
   
     #print('No coordinate-less records found.')
         # occs remains unchanged
-    print(occs.accepted_name)
+    logging.info(f'{occs.accepted_name}')
 
     ###---------------------- Then merge all with master database. Make backup of previous version. --------------------------------###
 
-    print('\n#> FINAL master database consolidation')
-    print('------------------------------------------------')
+    logging.info('\n#> FINAL master database consolidation')
+    logging.info('------------------------------------------------')
 
     #print(' size:', len(occs), 'With columns:', occs.columns)
 
@@ -355,17 +377,15 @@ if __name__ == "__main__":
     # reduce duplicated information within cells     
     deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc', 'det_by'], verbose=True)
     
-    print('\n#> Merging steps complete.')
-    print('------------------------------------------------')
+    logging.info('\n#> Merging steps complete.\n------------------------------------------------')
 
-    print('Trimming master database before writing:', len(deduplid))
+    logging.info(f'Trimming master database before writing: {len(deduplid)}')
     deduplid = deduplid[z_dependencies.final_cols_for_import]
     print('Final size:', len(deduplid), 'With columns:', deduplid.columns)
 
     # this is now the new master database...
     deduplid.to_csv(mdb_dir + 'master_db.csv', sep=';', index=False)
-    print('------------------------------------------------') 
-    print('\n#>', len(deduplid),'Records filed away into master database.\n')
-    print('------------------------------------------------')
+    logging.info(f'------------------------------------------------\n#> {len(deduplid)} Records filed away into master database.\n')
+    
 
 # needs more finetuning.

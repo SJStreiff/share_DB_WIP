@@ -24,7 +24,8 @@ import pykew.powo as powo
 import pykew.ipni as ipni
 from pykew.powo_terms import Name, Filters
 import pandas as pd
-#import swifter
+import logging
+import swifter
 
 
 def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
@@ -47,8 +48,7 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
         # annoying error when no det associated with a record
         query = {Name.genus: gen, Name.species: sp}
         res = powo.search(query, filters=Filters.species)  # , filters = [Filters.accepted])
-        if verbose:
-            print('Checking the taxon', gen, sp)
+        logging.info(f'Checking the taxon {gen} {sp}')
             # print('checking distribution', distribution)
         #print(res.size()) # for debugging
         try:
@@ -56,16 +56,14 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
                 if 'name' in r:
                     r['name']
 
-            if debugging:
-                print('Input taxon accepted:', r['accepted'])
+            logging.debug(f'Input taxon accepted: {r.accepted}')
 
             if r['accepted'] == False:
                 status = 'SYNONYM'
                 acc_taxon = r['synonymOf']
                 qID = acc_taxon['fqId']
                 ipni_no = r['url'].split(':', )[-1]
-                if debugging:
-                    print('Accepted taxon name:', acc_taxon['name']) 
+                logging.debug(f'Accepted taxon name: {acc_taxon.name}') 
                 scientificname = acc_taxon['name']
                 species_author = acc_taxon['author']
                 # if distribution:
@@ -96,18 +94,15 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
 
         except:
             # there are issues when the function is presented the string 'sp.' or 'indet.' etc
-            if debugging:
-                print('The species', gen, sp, 'is not registered in POWO...\n',
-                  ' I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
+            logging.debug(f'The species {gen}{sp} is not registered in POWO...\n I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
             status = pd.NA
             scientificname = pd.NA
             species_author = pd.NA
             # native_to = pd.NA
             ipni_no = pd.NA
 
-        if debugging:
-            print(status)
-            print(scientificname, species_author)
+        logging.debug(f'{status}')
+        logging.debug(f'{scientificname} {species_author}')
             #print(native_to)
 
         res = ipni.search(query)  # , filters = [Filters.accepted])
@@ -116,8 +111,7 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
                 if 'name' in r:
                     r['name']
             ipni_pubYr = r['publicationYear']
-            if debugging:
-                print('IPNI publication year found.')
+            logging.debug('IPNI publication year found.')
         except:
             ipni_pubYr = pd.NA
     else:
@@ -143,28 +137,26 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('nan', pd.NA)
     #occs_toquery[['genus', 'specific_epithet']] = occs_toquery[['genus', 'specific_epithet']].replace('None', pd.NA)
     occs_toquery['sp_idx'] = occs_toquery['genus']+ ' ' + occs_toquery['specific_epithet']
-    if debugging:
-        print('The is the index and length of taxa column (contains duplicated taxon names; should be same length as input dataframe)')
-        print(occs_toquery.sp_idx)
-        print(len(occs_toquery.sp_idx))
+    logging.debug('The is the index and length of taxa column (contains duplicated taxon names; should be same length as input dataframe)')
+    logging.debug(f'{occs_toquery.sp_idx}')
+    logging.debug(f'{len(occs_toquery.sp_idx)}')
     occs_toquery.set_index(occs_toquery.sp_idx, inplace = True)
 
     occs_toquery = occs_toquery.dropna(how='all', subset=['genus', 'specific_epithet']) # these are really bad for the query ;-)
     # drop duplicated genus-species combinations (callable by index in final dataframe)
     occs_toquery = occs_toquery.drop_duplicates(subset = 'sp_idx', keep = 'last')
-    if verbose:
-        print('Number of unique taxa to check:', len(occs_toquery.sp_idx))
-    # # SWIFTER VERSION
-    # occs_toquery[['status','accepted_name', 'ipni_species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.swifter.apply(lambda row: powo_query(row['genus'], 
-    #                                                                                                                         row['specific_epithet'],
-    #                                                                                                                      distribution=False, verbose=True),
-    #                                                                                                                           axis = 1, result_type='expand')
-
-    # # NON-SWIFTER VERSION
-    occs_toquery[['status','accepted_name', 'ipni_species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.apply(lambda row: powo_query(row['genus'], 
+    logging.info(f'Number of unique taxa to check: {len(occs_toquery.sp_idx)}')
+    # SWIFTER VERSION
+    occs_toquery[['status','accepted_name', 'ipni_species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.swifter.apply(lambda row: powo_query(row['genus'], 
                                                                                                                             row['specific_epithet'],
                                                                                                                          distribution=False, verbose=True),
                                                                                                                               axis = 1, result_type='expand')
+
+    # # NON-SWIFTER VERSION
+    # occs_toquery[['status','accepted_name', 'ipni_species_author', 'ipni_no', 'ipni_pub']] = occs_toquery.apply(lambda row: powo_query(row['genus'], 
+    #                                                                                                                         row['specific_epithet'],
+    #                                                                                                                      distribution=False, verbose=True),
+    #                                                                                                                           axis = 1, result_type='expand')
    
 
 
@@ -177,8 +169,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
   ###----> finish implementing this. broken now! 
   # ask just unique species and then reinsert based on index... WHICH NEEDS TO ALSO GO INTO ORIGINAL OCCS!!!
 
-    if debugging:
-        print(occs_out[['genus', 'specific_epithet', 'accepted_name']])
+    logging.debug(f'{occs_out.genus}{occs_out.specific_epithet}{occs_out.accepted_name}')
     # occs[['status','accepted_name', 'species_author', 'ipni_no', 'ipni_pub']] = occs.apply(lambda row: powo_query(row['genus'], row['specific_epithet'], distribution=False, verbose=True), axis = 1, result_type='expand')
     # # now drop some of the columns we really do not need here...
     # print(occs)
@@ -191,14 +182,10 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     #occs_out = occs_out[occs_out['status'].notna()]
 
     # some stats
-    if verbose:
-        print(len(occs_out[occs_out['status'].notna()]), 'records had an ACCEPTED name in the end. \n')
-        print(len(occs_out[occs_out['status'].isna()]), 'records had an ISSUE in their name and could not be assigned any name name. \n',
-    'These are saved to a separate output, please check these, and either rerun them or look for duplicates with a determination.')
-    # deprecated
-    #occs.to_csv(out_dir + 'taxonomy_checked.csv', index = False, sep=';')
-    # issue_occs.to_csv(working_directory + 'TO_CHECK_unresolved_taxonomy.csv', index = False, sep = ';')
-
+    logging.info(f'{len(occs_out[occs_out.status.notna()])} records had an ACCEPTED name in the end.')
+    logging.info(f'{len(occs_out[occs_out.status.isna()])} records had an ISSUE in their name and could not be assigned any name name.')
+    logging.info('These are saved to a separate output, please check these, and either rerun them or look for duplicates with a determination.')
+    
 
     return occs_out #, indet_occs
 
