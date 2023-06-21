@@ -150,7 +150,7 @@ final_col_type = {'source_id': str,
 	'colnum': str,
 	'sufix': str,
     'col_date': str,
-    'col_day': float, #pd.Int64Dtype(), # this allows nan within int
+    'col_day': object, #pd.Int64Dtype(), # this allows nan within int
     'col_month': float,#pd.Int64Dtype(),
     'col_year': float,#pd.Int64Dtype(),
 	'det_by': str,
@@ -215,7 +215,7 @@ herbo_subset_cols = (['recorded_by',
 	'genus',
 	'specific_epithet'])
 
-gbif_key = {'gbifID': 'source_id',
+gbif_key = {#'gbifID': 'source_id',
     'genus': 'genus',
     'species': 'species-tobesplit',
     'countryCode': 'country_id',
@@ -235,7 +235,7 @@ gbif_key = {'gbifID': 'source_id',
     'scientificName':'scientific_name'}
 
 
-gbif_subset_cols =(['source_id',
+gbif_subset_cols =([#'source_id',
     'scientific_name',
     'genus',
     'species-tobesplit',

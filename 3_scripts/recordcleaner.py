@@ -105,7 +105,7 @@ if __name__ == "__main__":
         tmp_occs_2['expert_det'] = 'expert_det_file'
     if args.expert_file == 'NO':
         tmp_occs_2['expert_det'] = pd.NA
-
+    stop
     #-----------------------------------------------
     logging.info('\n#> A3: Collector name processing\n')
     # Step A3: Standardise collector names 

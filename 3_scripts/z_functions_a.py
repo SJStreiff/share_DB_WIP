@@ -94,8 +94,36 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
     logging.debug(f'Testing new type implementation: {occs.dtypes}')
     logging.info(f'{occs}')
 
-    occs = occs.astype(dtype = z_dependencies.final_col_type, errors='ignore')
-    #print(occs.dtypes)
+    print(z_dependencies.final_col_type)
+    print(occs.columns)
+
+
+    for column in occs.columns:
+        # Iterate over each row in the column
+        for index, value in occs[column].items():
+            try:
+                # Try converting the value to float
+                float(value)
+            except ValueError:
+                print('')
+            except TypeError:
+                # Print the column, index, and value where the error occurred
+                print(f"Error in column '{column}', index '{index}': {value}")
+        # i = 0
+    # for col in occs.columns:
+    #     print(col)
+    #     print(occs[col].columns)
+    #     print(i)
+    #     key = dict(filter(lambda i:i[0] in z_dependencies.final_col_type, occs[col].columns))
+    #     print(key)
+    #     occs[col] = occs[col].astype(dtype = key)
+    #     i += 1
+    #print(sum(occs.source_id.isnull()))
+    # for col in occs.columns:
+    #     print(col)
+    #     occs[col] = occs[col].astype(dtype = z_dependencies.final_col_type, errors='raise')
+    occs = occs.astype(dtype = z_dependencies.final_col_type, errors='raise')
+    print(occs.dtypes)
     #_bc
     return occs
 
