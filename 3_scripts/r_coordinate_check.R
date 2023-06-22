@@ -7,6 +7,7 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 rm(list = ls()) # just making sure the environment is clean
+
 print('#> C: Coordinate checking')
 package_list <- c('optparse',
                   'rnaturalearthdata',
@@ -43,7 +44,7 @@ print('Inputfile:')
 print(opt$options$input)
 
 #debugging
-#dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230509_Phil_cleaned.csv', sep =';', head=T)
+dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230509_Phil_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
@@ -71,7 +72,7 @@ flags <- clean_coordinates(x = dat,
                            lat = "ddlat",
                            species = 'scientific_name',
                            countries = "country_iso3",
-                           tests = c("capitals", "centroids", "equal","gbif", "institutions",
+                           tests = c("capitals", "centroids", "equal","gbif", "institutions", "seas",
                                      "zeros", "countries" ))
 # and send the file out again for integrating into database
 '%notin%' <-  Negate('%in%')
@@ -89,6 +90,48 @@ for(j in newcols){
   flags[w, j] <- names(flags[j])
 }
 
+
+clines <- read_sf('/Users/serafin/Sync/1_Annonaceae/Y_DATA/2_land-map_rasters/ne_50m_coastline/ne_50m_coastline.shp') #path to shapefile
+
+
+dat_sf <- flags %>% st_as_sf(coords = c('ddlong','ddlat')) %>% 
+  st_set_crs(4326)
+
+dat_sf_tt <- dat_sf[dat_sf$.sea == FALSE,]
+dat_sf_good <-dat_sf[dat_sf$.sea == TRUE,]
+
+dat_sf_tt$coast_dist <- NULL
+dat_sf_tt$coast_point <- NULL
+for(i in 1:length(dat_sf_tt$scientific_name)){
+  testvalues <- st_as_sf(dat_sf_tt[i,])
+  dat_sf_tt$coast_dist[i] <- min(st_distance(testvalues, clines))
+  tmp <- st_nearest_points(testvalues, clines)
+  dat_sf_tt$coast_point[i] <- st_cast(tmp, 'POINT')
+  print(dat_sf_tt$coast_dist[i])
+  print(i)
+}
+
+
+# FOR choosing a decent cutoff value...
+dat_sf_tt$coast_dist <- as.numeric(dat_sf_tt$coast_dist) 
+print(paste('MEDIAN', median(dat_sf_tt$coast_dist)))
+print(paste('MEAN', mean(dat_sf_tt$coast_dist)))
+ggplot() + geom_density(aes(dat_sf_tt$coast_dist))
+dat_tbs <- dat_sf_tt[dat_sf_tt$coast_dist <= 15000,]
+print(paste('This many thrown out:', (dim(dat_sf_tt[dat_sf_tt$coast_dist > 15000,])[1])))
+ggplot() + geom_density(aes(dat_tbs$coast_dist))
+
+
+
+If blah = st_nearest_points(x, y) followed by blahblah = st_cast(blah, "POINT") 
+is giving you problems with st_intersects(blahblah, y) because of floating point math/really small dis
+tances between blahblah and y, just throw st_buffer() around y inside st_nearest_points() with a really small negative value, 
+ala st_nearest_points(x, st_buffer(y, -0.001)). This will force the "nearest point" to move slightly further into the y feature so
+that blahblah will then safely intersect it! – 
+Bajcz
+
+
+
 #if(sum(flags))
 # make a new column with all issues collated together... in one cell.
 geo_issues <- tidyr::unite(flags, geo_issues, any_of(newcols), sep = ',', na.rm = TRUE)
@@ -98,9 +141,10 @@ names(geo_issues)[names(geo_issues) == '.summary'] <- 'summary'
 #geo_issues <- geo_issues[, -"summary"] # drop the summary col as we have all the info we need in the geo_issue column
 geo_issues <- rbind(geo_issues, no_coord_dat)
 
-
+print('writing file now')
 write.table(geo_issues, file = out_file, row.names = FALSE, sep=';')
-nc_outfile <- gsub('spatialvalid.csv', 'nocoords.csv', out_file)
+
+#nc_outfile <- gsub('spatialvalid.csv', 'nocoords.csv', out_file)
 #write.table(no_coord_dat, file = nc_outfile, row.names = F, sep=';')
 # write.table(geo_issues, file = '~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/P_As_spatialvalid.csv', row.names = F, sep=';')
 # write.table(no_coord_dat, file = '~/Sync/1_Annonaceae/share_DB_WIP/2_data_out/P_As_nocoords.csv', row.names = F, sep=';')

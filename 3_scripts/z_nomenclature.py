@@ -55,8 +55,7 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
             for r in res:
                 if 'name' in r:
                     r['name']
-
-            logging.debug(f'Input taxon accepted: {r.accepted}')
+                #logging.info(f'Input taxon accepted: {r.accepted}')
 
             if r['accepted'] == False:
                 status = 'SYNONYM'
@@ -94,24 +93,29 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
 
         except:
             # there are issues when the function is presented the string 'sp.' or 'indet.' etc
-            logging.debug(f'The species {gen}{sp} is not registered in POWO...\n I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
+            logging.debug(f'The species {gen} {sp} is not registered in POWO...\n I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
             status = pd.NA
             scientificname = pd.NA
             species_author = pd.NA
             # native_to = pd.NA
             ipni_no = pd.NA
 
-        logging.debug(f'{status}')
+        logging.info(f'STATUS: {status}')
         logging.debug(f'{scientificname} {species_author}')
             #print(native_to)
-
-        res = ipni.search(query)  # , filters = [Filters.accepted])
+        query = {Name.genus: gen, Name.species: sp}
+        query = gen + ' ' + sp
+        #print(query)
+        res = ipni.search(query)
+        #res = ipni.search(query, filters=Filters.species)  # , filters = [Filters.accepted])
         try:
             for r in res:
+             
                 if 'name' in r:
                     r['name']
             ipni_pubYr = r['publicationYear']
-            logging.debug('IPNI publication year found.')
+            #print(ipni_pubYr)
+            #logging.debug('IPNI publication year found.')
         except:
             ipni_pubYr = pd.NA
     else:
@@ -131,6 +135,7 @@ def kew_query(occs, working_directory, verbose=True, debugging=False):
     '''
 
     #occs_na
+    occs.specific_epithet = occs.specific_epithet.replace('nan', pd.NA) 
     occs['sp_idx'] = occs['genus']+ ' ' + occs['specific_epithet']
     occs.set_index(occs.sp_idx, inplace = True)
     occs_toquery = occs[['genus', 'specific_epithet']].astype(str).copy()
