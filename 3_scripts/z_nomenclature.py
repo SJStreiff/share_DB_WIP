@@ -41,7 +41,6 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
              'native_to' POWO range information
     '''
     #print('Checking uptodate-ness of nomenclature in your dataset...')
-    distribution1 = distribution
 
 
     if pd.notna(gen) and pd.notna(sp):
@@ -65,15 +64,14 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
                 logging.debug(f'Accepted taxon name: {acc_taxon.name}') 
                 scientificname = acc_taxon['name']
                 species_author = acc_taxon['author']
-                # if distribution:
-                #     res2 = powo.lookup(qID, include=['distribution'])
-                #     try:
-                #         native_to = [d['name'] for d in res2['distribution']['natives']]
-                #     except:
-                #         status = 'EXTINCT'
-                #         native_to = [d['name'] for d in res2['distribution']['extinct']]
-                # else:
-                #     native_to = pd.NA
+                if distribution:
+                    res2 = powo.lookup(qID, include=['distribution'])
+                    try:
+                        native_to = [d['name'] for d in res2['distribution']['natives']]
+                    except:
+                        status = 'EXTINCT'
+                        native_to = [d['name'] for d in res2['distribution']['extinct']]
+                
 
             else:
                 status = 'ACCEPTED'
@@ -81,14 +79,14 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
                 ipni_no = r['url'].split(':', )[-1]
                 scientificname = gen + ' ' + sp
                 species_author = r['author']
-                # if distribution:
-                #     res2 = powo.lookup(qID, include=['distribution'])
-                #     #print(res2)
-                #     try:
-                #         native_to = [d['name'] for d in res2['distribution']['natives']]
-                #     except:
-                #         status = 'EXTINCT'
-                #         native_to = [d['name'] for d in res2['distribution']['extinct']]
+                if distribution:
+                    res2 = powo.lookup(qID, include=['distribution'])
+                    #print(res2)
+                    try:
+                        native_to = [d['name'] for d in res2['distribution']['natives']]
+                    except:
+                        status = 'EXTINCT'
+                        native_to = [d['name'] for d in res2['distribution']['extinct']]
             ipni_no = 'https://ipni.org/n/' + ipni_no
 
         except:
@@ -97,7 +95,7 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
             status = pd.NA
             scientificname = pd.NA
             species_author = pd.NA
-            # native_to = pd.NA
+            native_to = pd.NA
             ipni_no = pd.NA
 
         logging.info(f'STATUS: {status}')
@@ -124,9 +122,14 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
         species_author = pd.NA
         ipni_no = pd.NA
         ipni_pubYr = pd.NA
+        native_to = pd.NA
+        
 
-
-    return status, scientificname, species_author, ipni_no, ipni_pubYr 
+    if distribution:
+        print(native_to)
+        return status, scientificname, species_author, ipni_no, ipni_pubYr, native_to
+    else:
+        return status, scientificname, species_author, ipni_no, ipni_pubYr 
 
 
 
