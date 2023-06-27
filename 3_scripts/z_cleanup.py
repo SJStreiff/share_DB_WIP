@@ -39,6 +39,6 @@ def cleanup(occs, cols_to_clean, verbose = True, debugging = False):
 
 
     for col in cols_to_clean:
-            occs[ col] = occs[col].apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
+            occs[ col] = occs[col].apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated values within a cell
 
     return occs

@@ -70,6 +70,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
 
         occs = occs[z_dependencies.gbif_subset_cols] # and subset
         #occs = occs.fillna(pd.NA) # problems with this NA
+        occs.source_id = 'gbif'
 
 
     else:
@@ -151,8 +152,9 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         #split colDate_1 on '/' into three new fields (dd/mm/yyyy). Let's just hope no american ever turns up in that data
         occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,)
         occs[['det_day', 'det_month', 'det_year']] = occs.det_date_1.str.split("/", expand=True,)
-        # cahnge datatype to pd Int64 (integer that can handle NAs)
+        # change datatype to pd Int64 (integer that can handle NAs)
         occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']] = occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(float).astype(pd.Int64Dtype())
+
 
         #split colDate_1 on '/' into three new fields
         occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,)
@@ -263,6 +265,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             r'(\d+\-\d+\/\d+)$',
             r'(\d+\-\d+)$',
             r'(\d+\/\d+)$',
+            r'(\d+\.\d+)$',
+            r'(\d+\s\d+)$',
             r'(\d+)$',
         ]
         # extract the numeric part of the barcode

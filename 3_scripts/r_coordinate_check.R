@@ -228,7 +228,8 @@ for(j in newcols){
 }
 
 # make a new column with all issues together in one cell.
-geo_issues <- tidyr::unite(flags_final, geo_issues, any_of(newcols), sep = ',', na.rm = TRUE)
+geo_issues <- tidyr::unite(flags_final, geo_issues, any_of(newcols), sep = '-', na.rm = TRUE) 
+# sep with '-' to keep ',' reserved for separating duplicates
 
 no_coord_dat$old_ddlong <- rep(NA, length(no_coord_dat$scientific_name))
 no_coord_dat$old_ddlat <- rep(NA, length(no_coord_dat$scientific_name))

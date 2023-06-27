@@ -47,7 +47,7 @@ optional arguments:
 --nonamecln NONAMECLN
                        if specified, collector names are expected in the format <Surname>, <F>irstname, or if deviating standardised to be identical across all datasets.
 
-If it doesn't work, or you would like to chat, feel free to contact serafin.streiff@ird.fr
+If it doesn't work, or you would like to chat, feel free to contact serafin.streiff<at>ird.fr
 ```
 
 ## Working with RECORDCLEANER
@@ -63,7 +63,7 @@ GBIF raw data downloads are in tab-separated tables (csv), and herbonautes data 
 
 The working directory is specified, as some data might be non-conforming to the standardisation steps, and therefore not filterable with some steps of the pipeline. However, a lot of this might be still useable. Therefore it is written into the working directory for manual editing of the steps that cannot be done automatically. In this case, I will try to implement an automatic pause in the program that allows the user to edit the problematic data manually and then reinsert it into the pipeline.
 
-For example, when standardising collector names (which is crucial for detecting duplicates in subsequent steps), I cannot handle names that are not in the format of some firstname, any middle names and some surname. E.g. if collections are filed under a program name (i.e. in SE-Asia, herbarium specimens are frequently labelled and numbered as something like "Forest Research Institute (FRI)", which I haven't so far been able to cleanly filter). Therefore it is faster to manually cross check these for consistency within dataset, and then I can reinsert them with no problem).
+For example, when standardising collector names (which is crucial for detecting duplicates in subsequent steps), I cannot handle names that are not in the format of some firstname, any middle names and some surname. E.g. if collections are filed under a program name (i.e. in SE-Asia, herbarium specimens are frequently labelled and numbered as something similar to "Forest Research Institute (FRI)", which I haven't so far been able to cleanly filter). Therefore it is faster to manually cross check these for consistency within dataset, and then I  reinsert them with no problem).
 During the name standardisation step I output the concerned records to a temporary file, and after this step I plan to let the user know than one can edit the records before reinserting them and continuing...
 
 
@@ -86,9 +86,9 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
   * B4: Crossfill country full name and ISO codes (needed later on, and not always complete.)
 
 * Step C:
-  * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily within the framework of our project collaborators. With other families the situation might be different, but changes can always be pushed by making the curators of POWO aware of taxonomic changes that are published.
+  * Check taxonomy for accurracy, and update if necessary. At the moment this is done by cross checking with POWO (powo.kew.org), which for Annonaceae we can update relatively easily within the framework of our project collaborators. With other families the situation might be different, but changes can always be pushed by making the curators of POWO aware of published taxonomic changes that aren't up to date.
   * Check coordinates. Probably we just check for country centroids and points in the water. This will be done with already available packages, and issues flagged for potential correction in e.g. QGIS (qgis.org)
-  This process is invoked as a separate step in R, as the packages available there are more used and robust (maybe). For the moment we implemented an automatic CoordinateCleaner (https://ropensci.github.io/CoordinateCleaner/index.html)
+  This process is invoked as a separate step in R, as the packages available there are more used and robust (and I am more familiar with them). For the moment we implemented an automatic CoordinateCleaner (https://ropensci.github.io/CoordinateCleaner/index.html)
 
 The resulting data of these cleaning steps are hte following files:
 * FILENAME_cleaned.csv: final output from python processing (up to, including Step C1)
@@ -100,7 +100,10 @@ RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to
 
 * RECORD-FILER:
   * Merge newly cleaned data with the database. Before the actual merging, I check for duplicates and merge these 
-  * **WIP**: Crosscheck import data with indets and non-spatialvalid data in database, and recover any records potentially matching.
+  * First all databases are read. These include two backlog datasets, the *indet*-backlog and the *no-coordinate*-backlog, as well as the master database. Backups of these are saved with a timestamp, so changes can be reverted.
+  * With barcode priority, duplicates are checked and merged identically to the cleaning steps outlined above. If duplicates are found to with new data and the backlogs, these records are integrated into the new master version.
+  * Finally the newly modified backlogs and master database are saved.
+
 
 
 
@@ -120,18 +123,12 @@ debugging
 * **DONE** - implement problem name output and reinsertion, optionally pausing execution
 * **DONE** when do we query POWO/IPNI?? irrelevant in my opinion. We do it before inserting a new bunch of data into the master database. 
 * quantify fast and slow steps and make backup files between, so we can restart at that step (maybe integrate variable to call analysis from step XYZ)
-* make distinction between non-spatialvalid and no coordinate data!! then we can revise non-spatialvalid points in QGIS
+* **DONE** make distinction between non-spatialvalid and no coordinate data!! then we can revise non-spatialvalid points in QGIS
 
 * **Implement background files**:
-  * indets and similar: before integrating data, check for data previosly set aside because we had no conclusive data...?
+  * **DONE**  indets and similar: before integrating data, check for data previosly set aside because we had no conclusive data...?
 
-  * master distribution database for integration.
-
-
-
-# The/A pipeline for integrating cleaned data nicely into a postgres database: RECORDFILER
-
-Todo
+  * **DONE**  master distribution database for integration.
 
 
 

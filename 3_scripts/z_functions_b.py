@@ -373,7 +373,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     if step =='Master':
         # if Master, we merge the accepted name field.
         dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year','colnum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','accepted_name'],keep=False)]
-        print('DUPLICATED SPECIES?\n', dups_diff_species[['recorded_by', 'barcode', 'accepted_name', 'det_year']])
+        # print('DUPLICATED SPECIES?\n', dups_diff_species[['recorded_by', 'barcode', 'accepted_name', 'det_year']])
         dups_diff_species = dups_diff_species.sort_values(['col_year','colnum_full'], ascending = (True, True))
 
         logging.info(f'\n We have {len(dups_diff_species)} duplicate specimens with diverging identification.')
@@ -381,16 +381,21 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         # # backup the old dets
         # occs_dup_col['genus_old'] = occs_dup_col['genus']
         # occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
+        
+        # needs this to be able to group by and work below
+        occs_dup_col[dup_cols] = occs_dup_col[dup_cols].fillna(0)
+        #occs_dup_col = occs_dup_col.reset_index(drop = True)
+        #groupby col and num, and sort more recent det 
 
-        #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
         occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values(['det_year'], ascending=False))
-
-
         #occs_dup_col.reset_index(drop=True, inplace=True)
         occs_dup_col['accepted_name'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['accepted_name'].transform('first')
         occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
         occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
+        # and values 0 back to NA
+        occs_dup_col[dup_cols] = occs_dup_col[dup_cols].replace(0, pd.NA)
 
+        
         ###### HERE no data left in sn step... 
         #print('HERE', occs_dup_col)
 
@@ -492,7 +497,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
-                geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                geo_issues = pd.NamedAgg(column = 'geo_issues', aggfunc=lambda x: ', '.join(x)),
                 source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                 modified = pd.NamedAgg(column = 'modified',  aggfunc=lambda x: ', '.join(x)) # is filled with new value at the end of deduplication
                 )
@@ -557,7 +562,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
-                geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                geo_issues = pd.NamedAgg(column = 'geo_issues', aggfunc=lambda x: ', '.join(x)),
                 source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                 modified = pd.NamedAgg(column = 'modified',  aggfunc=lambda x: ', '.join(x)) # is filled wioth new value at the end of deduplication
             )
@@ -628,7 +633,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
                 source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
-                geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                geo_issues = pd.NamedAgg(column = 'geo_issues', aggfunc=lambda x: ', '.join(x)),
                 modified = pd.NamedAgg(column = 'modified',  aggfunc=lambda x: ', '.join(x)) # is filled wioth new value at the end of deduplication
                 )
             # here quite some data might get lost, so we need to check where we want to just join first,
@@ -652,6 +657,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             occs_dup_col = occs_dup_col.sort_values(['status', 'expert_det'], ascending = [True, True])
             logging.info(f'{occs_dup_col.accepted_name}')
             # master but not expert. proceed as normal.
+            print(occs_dup_col.modified.isna())
+            occs_dup_col.modified = occs_dup_col.modified.fillna('nan')
+            occs_dup_col.geo_issues = occs_dup_col.geo_issues.fillna('NONE')
             occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
                     scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
                     genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
@@ -692,14 +700,13 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                     accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                     ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                     ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
-                    geo_issues = pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),
+                    geo_issues = pd.NamedAgg(column = 'geo_issues', aggfunc=lambda x: ', '.join(x)),
                     source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                     modified = pd.NamedAgg(column = 'modified',  aggfunc=lambda x: ', '.join(x)) # is filled wioth new value at the end of deduplication
                     )
                 # here quite some data might get lost, so we need to check where we want to just join first,
                 # and where we add all values, and then decide on the columns we really want in the final
                 # database!!!
-           
                 # de-duplicated duplicates sorting to get them ready for merging
             length = len(dup_cols)-2
             order_vec = tuple([True, True] + [False]*length)

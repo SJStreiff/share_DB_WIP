@@ -148,8 +148,7 @@ if __name__ == "__main__":
     # print('\n ................................\n',
     # 'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
     print('Please type the USERNAME used to annotate changes in the records:')
-    #username=input() 
-    username = 'testing'
+    username=input() 
     # print('\n ................................\n',
     # 'Please type the PASSWORD used to connect to the database for user', username)
     # password=getpass() #'n' # make back to input()
