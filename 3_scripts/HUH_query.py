@@ -28,7 +28,7 @@ import os
 import regex as re
 import requests
 import swifter
-
+import logging
 
 
 from bs4 import BeautifulSoup
@@ -63,18 +63,24 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
     if verbose:
         print('HUH name checker checking the botanist', recordedBy, '\n .........................\n')
+    
+
+
     else:
         print(recordedBy)
+    logging.info(f'HUH name checker checking the botanist {recordedBy}')
     recby_length = len(recordedBy.split())
     if debugging:
         print(recby_length)
+        logging.debug(f'HUH names l75: Recby_length {recby_length}')
     # split recorded by into Firstnames and Surnames. If just one word, assume it is the surname and proceed with just this...    
     if recby_length > 1:
         try:
             lastname, firstnames = recordedBy.split(',')
         except:
             if verbose:
-                print('firstname issue @ l.64')
+                print('firstname issue @ l.79')
+            logging.debug('First name issues ~l.79')    
             lastname = recordedBy
             firstnames = ''
         try:
@@ -92,8 +98,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
     # create name=<string> for insertion into url for query.
     lastname=lastname.strip()
     name_string = lastname # for now i have found just querying with surname yields best results
-    if debugging:
-        print('Querying for:', name_string)
+    
+    logging.debug(f'Querying for {name_string}')
     name_string=name_string.strip() # just to make sure no leadin/trailing whitespace again
     
 
@@ -102,8 +108,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
     # do query
     url = "https://kiki.huh.harvard.edu/databases/botanist_search.php?name="+name_string+"&individual=on"
-    if debugging:
-        print('The URL is:', url)
+    
+    logging.debug(f'The URL is {url}')
     response = requests.get(url)
     # important: re-encode into utf-8 to have all non-english characters and accents work
     response.encoding = 'UTF-8'
@@ -118,8 +124,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
     # we now get all possibilities found on the webpage
     pot_names = soup.findAll(href = re.compile("botanist_search.php"))
-    if debugging:
-        print(pot_names)
+    
+    logging.debug(f'Potential names: {pot_names}')
     """ structure is:
      <a href="botanist_search.php?mode=details&amp;id=28447">P. A. W. J. de Wilde</a>     
     """
@@ -162,15 +168,15 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
         new_row =  pd.DataFrame(I_out).transpose()
         pot_df = pd.concat([pot_df, new_row], axis=0)
-        if debugging:
-            print(pot_df)
+        # if debugging:
+        #     print(pot_df)
 
 
     pot_df.reset_index(inplace=True) # reset index
     pot_df.columns = pot_df.iloc[0] # so we can rename columns
     pot_df.drop(index = 0, axis = 0, inplace=True) # and drop the row with the column names
-    if debugging:
-        print('Here the pot_df after cleaning up:\n',pot_df)
+    
+    logging.debug(f'Here the pot_df after cleaning up: {pot_df}')
 
     pot_df.name = pot_df.name.str.replace('De ', 'de ') # sometimes the caps mid-name-inserts can cause issues, in our data we have only lower case mid-name-inserts
     pot_df.name = pot_df.name.str.replace('.', '')
@@ -271,8 +277,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
 
     names_WIP = pd.DataFrame(pot_df.name) #.astype(str)
-    if debugging:
-        print('Names WIP:\n', names_WIP)
+    
+    logging.debug(f'HUH Names WIP l.282:v {names_WIP}')
     i = 0
     for key, value in extr_list.items():
         i = i+1
@@ -305,8 +311,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
     # now merge these cleaned names into the dataframe for further processing
     pot_df_ext = pot_df.assign(regexed_nm = names_WIP['corrnames'])
-    if debugging:
-        print('After adding regex results:\n', pot_df_ext)
+    
+    logging.debug(f'After adding regex results {pot_df_ext}')
     try:
         pot_df_ext[['surname', 'givname']] = pot_df_ext.regexed_nm.str.split(',', expand = True)
         pot_df_ext['givname'] =  pot_df_ext['givname'].str.strip()
@@ -321,42 +327,41 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
     if debugging:
         try:
             print('Firstnames used to choose correct individual: \n', firstnames, len(firstnames))
+            logging.debug(f'Firstnames used to choose correct individual: {firstnames} {len(firstnames)}')
         except:
             print('Firstnames used to choose correct individual: \n', firstnames)
+            logging.debug(f'Firstnames used to choose correct individual: {firstnames}')
     # and then we  try to see which initials best match to the query
     if len(firstnames)==0:
         subs1 = pot_df_ext
-        if debugging:
-            print('No first name provided')
+        
+        logging.debug('No first name provided')
     elif len(firstnames)==1:
         subs1 = pot_df_ext[pot_df_ext.givname.str[0:(len(firstnames))] == firstnames[0:(len(firstnames))]]
-        if debugging:
-            print('Length of firstnames 1')
+        
+        logging.debug('Length of firstnames 1')
     else:
         subs1 = pot_df_ext[pot_df_ext.givname.str[0:(len(firstnames))] == firstnames[0:(len(firstnames))]]
-        if debugging:
-            print('length of firstnames laregr 1')
+        
+        logging.debug('length of firstnames larger 1')
     
     subs1 = subs1.drop_duplicates(subset = ['link_id']) # get rid of all records pointing to the identical database entry
 
-    if verbose:
-        print('\n','We have', len(subs1.name), 'candidate names.' )
-        if debugging:
-            print(subs1)
+    logging.info(f'We have {len(subs1.name)} candidate names')
+        
     # now we have a shortlist, we can go and check     
 
     ###------- Now go and check out the results from the first query --------###
 
     pot_df = pd.DataFrame(tmp).transpose()
-    if debugging:
-        print(pot_df)
+    logging.info(pot_df)
+        
 
     for i in range(0, len(subs1.name)):
-        if debugging:
-            print(i)
+        logging.debug(i)
         bot_str = subs1.iloc[i,1]
-        if debugging:
-            print(bot_str)
+        
+        logging.debug(bot_str)
         url = "https://kiki.huh.harvard.edu/databases/"+bot_str
         
     # print('The URL is:', url)
@@ -368,8 +373,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         soup = BeautifulSoup(response.text, "html.parser")
         # this time around, we can transform the output to a table
         df_soup = pd.read_html(str(soup.find('table')))[0].transpose()
-        if debugging:
-            print('For this record, the following details are available:', df_soup.columns)
+        
+        logging.debug(f'For this record, the following details are available: {df_soup.columns}')
     
         # we want Name, Date of birth, Date of death, URL, Geography Collector
         df_soup.columns = df_soup.iloc[0] # set col names
@@ -399,8 +404,7 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
             geo_col = pd.Series(pd.NA)
 
         df_out = pd.concat([name, dobirth, dodeath, wiki_url, geo_col], axis=1)
-        if debugging:
-            print(df_out)
+        logging.debug(df_out)
 
         try:
             df_tocheck = pd.concat([df_tocheck,df_out])
@@ -410,8 +414,7 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         df_tocheck = df_tocheck.dropna(subset='Name')
         df_tocheck = df_tocheck.filter(regex='^\D')
         df_tocheck.replace('NaN', '0', inplace=True)
-        if debugging:
-            print('CHECK', df_tocheck)
+        logging.debug(f'CHECK {df_tocheck}')
         # change colnames to tractable names...
 
     # if there is a problem here, it means the name dod not match anything. br
@@ -424,15 +427,13 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
 
         # rename columns
         df_tocheck = df_tocheck.rename(columns = {'Name': 'name', 'Date of birth':'dobirth', 'Date of death':'dodeath', 'Geography Collector':'geo_col', 'URL':'wiki_url'})
-        if debugging:
-            print('1:',df_tocheck)
+        logging.debug(f'1: {df_tocheck}')
         # count commas to separate out entries with more than one name...
         df_tocheck = df_tocheck[df_tocheck.name.str.count(',')< 2] # records with more than 2 commas in the name are made up of multiple individuals.
         if len(df_tocheck.name) > 1:
             df_tocheck = df_tocheck[df_tocheck.name.str.count(',')> 0] # records with 0 commas are full names written as <<first mid lastname>>, but if multiple exist, there is an issue and we take the one in 
                                                                     #  in standard format << lastname, first mid >>
-        if debugging:
-            print('1:',df_tocheck)
+        logging.debug(f'1: {df_tocheck}')
 
 
         # Issue identified e.g. with leonard Co, names not linked and crossreferenced... 
@@ -442,12 +443,10 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
         # print('REDUCED?', df_tocheck)
         if len(df_tocheck.name) > 1: # if still more than one name in the dataframe
 
-            if debugging:
-                print('TYPES', df_tocheck)
+            logging.debug(f'TYPES {df_tocheck}')
             df_tocheck.dobirth = pd.to_numeric(df_tocheck.dobirth) #astype(float).astype(int)
             df_tocheck.dodeath = pd.to_numeric(df_tocheck.dodeath)
-            if debugging:
-                print('TYPES', df_tocheck.dtypes)
+            logging.debug(f'TYPES {df_tocheck.dtypes}')
             df_tocheck[['surname', 'othernames']] = df_tocheck.name.str.split(',', expand=True).copy(deep=True) 
             df_tocheck['fname1'] = df_tocheck['othernames'].str.strip().str.split(' ', expand=True)[0]   
             df_tocheck['fname2'] = df_tocheck['othernames'].str.strip().str.split(' ', expand=True)[1] 
@@ -483,18 +482,16 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                                 finalvote = test
 
                 except:
-                    if verbose:
-                        print('No firstname given in original Label.')
+                    logging.info('No firstname given in original Label.')
                     if len(df_tocheck.name) > 1:
                         f = 2 # to trigger the following if statement    
                     finalvote = False
-                print(f, finalvote)
+                logging.info(f'{f} ,{finalvote}')
                 if f > 1:
-                    if verbose:
-                        print('Multiple entries in HUH have matched to the query!')
-                        print('Probably this is down do duplicates there not being linked.')
-                        print('I will do a quick and dirty check (i.e. see if Surname, Firstname are identical) and then merge the duplicates, if possible.')
-                        print(df_tocheck)
+                    logging.info('Multiple entries in HUH have matched to the query!')
+                    logging.info('Probably this is down do duplicates there not being linked.')
+                    logging.info('I will do a quick and dirty check (i.e. see if Surname, Firstname are identical) and then merge the duplicates, if possible.')
+                    logging.info(df_tocheck)
                     if sum(df_tocheck.duplicated(subset = [ 'surname', 'fname1'])) >= 1:
                         # there is at least one duplicated row
                         # now i want to merge the rows, so all potential NAs don't overwrite useful information...
@@ -507,18 +504,17 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                         if sum(df_tocheck.duplicated(subset = [ 'surname', 'fname1'])) >= 1:
                             
                             thelength = len(df_tocheck.name)
-                            if debugging:
-                                print('I have', thelength, 'duplicated rows.')
+                            logging.debug(f'I have {thelength} duplicated rows.')
                             for k in range(0,thelength):
                                 try:
                                     df_tocheck.loc[k,] = df_tocheck.loc[k,].fillna(df_tocheck.loc[k+1,])  
                                 except:
-                                    print('No more k+1 possible')
+                                    logging.info('No more k+1 possible')
                             for k in range(thelength, 0):
                                 try:
                                     df_tocheck.loc[k,] = df_tocheck.loc[k,].fillna(df_tocheck.loc[k-1,])  
                                 except:
-                                    print('No more k-1 possible')
+                                    logging.info('No more k-1 possible')
 
 
 
@@ -529,8 +525,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                             df_tocheck.reset_index(inplace=True)
                             the_row = df_tocheck.lengths.idxmax() # identify the row with a longer name (number of words)
                             if len(df_tocheck.loc[df_tocheck.lengths == df_tocheck.lengths.max()].name) > 1:
-                                if debugging:
-                                    print('more than one maximum value found. Try full name length')
+                                
+                                logging.debug('more than one maximum value found. Try full name length')
                                 the_row = df_tocheck.fulllengths.idxmax() # identify row with a longer name (length of words), if the number of words is equal...
                             df_tocheck.reset_index(inplace=True)
 
@@ -538,18 +534,17 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                                 df_tocheck.drop('index', inplace = True)
                             except:
                                 # no index column to drop
-                                if debugging:
-                                    print('no index to drop')
-                            if debugging:
-                                print(df_tocheck)
-                                print('therow' ,the_row)
+                                
+                                logging.debug('no index to drop')
+                        
+                            logging.debug(df_tocheck)
+                            logging.debug('therow {the_row}')
 
                             #df_tocheck.reset_index(inplace=True)
-                                print(df_tocheck)
+                            logging.info(df_tocheck)
                             df_tocheck.mask(df_tocheck.isna())
                             df_tocheck.mask(df_tocheck.isnull())
-                            if debugging:
-                                print('the row:',the_row, '\n the size of df:', len(df_tocheck.name), df_tocheck.index)
+                            logging.info(f'the row: {the_row} the size of df:  {len(df_tocheck.name)}, {df_tocheck.index}')
                             # now MERGE THE TWO ROWS TOGETHER!!!!!!!!!!!!!!!!!!!!
 
 
@@ -559,35 +554,29 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                             #     print('There is an issue with the name', recordedBy,'. \n I can\'t seem to distinguish between multiple options. (l.486)')
                             #     break
                             for i in range(0, len(df_tocheck.name)): # go through rows and merge
-                                if debugging:
-                                    print('This is i:',i)
+                                logging.debug(f'This is i: {i}')
                                 if i == the_row: 
-                                    if debugging:
-                                        print('breaking')
+                                    logging.debug('breaking')
                                     #i+=1
                                     break # except if the row is the one want to preserve for the end
-                                if debugging:
-                                    print(df_tocheck.iloc[i,:])
-                                    print('The row df', df_tocheck.iloc[the_row,:])
+                                logging.debug(df_tocheck.iloc[i,:])
+                                logging.debug(f'The row df {df_tocheck.iloc[the_row,:]}')
                                 df_tocheck.iloc[the_row,:] = df_tocheck.iloc[the_row,:].fillna(df_tocheck.iloc[i,:])
-                                if debugging:
-                                    print(df_tocheck)
+                                logging.debug(df_tocheck)
                                 df_tocheck = df_tocheck.drop(df_tocheck.index[i], axis=0)
 
-                            if debugging:
-                                print('after reduction \n', df_tocheck)
-                                print('finalvote going to True')
+                        
+                            logging.debug(f'after reduction  {df_tocheck}')
+                            logging.debug('finalvote going to True')
                             if len(df_tocheck.name) > 1:
-                                if debugging:
-                                    print('ERROR: I cannot handle the names', df_tocheck.name, '!')
+                                logging.error(f'ERROR: I cannot handle the names {df_tocheck.name} !')
 
-                                print(df_tocheck.duplicated(subset=['name', 'fulllengths']))
+                                #print(df_tocheck.duplicated(subset=['name', 'fulllengths']))
                                     
                                 break
                             finalvote = True
 
-                        if debugging:
-                            print(df_tocheck, the_row)
+                        logging.debug(f'{df_tocheck}, {the_row}')
 
                     if verbose:
                         print('Duplicated length:::',sum(df_tocheck.duplicated(subset = [ 'surname', 'fname1']))) # find number of duplicates
@@ -604,8 +593,7 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
             #colyear = pd.Int64Dtype
             #colyear.astype('Int64')
             df_tocheck[['dobirth', 'dodeath']] = df_tocheck[['dobirth', 'dodeath']].astype(float)
-            if debugging:
-                print('TEST', df_tocheck)
+            logging.debug(f'TEST {df_tocheck}')
             if pd.isna(colyear) == False: # if we have a collection year to work with, we can try to match to the life of botanist. However, usually these are NA...
                 if df_tocheck.dobirth.notnull().values.any(): #(df_tocheck.dobirth != '0' and pd.notna(df_tocheck.dobirth)):
                     
@@ -619,31 +607,27 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
                 df_checked = df_tocheck.copy()
 
             if len(df_checked.name) == 0:
-                if debugging:
-                    print('The name', recordedBy, 'combined with the Collection year of', colyear, 'does not match anyone in the HUH database.',
-                '\n\n I\'m returning NA values.')
+                logging.info(f'The name {recordedBy} combined with the Collection year of {colyear} does not match anyone in the HUH database. I\'m returning NA values.')
             if len(df_checked.name) == 1:
                 finalvote = True
-            if debugging:
-                print('CHECKED2',df_checked)
-                print(finalvote)
+            
+            logging.debug(f'CHECKED2 {df_checked}')
+            logging.debug(finalvote)
             #df_checked['dobirth'] = df_checked['dobirth'].astype(str).str.replace('NaN', '0')
             if len(df_checked.name) > 1:
                 # chose the row now with the longest name? Special case??
-                if verbose:
-                    print('SPECIAL CASE: After a lot of whittling down, I still have', len(df_checked.name), 'records I cannot distinguish.')
-                    print('I will try drastic measures')
-                    the_row = df_checked.fulllengths.idxmax()
+                logging.info(f'SPECIAL CASE: After a lot of whittling down, I still have {len(df_checked.name)}, records I cannot distinguish.')
+                logging.info('I will try drastic measures')
+                the_row = df_checked.fulllengths.idxmax()
                    #df_tocheck = df_tocheck.drop(df_tocheck.index[i], axis=0)
 
-                    df_checked = df_checked.drop(df_checked.index[df_checked.fulllengths.idxmax()], axis=0)
+                df_checked = df_checked.drop(df_checked.index[df_checked.fulllengths.idxmax()], axis=0)
                #HERETOGO
                 finalvote = True
 
         else:
             df_tocheck[['dobirth', 'dodeath']] = df_tocheck[['dobirth', 'dodeath']].astype(float)
-            if debugging:
-                print(df_tocheck.dtypes)
+            logging.debug(df_tocheck.dtypes)
             df_checked = df_tocheck
 
             df_checked[['dobirth', 'dodeath']] = df_checked[['dobirth', 'dodeath']].astype(int)
@@ -660,32 +644,26 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
             finalvote = True
 
 
-        if debugging:
-            print('fin vote', finalvote)
+        logging.debug(f'final vote {finalvote}')
         # If still more than 1 name in the dataframe, do geography check
         if len(df_checked.name) > 1:
-            if debugging:
-                print("resorting to geography")
+            logging.debug("resorting to geography")
             #print(df_checked.geo_col)
             df_checked = df_checked[df_checked.geo_col == country]
             if len(df_checked.name) == 1:
                 finalvote = True
-        if debugging:
-            print('finalcheck', df_checked)       
+        logging.info(f'finalcheck {df_checked}')       
         try:
             df_checked = df_checked.assign(finalvote = pd.DataFrame(finalvote))
         except:
-            if debugging:
-                print('Only one FINALVOTE remaining:', finalvote)
+            logging.debug(f'Only one FINALVOTE remaining: {finalvote}')
             df_checked = df_checked.assign(finalvote = (finalvote))
-        if debugging:
-            print(df_checked)
+        logging.debug(df_checked)
         df_out = df_checked[df_checked.finalvote == True] # only get those that are chose based on above checks
         df_out = df_out[['name', 'geo_col', 'wiki_url']] # and subset cols we're interested in
 
         # get the final output variables 
-        if verbose:
-            print('OUTPUT', df_out)
+        logging.info(f'OUTPUT {df_out}')
         name = ' '.join(df_out.name.values)
         try: # issue with NA values
             geo_col = ' '.join(df_out.geo_col.values)
@@ -695,8 +673,8 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
             wiki_url = ' '.join(df_out.wiki_url.values)
         except:
             wiki_url = pd.NA
-        if verbose:
-            print('OUTPUT', df_out)
+
+        logging.info(f'OUTPUT {df_out}')
         
         if len(df_out.name) == 0: # if no result make all NA
             name = pd.NA
@@ -728,6 +706,7 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     Launches the HUH name checking function, and reintegrates the resulting queried names into occs.
     """
     print('HUH query starting.')
+    logging.info('HUH query starting.')
     # reset index, so we can reintegrate data later....
     occs.set_index(occs.recorded_by, inplace=True)
     # drop the cols we had for formatting purposes...
@@ -749,7 +728,7 @@ def huh_wrapper(occs, verbose=True, debugging=False):
     mod_data[['huh_name','geo_col', 'wiki_url']] = mod_data.swifter.apply(lambda row: get_HUH_names(row['recorded_by'], row['col_year'], row['country'], 
                                                                                             row['orig_recby'], verbose, debugging), axis = 1, result_type='expand')
     
-    print(mod_data)
+    logging.info(mod_data)
     # set index so we can reintegrate the resulting data
     # 
     total = len(mod_data.huh_name)
@@ -778,7 +757,8 @@ def huh_wrapper(occs, verbose=True, debugging=False):
         print('\n now', out_data.huh_name)
         print('--------- HUH STATS -----------\n',
         'Total names:', total, '\n NA names:', nojoy, '\n Success ratio', (nojoy/total)*100,'%')
-
+    logging.info(f'HUH originally {out_data.recby_regex}')
+    logging.info(f'HUH now {out_data.huh_name}')
 
     return out_data
 

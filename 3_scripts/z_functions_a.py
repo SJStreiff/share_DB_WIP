@@ -463,6 +463,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     occs['orig_detby'] = occs['det_by']
     # remove the introductory string before double point :
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Collector(s):', '', regex=False)
+    occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('Unknown', '', regex=False)
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace('&', ';', regex=False)
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace(' y ', ';', regex=False)
     occs['recorded_by'] = occs['recorded_by'].astype(str).str.replace(' and ', ';', regex=False)
@@ -751,9 +752,9 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     logging.info('---------------------------------------------------')
     logging.info(f'Now it looks like this: {occs_newnames.recorded_by}')
 
-    logging.info(f'It used to look like this: {occs.det_by}')
+    logging.info(f'DETS: It used to look like this: {occs.det_by}')
     logging.info(f'---------------------------------------------------')
-    logging.info(f'Now it looks like this: {occs_newnames.det_by}')
+    logging.info(f'DETS: Now it looks like this: {occs_newnames.det_by}')
 
     logging.info(f'I removed {len(occs) - len(occs_newnames)} records because I could not handle the name.')
    
@@ -776,26 +777,28 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
 def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, verbose=True, debugging=False):
     '''
     Quickly read in data for reinsertion, test that nothing went too wrong, and append to the data already in the system.
+    occs_already_in_program: Data not flagged in previous steps
+      frame_to_be_better: Data flagged in previous step
+      names_to_reinsert: subset of frame the above, but corrected by user (hopefully!)
     '''
     logging.info('REINSERTING...')
-    logging.info(f'{names_to_reinsert}')
+    logging.info(f'To reinsert: {names_to_reinsert}')
     imp = codecs.open(names_to_reinsert,'r','utf-8') #open for reading with "universal" type set
-    logging.debug('problems?')
-    re_occs = pd.read_csv(imp, sep = ';',  dtype = str) # read the data
-    logging.debug(f'yes? {re_occs}')
-    logging.debug(f'{re_occs.columns}')
+    re_occs = pd.read_csv(imp, sep = ';',  dtype = str, index_col=0) # read the data
+    logging.debug(f'The read dataframe: {re_occs}')
+    logging.debug(f'The read dataframe columns: {re_occs.columns}')
     
     re_occs = re_occs.drop(['to_check', 'to_check_det'], axis = 1)
     re_occs.sort_index(inplace=True)
     re_occs = re_occs.replace('NaN', pd.NA)
     
-    logging.debug(f'{re_occs.recorded_by}')
+    logging.debug(f'Reordered read data: {re_occs.recorded_by}')
     frame_to_be_better.sort_index(inplace=True)
-    logging.debug(f'{frame_to_be_better.orig_recby}')
+    logging.debug(f'The problem data before user correction: {frame_to_be_better.orig_recby}')
     frame_to_be_better['recorded_by'] = re_occs['recorded_by']
     frame_to_be_better['det_by'] = re_occs['det_by']
-    logging.debug(f'{frame_to_be_better.recorded_by}') #[['recordedBy', 'orig_recby']])
-    logging.debug(f'{frame_to_be_better.orig_recby}')
+    logging.debug(f'The problem data after user correction: {frame_to_be_better.recorded_by}') #[['recordedBy', 'orig_recby']])
+    logging.debug(f'Original problematic values{frame_to_be_better.orig_recby}')
     
     frame_to_be_better = frame_to_be_better.astype(z_dependencies.final_col_type)
 

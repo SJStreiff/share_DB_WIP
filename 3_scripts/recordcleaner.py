@@ -154,8 +154,8 @@ if __name__ == "__main__":
     logging.info('\n#> A4: HUH name query\n')
     
     # print('This takes a moment to initialise...')
-   # tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
-   # tmp_occs_3 = tmp_occs_3.reset_index(drop=True)
+    tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
+    tmp_occs_3 = tmp_occs_3.reset_index(drop=True)
     logging.info('\n #> STEP A complete.\n')
 
 
