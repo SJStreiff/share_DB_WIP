@@ -86,15 +86,18 @@ get_closest_coast = function(x, y){
 ###---------------------- Read data and do coordinate check -------------------------------------###
 
 #debugging test dataframe
-dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230509_Phil_cleaned.csv', sep =';', head=T)
+dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230710_indocleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
 dat <- data.frame(dat)  # checking
 
+
 # keep all data in same dataframe. Sorted/filtered in database integration step
 
 no_coord_dat <- dat[is.na(dat$ddlong),] # subsetting coords with no coordinate value
+no_coord_dat <- rbind(no_coord_dat, dat[is.na(dat$ddlat),])
+no_coord_dat <- unique(no_coord_dat)
 if(length(no_coord_dat[,1]) != 0){
   no_coord_dat$geo_issues <- 'NA_coord'
 }
@@ -104,7 +107,7 @@ dat <- dat[!is.na(dat$ddlong),] # checking that all records have coordinates...
 dat[dat == 'nan'] <- ''
 dat[dat == '<NA>'] <- ''
 dat[dat == '<NA> nan'] <- ''
-dat[dat == '0'] <- ''
+#dat[dat == '0'] <- ''
 dat[is.na(dat)] <- ''
 
 # coordinate cleaner 

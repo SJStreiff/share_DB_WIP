@@ -289,9 +289,11 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         logging.debug(f'Prelim. barcode: {occs.prel_bc}')
         # now get the herbarium code. First if it was correct to start with, extract from barcode.
         bc = pd.Series(occs['barcode'])
-        prel_herbCode = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)') # gets most issues...
-        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+\-)'))
-        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+)'))
+
+        prel_herbCode = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)') # gets most issues... ABC-DE-000000
+        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'(^[A-Z]+\s[A-Z]+)')) # ABC DE00000
+        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+\-)')) # ABC-00000
+        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+)')) #ABC000
         occs = occs.assign(prel_herbCode = prel_herbCode)
         occs['prel_code'] = occs['barcode'].astype(str).str.extract(r'(\D+)')
         occs['prel_code_X'] = occs['barcode'].astype(str).str.extract(r'(\d+\.\d)') # this is just one entry and really f@#$R%g annoying
