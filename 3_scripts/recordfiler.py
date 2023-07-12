@@ -374,7 +374,7 @@ if __name__ == "__main__":
         deduplid[col] = deduplid[col].fillna('')
 
     # reduce duplicated information within cells     
-    deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc', 'det_by', 'geo_issues'], verbose=True)
+    deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc', 'geo_issues'], verbose=True)
     
     logging.info('\n#> Merging steps complete.\n------------------------------------------------')
 
