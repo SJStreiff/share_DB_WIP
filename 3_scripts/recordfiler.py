@@ -261,7 +261,7 @@ if __name__ == "__main__":
     occs.status = occs.status.replace('<NA>', None)
     # check nomencl. status
     logging.debug(f'INDET:::::\n {occs[~occs.status.notna()]}')
-    indet_to_backlog = occs[~occs.status.notna()] # ==NA !!
+    indet_to_backlog = occs[occs.status.isna()] # ==NA !!
     occs = occs[occs.status.notna() ] # NOT NA!
     logging.info(f'{occs.status.notna()}')
     logging.info(f'{indet_to_backlog.status.notna()}')

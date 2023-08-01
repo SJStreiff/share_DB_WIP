@@ -52,29 +52,29 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
     bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip())
      # some information if there are issues
-    logging.debug(f'NEW OCCS:\n {bc_dupli_split}')
-    logging.debug(f'NEW OCCS:\n {type(bc_dupli_split)}')
+    # logging.debug(f'NEW OCCS:\n {bc_dupli_split}')
+    # logging.debug(f'NEW OCCS:\n {type(bc_dupli_split)}')
     master_bc_split = master_db['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
     master_bc_split.columns = [f'bc_{i}' for i in range(master_bc_split.shape[1])]
     master_bc_split = master_bc_split.apply(lambda x: x.str.strip())  #important to strip all leading/trailing white spaces!
     
     logging.debug(f'master OCCS:\n {master_bc_split}')
-    logging.debug(f'master OCCS:\n {master_bc_split.dtypes}')
+    # logging.debug(f'master OCCS:\n {master_bc_split.dtypes}')
 
      # some information if there are issues
-    logging.debug(f'Shape of new_occs {len(new_occs)}')
+    # logging.debug(f'Shape of new_occs {len(new_occs)}')
 
     # then iterate through all barcodes of the new occurrences
     # for every row
     for i in range(len(new_occs)):
         barcode = list(bc_dupli_split.loc[i].astype(str))
-        logging.info(f'BARCODE1: {barcode}')
+        # logging.info(f'BARCODE1: {barcode}')
         # if multiple barcodes in the barcode field, iterate across them
         for x in  range(len(barcode)):
             bar = barcode[x]
             
-            logging.info(f'working on row {i}')
-            logging.info(f'BC to test:{bc_dupli_split.iloc[i]}') # TODO
+            # logging.info(f'working on row {i}')
+            # logging.info(f'BC to test:{bc_dupli_split.iloc[i]}') # TODO
 
             if bar == 'None':
             # this happens a lot. skip if this is the case.
@@ -83,7 +83,7 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
             else:
                 # -> keep working with the barcode
                 
-                logging.info(f'Working on barcode:\n {bar}')
+                # logging.info(f'Working on barcode:\n {bar}')
             
 
                 selection_frame = pd.DataFrame()  # df to hold resulting True/False mask  
@@ -91,7 +91,7 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                 for col in master_bc_split.columns:
                     # iterate through rows. the 'in' function doesn't work otherwise
                     
-                    logging.info('checking master columns')
+                    # logging.info('checking master columns')
                     f1 = master_bc_split[col] == bar # get true/false column
                     selection_frame = pd.concat([selection_frame, f1], axis=1) # and merge with previos columns
                 # end of loop over columns
@@ -100,8 +100,8 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                 sel_sum = selection_frame.sum(axis = 1)
                 sel_sum = sel_sum >= 1 # any value >1 is a True => match 
                 
-                logging.info(f'this should be our final selection object length: {sel_sum.sum()}')
-                logging.info(f'Selection: {sel_sum}')
+                # logging.info(f'this should be our final selection object length: {sel_sum.sum()}')
+                # logging.info(f'Selection: {sel_sum}')
                 if sel_sum.sum() == 0:
                     
                     logging.info('NO MATCHES FOUND!')
@@ -115,9 +115,9 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                    
       
         # replace i-th element of the new barcodes with the matched complete range of barcodes from master
-                    logging.info(f'i is: {i}')
+                    # logging.info(f'i is: {i}')
                     #logging.info(f'Input: {new_occs.at[i, 'barcode']}')
-                    logging.info(f'Master: {out_barcode[0]}') # these are the barcodes retreived from the master file
+                    # logging.info(f'Master: {out_barcode[0]}') # these are the barcodes retreived from the master file
                     input = str(new_occs.at[i, 'barcode'])
                     master = str(out_barcode[0])
                     new = input + ', ' + master

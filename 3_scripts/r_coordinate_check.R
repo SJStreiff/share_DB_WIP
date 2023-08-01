@@ -86,7 +86,7 @@ get_closest_coast = function(x, y){
 ###---------------------- Read data and do coordinate check -------------------------------------###
 
 #debugging test dataframe
-dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230710_indocleaned.csv', sep =';', head=T)
+# dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230710_indocleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
