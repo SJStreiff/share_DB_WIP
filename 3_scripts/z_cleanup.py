@@ -14,16 +14,7 @@ CONTAINS:
 '''
 
 
-import pandas as pd
-import numpy as np
-import codecs
-import os
-import regex as re
-import swifter
-import datetime 
-
-
-import z_dependencies
+import logging
 
 
 
@@ -39,7 +30,16 @@ def cleanup(occs, cols_to_clean, verbose = True, debugging = False):
 
 
     for col in cols_to_clean:
-            occs[col] = occs[col].apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated values within a cell
-            occs[col] = occs[col].str.strip()
-            occs[col] = occs[col].str.strip(',')
+            if col == 'det_by':
+                logging.info('col to clean in -det_by-')
+                occs[col] = occs[col].apply(lambda x: ' / '.join(set(x.split(' / '))))    # this combines all duplicated values within a cell     
+                occs[col] = occs[col].str.strip()
+                occs[col] = occs[col].str.strip('/') 
+                print('det_by cleaning')
+
+            else:
+                print('cleaning', col)                       
+                occs[col] = occs[col].apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated values within a cell
+                occs[col] = occs[col].str.strip()
+                occs[col] = occs[col].str.strip(',')
     return occs
