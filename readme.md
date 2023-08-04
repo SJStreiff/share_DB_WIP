@@ -107,11 +107,15 @@ RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to
 
 
 
-## verbose and debugging options
+## Options
 
--v 
-debugging
-...tbd
+### Expert flag
+
+CAUTION: this setting gives new data more priority than previous data. Therefore, make sure this data is clean, validated and doesn't include missing data!
+
+If the EXP=EXP in the config file, then the pipeline expects this dataset to be completely expert determined and curated. The values here are given precedence over duplicates found in the master database. The main utility of using this flag is to integrate this data to update any determinations and georeferencing.
+
+
 
 
 ## TODO

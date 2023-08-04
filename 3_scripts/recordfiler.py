@@ -256,16 +256,29 @@ if __name__ == "__main__":
     # recombine data 
     occs = pd.concat([occs_s_n_dd, occs_num_dd], axis=0)
     #occs = occs.replace('\'nan\'', pd.NA)
-    #print(occs.status)
-    occs.status = occs.status.replace('nan', None)
-    occs.status = occs.status.replace('<NA>', None)
+
+    ###--------------testing if filter by 'accepted_name' ----------------###
+            # #print(occs.status)
+            # occs.status = occs.status.replace('nan', None)
+            # occs.status = occs.status.replace('<NA>', None)
+            # # check nomencl. status
+            # logging.debug(f'INDET:::::\n {occs[~occs.status.notna()]}')
+            # indet_to_backlog = occs[occs.status.isna()] # ==NA !!
+            # occs = occs[occs.status.notna() ] # NOT NA!
+            # logging.info(f'{occs.status.notna()}')
+            # logging.info(f'{indet_to_backlog.status.notna()}')
+    ###-------------------------------------------------------------------###
+
+    occs.accepted_name = occs.accepted_name.replace('nan', None)
+    occs.accepted_name = occs.accepted_name.replace('<NA>', None)
     # check nomencl. status
-    logging.debug(f'INDET:::::\n {occs[~occs.status.notna()]}')
-    indet_to_backlog = occs[occs.status.isna()] # ==NA !!
-    occs = occs[occs.status.notna() ] # NOT NA!
-    logging.info(f'{occs.status.notna()}')
-    logging.info(f'{indet_to_backlog.status.notna()}')
-    
+    logging.debug(f'INDET:::::\n {occs[~occs.accepted_name.notna()]}')
+    indet_to_backlog = occs[occs.accepted_name.isna()] # ==NA !!
+    occs = occs[occs.accepted_name.notna() ] # NOT NA!
+    logging.info(f'{occs.accepted_name.notna()}')
+
+
+
     #indet_to_backlog = pd.concat([indet_to_backlog])
     # keep indet_to_backlog and send back into server
     #indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';')

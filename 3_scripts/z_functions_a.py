@@ -62,7 +62,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
     elif(data_source_type == 'GBIF'):
         # for all data in the darwin core format!!
         logging.info('data type GBIF')
-        occs = pd.read_csv(imp, sep = '\t',  dtype = str, na_values=pd.NA) # read data
+        occs = pd.read_csv(imp, sep = '\t',  dtype = str, na_values=pd.NA, quotechar='"') # read data
         occs = occs[occs['basisOfRecord'] == "PRESERVED_SPECIMEN"] # remove potential iNaturalist data....
         occs = occs[occs['occurrenceStatus'] == 'PRESENT'] # loose absence data from surveys
         # here we a column species-tobesplit, as there is no single species columns with only epithet
@@ -262,12 +262,14 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         # if there is a nondigit, take it away from the digits, and modify it to contain only letters
         barcode_regex = [
-            r'(\d+\-\d+\/\d+)$',
-            r'(\d+\-\d+)$',
-            r'(\d+\/\d+)$',
-            r'(\d+\.\d+)$',
-            r'(\d+\s\d+)$',
-            r'(\d+)$',
+            r'^(\w+)$', # digit and letters
+            r'(\d+\-\d+\/\d+)$', # digit separated by - and /
+            r'(\d+\:\d+\:\d+)$', # digit separated by :
+            r'(\d+\-\d+)$', # digit separated by - 
+            r'(\d+\/\d+)$', # digit separated by /
+            r'(\d+\.\d+)$', # digit separated by .
+            r'(\d+\s\d+)$', # digit separated by space
+            r'(\d+)$', # digit
         ]
         # extract the numeric part of the barcode
         bc_extract = occs['barcode'].astype(str).str.extract('(' + '|'.join(barcode_regex) + ')')
@@ -292,8 +294,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         prel_herbCode = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)') # gets most issues... ABC-DE-000000
         prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'(^[A-Z]+\s[A-Z]+)')) # ABC DE00000
-        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+\-)')) # ABC-00000
-        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'([A-Z]+)')) #ABC000
+        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'(^[A-Z]+\-)')) # ABC-00000
+        prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'(^[A-Z]+)')) #ABC000
         occs = occs.assign(prel_herbCode = prel_herbCode)
         occs['prel_code'] = occs['barcode'].astype(str).str.extract(r'(\D+)')
         occs['prel_code_X'] = occs['barcode'].astype(str).str.extract(r'(\d+\.\d)') # this is just one entry and really f@#$R%g annoying
@@ -305,11 +307,13 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         # if the barcode column was purely numericm integrate
         occs['tmp_hc'] = occs['institute'].str.extract(r'(^[A-Z]+\Z)')
-        #occs['tmp_hc'] = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)')
-        occs['tmp_hc'] = occs['herbarium_code'].str.extract(r'(^[A-Z]+\Z)')
+        occs['tmp_hc'] = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)')
+        #occs['hc_tmp_tmp'] = occs['herbarium_code'].str.extract(r'(^[A-Z]+\Z)')
+        #occs['tmp_hc'].fillna(occs.hc_tmp_tmp, inplace = True)
         occs['tmp_hc'] = occs['tmp_hc'].replace({'PLANT': 'TAIF'})
         #occs['tmp_hc'] = occs['tmp_hc'].str.replace('PLANT', '')
         occs.prel_herbCode.fillna(occs['tmp_hc'], inplace = True)
+        occs.prel_herbCode.fillna('', inplace = True)
         #occs[occs['herbarium_code'] == r'([A-Z]+)', 'tmp_test'] = 'True'
         
         logging.debug(f'TMP herb code: {occs.tmp_hc}')
@@ -318,12 +322,24 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             # (TAIF)
 
         #occs.institute.fillna(occs.prel_herbCode, inplace=True)
-
-        
-        logging.debug(f'{occs.prel_herbCode}')
+        print('DEBUG:', pd.isna(occs.prel_bc.str.extract(r'([A-Z])')))
+        occs['sel_col_bc'] = pd.isna(occs['prel_bc'].str.extract(r'([A-Z])'))
+        occs.loc[occs['sel_col_bc'] == False, 'prel_herbCode'] = ''
+        logging.debug(f'prel_code: {occs.prel_herbCode}')
         logging.debug(f'{occs.prel_bc}')
         occs['st_barcode'] = occs['prel_herbCode'] + occs['prel_bc']
+        occs['st_barcode'] = occs.st_barcode.astype(str)
         
+        # for i in occs.st_barcode:
+
+        #     j = re.findall(r'([A-Z])', i)
+        #     print(len(i), i, len(j))
+        # indexbc = pd.isna(occs.st_barcode.str.extract(r'([A-Z])'))
+        # logging.debug(indexbc)
+        # print('HERE', indexbc, type(indexbc))
+        # print('HERE again', indexbc.value_counts())
+        
+
         logging.debug(f'{occs.st_barcode}')
     #    prel_herbCode trumps all others,
     #        then comes herbarium_code, IF (!) it isn't a word (caps and non-caps) and if it is not (!!) 'PLANT'
