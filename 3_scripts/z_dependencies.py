@@ -54,7 +54,8 @@ final_cols_for_import = list([#'global_id',
     'expert_det',
     'ipni_species_author',
     'modified',
-    'geo_issues'])
+    'geo_issues',
+    'link'])
 
 final_col_for_import_type = {#'global_id': str,
     #'childData_id': str,
@@ -101,7 +102,8 @@ final_col_for_import_type = {#'global_id': str,
     'expert_det' : str, # NO/ pd.NA or EXP
     'ipni_species_author': str, #not sure we need this, but easier to throw out later
     'modified': str, # last modified list.
-    'geo_issues': str
+    'geo_issues': str,
+    'link':str,
     }
 
 
@@ -137,7 +139,8 @@ final_cols = list(['source_id',
     'barcode',
     'huh_name',
     'geo_col',
-    'wiki_url'])
+    'wiki_url',
+    'link'])
 
 final_col_type = {'source_id': str,
     'scientific_name': str,
@@ -170,7 +173,8 @@ final_col_type = {'source_id': str,
     'barcode': str,
     'huh_name': str,
     'geo_col': str,
-    'wiki_url': str}
+    'wiki_url': str,
+    'link':str}
 
 
 # herbonautes data set columns present and wished in database
@@ -232,7 +236,8 @@ gbif_key = {#'gbifID': 'source_id',
     'identifiedBy':'det_by',
     'dateIdentified':'det_date',
     'recordedBy':'recorded_by',
-    'scientificName':'scientific_name'}
+    'scientificName':'scientific_name',
+    'references':'link'}
 
 
 gbif_subset_cols =([#'source_id',
@@ -259,9 +264,88 @@ gbif_subset_cols =([#'source_id',
     #'coordinate_id',
     'institute',
     'herbarium_code',
-    'barcode'])
+    'barcode',
+    'link'])
+
+brahms_key = {#'gbifID': 'source_id',
+    'GENUS': 'genus',
+    'SP1': 'specific_epithet',
+    'COUNTRY': 'country',
+    'MAJORAREA': 'region',
+    'LOCNOTES':'locality',
+    'LATDEC': 'ddlat',
+    'LONGDEC': 'ddlong',
+    #alt?
+    'DAY':'col_day',
+    'MONTH':'col_month',
+    'YEAR':'col_year',
+    'DETDAY':'det_day',
+    'DETMONTH':'det_month',
+    'DETYEAR':'det_year',
+    
+    #'institutionCode':'institute',
+    #'collectionCode':'herbarium_code',
+    'BARCODE':'barcode',
+    'PREFIX':'prefix',
+    'SUFIX':'sufix',
+    'NUMBER':'colnum',
+    'DETBY':'det_by',
+    'COLLECTOR':'recorded_by',
+    'scientificName':'scientific_name',
+    'IMAGELIST':'link'}
+
+brahms_cols =([#'source_id',
+    'genus',
+    'specific_epithet',
+    'country',
+    'region',
+    'locality',
+    'ddlat',
+    'ddlong',
+    'col_day',
+    'col_month',
+    'col_year',
+    'det_day',
+    'det_month',
+    'det_year',
+    'barcode',
+    'prefix',
+    'sufix',
+    'colnum',
+    'det_by',
+    'recorded_by',
+    'link'])
 
 
+MO_key = {
+    'DeterminationFullNameNoAuthors':'species-tobesplit',
+    'SeniorCollector':'recorded_by',
+    'CollectionNumber': 'col_num',
+    'CountryName': 'country',
+    'region':'region',
+    'Locality':'locality',
+    'decimalLatitude':'ddlat',
+    'decimalLongitude': 'ddlong',
+    'CollectionMonth':'col_month',
+    'CollectionDay':'col_day',
+    'CollectionYear': 'col_year',
+    'DeterminedBy': 'det_by',
+    'DeterminationYear':'det_year'
+}
+
+MO_cols = (['species-tobesplit',
+    'recorded_by',
+    'col_num',
+    'country',
+    'region',
+    'locality',
+    'ddlat',
+    'ddlong',
+    'col_month',
+    'col_day',
+    'col_year',
+    'det_by',
+    'det_year'])
 
 #
 #

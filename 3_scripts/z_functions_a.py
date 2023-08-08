@@ -65,12 +65,39 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         occs = pd.read_csv(imp, sep = '\t',  dtype = str, na_values=pd.NA, quotechar='"') # read data
         occs = occs[occs['basisOfRecord'] == "PRESERVED_SPECIMEN"] # remove potential iNaturalist data....
         occs = occs[occs['occurrenceStatus'] == 'PRESENT'] # loose absence data from surveys
+        occs['references'] = occs['references'].fillna(occs['bibliographicCitation'])
         # here we a column species-tobesplit, as there is no single species columns with only epithet
         occs = occs.rename(columns = z_dependencies.gbif_key) # rename
 
         occs = occs[z_dependencies.gbif_subset_cols] # and subset
         #occs = occs.fillna(pd.NA) # problems with this NA
         occs.source_id = 'gbif'
+
+        print(occs.link)
+
+    elif(data_source_type == 'BRAHMS'):
+        # for data from BRAHMS extracts
+        logging.info('data type BRAHMS')
+        occs = pd.read_csv(imp, sep = ',',  dtype = str, na_values=pd.NA, quotechar='"') # read data
+
+        occs = occs.rename(columns = z_dependencies.brahms_key) # rename
+
+        occs = occs[z_dependencies.brahms_cols] # and subset
+        #occs = occs.fillna(pd.NA) # problems with this NA
+        occs.source_id = 'brahms'
+
+    elif(data_source_type == 'MO'):
+        # for data from BRAHMS extracts
+        logging.info('data type MO')
+        occs = pd.read_csv(imp, sep = ',',  dtype = str, na_values=pd.NA, quotechar='"') # read data
+        
+        occs = occs.rename(columns = z_dependencies.brahms_key) # rename
+
+        occs = occs[z_dependencies.brahms_cols] # and subset
+        #occs = occs.fillna(pd.NA) # problems with this NA
+        occs.source_id = 'brahms'
+
+
 
 
     else:
@@ -291,17 +318,22 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         logging.debug(f'Prelim. barcode: {occs.prel_bc}')
         # now get the herbarium code. First if it was correct to start with, extract from barcode.
         bc = pd.Series(occs['barcode'])
+        insti = pd.Series(occs['institute'])
 
         prel_herbCode = occs['barcode'].str.extract(r'(^[A-Z]+\-[A-Z]+\-)') # gets most issues... ABC-DE-000000
         prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'(^[A-Z]+\s[A-Z]+)')) # ABC DE00000
         prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'(^[A-Z]+\-)')) # ABC-00000
         prel_herbCode = prel_herbCode.fillna(bc.str.extract(r'(^[A-Z]+)')) #ABC000
+        # If still no luck, take the capital letters in 'Institute'
+        prel_herbCode = prel_herbCode.fillna(occs['institute'].str.extract(r'(^[A-Z]+)')) # desperately scrape whatever is in the 'institute' column if we still have no indication to where the barcode belongs
+
         occs = occs.assign(prel_herbCode = prel_herbCode)
         occs['prel_code'] = occs['barcode'].astype(str).str.extract(r'(\D+)')
         occs['prel_code_X'] = occs['barcode'].astype(str).str.extract(r'(\d+\.\d)') # this is just one entry and really f@#$R%g annoying
         #occs.to_csv('debug.csv', sep = ';')
 
         logging.debug(f'Prelim. barcode Type: {type(occs.prel_code)}')
+        logging.debug(f'Institute would be: {occs.institute}')
         
         logging.debug(f'Prel. Herbarium code: {occs.prel_herbCode}')
 
@@ -327,6 +359,10 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs.loc[occs['sel_col_bc'] == False, 'prel_herbCode'] = ''
         logging.debug(f'prel_code: {occs.prel_herbCode}')
         logging.debug(f'{occs.prel_bc}')
+        occs.drop
+
+
+
         occs['st_barcode'] = occs['prel_herbCode'] + occs['prel_bc']
         occs['st_barcode'] = occs.st_barcode.astype(str)
         
@@ -361,7 +397,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             logging.debug(f'Occs: {occs}')
 
         # and clean up now
-        occs = occs.drop(['prel_bc', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc'], axis = 1)
+        occs = occs.drop(['prel_bc', 'prel_herbCode', 'prel_code', 'prel_code_X', 'tmp_hc', 'sel_col_bc'], axis = 1)
         occs = occs.rename(columns = {'barcode': 'orig_bc'})
         occs = occs.rename(columns = {'st_barcode': 'barcode'})
         

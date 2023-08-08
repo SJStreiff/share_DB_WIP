@@ -37,7 +37,7 @@ if __name__ == "__main__":
                         type = pathlib.Path)
     parser.add_argument('data_type',
                         help = 'File format. So far I can only handle Darwin core (GBIF) or herbonautes (P)',
-                        type = str, choices=['GBIF', 'P']) # modify if anything else becomes available.
+                        type = str, choices=['GBIF', 'P', 'BRAHMS', 'MO']) # modify if anything else becomes available.
     parser.add_argument('expert_file',
                          help = 'Specify if input file is of expert source (i.e. all determinations and coordinates etc. are to have priority over other/previous data)',
                          type = str,
