@@ -752,16 +752,20 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # For all names that didn't match anything:
     # extract and then check manually
 
-    print('TEST', TC_occs.colnum_full)
-
     TC_occs1 = occs_newnames.copy()
     TC_occs1['to_check_det'] = names_WIP['det_by']
+    print('CHECK', TC_occs1.to_check_det)
+
+    print('TEST', TC_occs.colnum_full)
     print(TC_occs.to_check)
     print('NAs:',sum(pd.isna(TC_occs.to_check)))
-    # TC_occs1['to_check_det'] = TC_occs1['to_check_det'].astype(str).replace('NaN', pd.NA)
+    try:
+        TC_occs1['to_check_det'] = TC_occs1['to_check_det'].str.replace('NaN', pd.NA)
     #     print('THIS TIME IT WORKED')
-    # except:
-    #     print('STILL NO LUCK')
+    except:
+        logging.debug(f'TC_occs no NA transformation possible')
+
+    print('det NAs:',sum(pd.isna(TC_occs1.to_check_det)))
     # ###
 
 
@@ -782,8 +786,6 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
         #print('So many columns:', len(names_WIP.columns), '\n')
     #print(type(names_WIP))
 
-
-    #print('----------------------\n', names_WIP, '----------------------\n')
     # just to be sure to know where it didn't match
     names_WIP.columns = ['corrnames']
     names_WIP = names_WIP.astype(str)
@@ -791,13 +793,22 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # now merge these cleaned names into the output dataframe
     occs_newnames = occs_newnames.assign(det_by = names_WIP['corrnames'])
 
-
-
-
+    #leave just problematic names (drop NA)
     TC_occs.dropna(subset= ['to_check'], inplace = True)
+    print('HERE 1', TC_occs.to_check)
     TC_occs.det_by = occs_newnames.det_by
 
+    print(TC_occs1.to_check_det)
+    # some datasets have problem with NA strings (vs NA type)
+    try:
+        TC_occs1['to_check_det'] = TC_occs1['to_check_det'].replace('<NA>', pd.NA)
+        print('<NA> handled')
+    except:
+        print('<NA> issues')
     TC_occs1.dropna(subset= ['to_check_det'], inplace = True)
+    print('HERE 2', TC_occs1.to_check_det)
+    print('NAs:',sum(pd.isna(TC_occs1.to_check_det)))
+
     #print(TC_occs.to_check)
     TC_occs['to_check_det'] = 'recby_problem'
     TC_occs1['to_check'] = 'detby_problem'
