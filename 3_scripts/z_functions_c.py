@@ -98,6 +98,9 @@ def country_crossfill(occs, verbose=True):
     """
     Take records and crossfill the country_id and country name columns
     """
+
+
+    occs.reset_index(drop=True)
     logging.info(f'Let\'s see if this works {occs.country_id}')
     occs[['country_id', 'country']] = occs[['country_id', 'country']].replace('0', pd.NA)
     occs['country_id'] = occs.country_id.fillna(cc.pandas_convert(series = occs.country, to='ISO2'))

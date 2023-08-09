@@ -281,7 +281,7 @@ if __name__ == "__main__":
 
     #indet_to_backlog = pd.concat([indet_to_backlog])
     # keep indet_to_backlog and send back into server
-    #indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';')
+    indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';', index=False)
     logging.info(f'{occs.status}')
     logging.info(f'{occs.accepted_name}')
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
@@ -316,7 +316,7 @@ if __name__ == "__main__":
     no_coords_to_backlog = occs[occs.ddlat.isna() ] # ==NA !!
     occs = occs[occs.ddlat.notna() ] # NOT NA!
     
-    no_coords_to_backlog.to_csv(mdb_dir + 'coord_backlog.csv', sep=';')
+    no_coords_to_backlog.to_csv(mdb_dir + 'coord_backlog.csv', sep=';', index=False)
 
   
     #print('No coordinate-less records found.')

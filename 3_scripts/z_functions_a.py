@@ -33,8 +33,6 @@ import z_dependencies # can be replaced at some point, but later...
 
 
 
-
-
 def column_standardiser(importfile, data_source_type, verbose=True, debugging = False):
     ''' reads a file, checks the columns and subsets and adds columns where
     necessary to be workable later down the line.'''
@@ -79,10 +77,9 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         # for data from BRAHMS extracts
         logging.info('data type BRAHMS')
         occs = pd.read_csv(imp, sep = ',',  dtype = str, na_values=pd.NA, quotechar='"') # read data
-
         occs = occs.rename(columns = z_dependencies.brahms_key) # rename
-
         occs = occs[z_dependencies.brahms_cols] # and subset
+        print('READ3',occs.columns)
         #occs = occs.fillna(pd.NA) # problems with this NA
         occs.source_id = 'brahms'
 
@@ -151,7 +148,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
     logging.info('Standardising column names.')
     if(data_source_type == 'P'):
         """things that need to be done in the herbonautes data:
-            - coordinate split (is ['lat, long'])
+            - coordinate split (is ['lat, long'], want ['lat'], ['long'])
             - date split coll
             - date split det
             - split ColNum into pre-, main and sufix!
@@ -166,9 +163,6 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         # herbonautes data has 2 dates, start and end. We have decided to just take the first.
         # sometimes these are identical, but sometimes these are ranges.
-
-
-
 
         occs[['col_date_1', 'col_date_2']] = occs.col_date.str.split("-", expand=True,)
         occs[['det_date_1', 'det_date_2']] = occs.det_date.str.split("-", expand=True,)
@@ -408,7 +402,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # split to get a purely numeric colnum, plus a prefix for any preceding characters,
         # and sufix for trailing characters
 
-        occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
+        #occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
         try:
             occs.colnum_full = occs.colnum_full.replace('s.n.', pd.NA) # keep s.n. for later?
         except:
@@ -419,7 +413,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         logging.debug(f'{occs.colnum_full}')
 
         #create prefix, extract text before the number
-        occs['prefix'] = occs['colnum_full'].str.extract('^([a-zA-Z]*)')
+        occs['prefix'] = occs.colnum_full.str.extract('^([a-zA-Z]*)')
         ##this code deletes spaces at start or end
         occs['prefix'] = occs['prefix'].str.strip()
 
@@ -478,6 +472,28 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
 
 
+    #-------------------------------------------------------------------------------
+    if(data_source_type == 'BRAHMS'):
+        """things that need to be done in the BRAHMS data:
+            - colnum_full for completeness (= prefix+colnum+sufix)
+        """
+    # -------------------------------------
+        #remove odd na values
+        occs.prefix = occs.prefix.str.replace('nan', '')
+        occs.sufix = occs.sufix.str.replace('nan', '')
+        # make colnum_full
+        occs.colnum_full = occs.prefix + occs.colnum + occs.sufix
+        # for completeness we need this
+        occs['orig_bc'] = occs['barcode']
+        occs['country_id'] = pd.NA
+
+    #TODO
+
+        #BRAHMS formatting?
+    
+        #MO split species-tobesplit
+
+
     occs = occs.astype(dtype = z_dependencies.final_col_type) # check data type
     #print(occs.dtypes)
     logging.info('Data has been standardised to conform to the columns we need later on.') #\n It has been saved to: ', out_file)
@@ -500,7 +516,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     This is applied to both recorded_by and det_by columns. All those records that failed are
     written into a debugging file, to be manually cleaned.
     """
-
+    print('NAMES FORMAT:', occs.columns)
     pd.options.mode.chained_assignment = None  # default='warn'
     # this removes this warning. I am aware that we are overwriting stuff with this function.
     # the column in question is backed up
@@ -736,14 +752,17 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     # For all names that didn't match anything:
     # extract and then check manually
 
-    #print(TC_occs.to_check)
+    print('TEST', TC_occs.colnum_full)
 
     TC_occs1 = occs_newnames.copy()
     TC_occs1['to_check_det'] = names_WIP['det_by']
-    #print(TC_occs.to_check)
-    TC_occs1['to_check_det'] = TC_occs1['to_check_det'].replace('<NA>', pd.NA)
-
-    ###
+    print(TC_occs.to_check)
+    print('NAs:',sum(pd.isna(TC_occs.to_check)))
+    # TC_occs1['to_check_det'] = TC_occs1['to_check_det'].astype(str).replace('NaN', pd.NA)
+    #     print('THIS TIME IT WORKED')
+    # except:
+    #     print('STILL NO LUCK')
+    # ###
 
 
 
@@ -788,7 +807,7 @@ def collector_names(occs, working_directory, prefix, verbose=True, debugging=Fal
     TC_occs = TC_occs.drop_duplicates(subset = ['barcode'], keep = 'first')
     
     logging.debug(f'To check (deduplicated by barcode) {TC_occs.shape}')
-
+    print(TC_occs.columns)
     TC_occs_write = TC_occs[['recorded_by', 'orig_recby', 'colnum_full', 'det_by', 'orig_detby', 'to_check', 'to_check_det']]
 
     # output so I can go through and check manually
