@@ -393,8 +393,9 @@ if __name__ == "__main__":
 
     logging.info(f'Trimming master database before writing: {len(deduplid)}')
     deduplid = deduplid[z_dependencies.final_cols_for_import]
-    print('Final size:', len(deduplid), 'With columns:', deduplid.columns)
-
+    print('Final size:', len(deduplid))#, 'With columns:', deduplid.columns)
+    print('Indet backlog size:', len(indet_to_backlog))
+    print('No-Coord backlog size:', len(no_coords_to_backlog))
     # this is now the new master database...
     deduplid.to_csv(mdb_dir + 'master_db.csv', sep=';', index=False)
     logging.info(f'------------------------------------------------\n#> {len(deduplid)} Records filed away into master database.\n')

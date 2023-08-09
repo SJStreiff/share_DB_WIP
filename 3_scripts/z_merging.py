@@ -42,6 +42,10 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
     be identified. 
     """
 
+
+    print(new_occs.barcode)
+    new_occs.barcode = new_occs.barcode.fillna('')
+
     # first some housekeeping: remove duplicated barcodes in input i.e. [barcode1, barcode2, barcode1] becomes [barcode1, barcode2]
     new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
     master_db.barcode = master_db.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell

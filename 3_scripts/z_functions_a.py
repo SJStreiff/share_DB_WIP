@@ -203,7 +203,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # keep the original colnum column
         occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
         #create prefix, extract text before the number
-        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([a-zA-Z]*)')
+        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([A-Z]+)')
+        print(occs.prefix)
         ##this code deletes spaces at start or end
         occs['prefix'] = occs['prefix'].str.strip()
         #print(occs.dtypes)

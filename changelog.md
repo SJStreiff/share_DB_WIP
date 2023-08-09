@@ -11,3 +11,6 @@
 # 2023-08-08:
     - added 'link' column, where urls leading to the image can be integrated (remains hit-and-miss for GBIF, as there data entered quite randomly sometimes)
     
+# 2023-08-09:
+    - added 'BRAHMS' flag, allows integration of BRAHMS extract data
+        included slight modifications to name standardisation, recurring NA vs NA-string 

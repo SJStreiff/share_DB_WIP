@@ -727,6 +727,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     else:
         logging.info('Deduplication: RAW-1')
         occs_dup_col['colnum_full'] = occs_dup_col['colnum_full'].fillna('')
+        occs_dup_col['orig_bc'] = occs_dup_col['orig_bc'].fillna('')
+
         # not master
         occs_dup_col = occs_dup_col.sort_values(['expert_det'], ascending = True)
 
