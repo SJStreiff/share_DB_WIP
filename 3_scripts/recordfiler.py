@@ -62,12 +62,12 @@ if __name__ == "__main__":
     parser.add_argument('working_directory',
                         help='the working directory for debugging output',
                         type=str)
-    parser.add_argument('indets_backlog',
-                        help='The location of the indets backlog database for crosschecking and indets-rescuing',
-                        type=str)
-    parser.add_argument('no_coords_backlog',
-                        help='The location of the backlog database with records of missing data for crosschecking and duplicate-rescuing',
-                        type=str)
+    # parser.add_argument('indets_backlog',
+    #                     help='The location of the indets backlog database for crosschecking and indets-rescuing',
+    #                     type=str)
+    # parser.add_argument('no_coords_backlog',
+    #                     help='The location of the backlog database with records of missing data for crosschecking and duplicate-rescuing',
+    #                     type=str)
     parser.add_argument('-v', '--verbose',
                         help = 'If true (default), I will print a lot of stuff that might or might not help...',
                         default = True)
@@ -90,8 +90,6 @@ if __name__ == "__main__":
           '\n Table name:', args.tablename,
           '\n Schema name:', args.schema,
           '\n Working directory:', args.working_directory,
-          '\n Indet backlog location:', args.indets_backlog,
-          '\n No coordinate backlog:', args.no_coords_backlog,
           '\n verbose:', args.verbose)
     print('-----------------------------------------------------------\n')
 
@@ -109,8 +107,8 @@ if __name__ == "__main__":
     logging.info(f'Table name: {args.tablename}')
     logging.info(f'Schema name: {args.schema}')
     logging.info(f' Working directory: {args.working_directory}')
-    logging.info(f' Indet backlog location: {args.indets_backlog}')
-    logging.info(f' No coordinate backlog: {args.no_coords_backlog}')
+    #logging.info(f' Indet backlog location: {args.indets_backlog}')
+    #logging.info(f' No coordinate backlog: {args.no_coords_backlog}')
     logging.info(f' verbose: {args.verbose}')
     logging.info('-----------------------------------------------------------')
 
@@ -237,7 +235,7 @@ if __name__ == "__main__":
     test_upd_DB=test_upd_DB.astype(z_dependencies.final_col_for_import_type)
 
     test_upd_DB.colnum = test_upd_DB.colnum.replace('nan', pd.NA)
-    test_upd_DB.colnum = pd.to_numeric(test_upd_DB.colnum, errors='coerce').astype(pd.Int64Dtype())
+    #test_upd_DB.colnum = pd.to_numeric(test_upd_DB.colnum, errors='coerce').astype(pd.Int64Dtype())
     #print(test_upd_DB.colnum)
     #print(test_upd_DB.colnum.isna())
     # TODO s.n. not recognised properly...
@@ -387,7 +385,7 @@ if __name__ == "__main__":
         deduplid[col] = deduplid[col].fillna('')
 
     # reduce duplicated information within cells     
-    deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc', 'geo_issues', 'det_by'], verbose=True)
+    deduplid = cleanup.cleanup(deduplid, cols_to_clean=['source_id', 'colnum_full', 'institute', 'herbarium_code', 'barcode', 'orig_bc', 'geo_issues', 'det_by', 'link'], verbose=True)
     
     logging.info('\n#> Merging steps complete.\n------------------------------------------------')
 

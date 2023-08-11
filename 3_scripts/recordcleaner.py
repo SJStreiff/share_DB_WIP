@@ -146,8 +146,12 @@ if __name__ == "__main__":
     # For now this is not much data loss. Update as necessary.
     HERB_TO_RM = [['AAU']]
     logging.info(f'Before removing dataproblematic institutions: {tmp_occs_3.shape}')
-    drop_ind = tmp_occs_3[(tmp_occs_3['institute'] == 'AAU')].index
-    tmp_occs_3.drop(drop_ind, inplace = True)
+ #   drop_ind = tmp_occs_3[(tmp_occs_3['institute'] in ['AAU', 'AU'])].index
+    #for dropper in HERB_TO_RM:
+     #   print('dropping', dropper)
+    tmp_occs_3 = tmp_occs_3[tmp_occs_3['institute'] != 'AU']
+    tmp_occs_3 = tmp_occs_3[tmp_occs_3['institute'] != 'AAU']
+#    tmp_occs_3.drop(drop_ind, inplace = True)
     logging.info(f'After removing dataproblematic institutions: {tmp_occs_3.shape}')
 
     #-----------------------------------------------

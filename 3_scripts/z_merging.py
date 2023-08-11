@@ -44,7 +44,7 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
 
 
     print(new_occs.barcode)
-    new_occs.barcode = new_occs.barcode.fillna('')
+    print('MASTER\n', master_db.barcode)
 
     # first some housekeeping: remove duplicated barcodes in input i.e. [barcode1, barcode2, barcode1] becomes [barcode1, barcode2]
     new_occs.barcode = new_occs.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
@@ -56,8 +56,8 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
     bc_dupli_split = bc_dupli_split.apply(lambda x: x.str.strip())
      # some information if there are issues
-    # logging.debug(f'NEW OCCS:\n {bc_dupli_split}')
-    # logging.debug(f'NEW OCCS:\n {type(bc_dupli_split)}')
+    logging.debug(f'NEW OCCS:\n {bc_dupli_split}')
+    logging.debug(f'NEW OCCS:\n {type(bc_dupli_split)}')
     master_bc_split = master_db['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
     master_bc_split.columns = [f'bc_{i}' for i in range(master_bc_split.shape[1])]
     master_bc_split = master_bc_split.apply(lambda x: x.str.strip())  #important to strip all leading/trailing white spaces!
@@ -71,6 +71,8 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
     # then iterate through all barcodes of the new occurrences
     # for every row
     for i in range(len(new_occs)):
+        # print(bc_dupli_split.loc[i])
+        # print(i, len(new_occs))
         barcode = list(bc_dupli_split.loc[i].astype(str))
         # logging.info(f'BARCODE1: {barcode}')
         # if multiple barcodes in the barcode field, iterate across them
@@ -82,8 +84,8 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
 
             if bar == 'None':
             # this happens a lot. skip if this is the case.
-                
-                logging.info('Values <None> are skipped.')
+                a = 'skip'
+                #logging.info('Values <None> are skipped.')
             else:
                 # -> keep working with the barcode
                 
@@ -95,7 +97,7 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                 for col in master_bc_split.columns:
                     # iterate through rows. the 'in' function doesn't work otherwise
                     
-                    # logging.info('checking master columns')
+                    #logging.info('checking master columns')
                     f1 = master_bc_split[col] == bar # get true/false column
                     selection_frame = pd.concat([selection_frame, f1], axis=1) # and merge with previos columns
                 # end of loop over columns
@@ -108,8 +110,8 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                 # logging.info(f'Selection: {sel_sum}')
                 if sel_sum.sum() == 0:
                     
-                    logging.info('NO MATCHES FOUND!')
-                    #out_barcode = pd.DataFrame([bar])
+                    # logging.info('NO MATCHES FOUND!')
+                    out_barcode = pd.DataFrame([bar])
                     
                     # in this case we do not modify anything!
                     
@@ -125,17 +127,17 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
                     input = str(new_occs.at[i, 'barcode'])
                     master = str(out_barcode[0])
                     new = input + ', ' + master
-                    logging.debug('New value pre processing: {new}')
+                    # logging.debug('New value pre processing: {new}')
 
                     #new_occs.at[i, 'barcode'] = (new_occs.at[i, 'barcode'] + ', ' + out_barcode).astype(str) # replace original value with new value
                     new = ', '.join(set(new.split(', ')))
-                    logging.info('New value after processing {new}')
+                    #logging.info('New value after processing {new}')
                     new_occs.at[i, 'barcode'] = new
 
                     master_db.loc[sel_sum, 'barcode'] = new
                     # print(master_db.loc[sel_sum, 'barcode'])
-                    #print('the replaced value:',  new_occs.at[i, 'barcode'])
-                    #print('the replaced value:',  type(new_occs.at[i, 'barcode']))
+                    # print('the replaced value:',  new_occs.at[i, 'barcode'])
+                    # print('the replaced value:',  type(new_occs.at[i, 'barcode']))
 
                 # <- end of bar==None condition
     logging.info(f'Final barcode in new data: {new_occs.barcode}')
@@ -163,8 +165,15 @@ def check_premerge(mdb, occs, verbose=True, debugging=False):
 
     '''
 
+    # drop any rows with no barcode!
+    occs.dropna(subset= ['barcode'], inplace = True)
+
+
     occs.reset_index(drop = True, inplace = True)
     mdb.reset_index(drop = True, inplace = True)
+
+
+
     logging.info(f'NEW: {occs.barcode}')
     logging.info(f'MASTER: {mdb.barcode}')
     # modify the barcodes to standardise...

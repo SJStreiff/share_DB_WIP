@@ -345,20 +345,3 @@ MO_cols = (['species-tobesplit',
     'det_by',
     'det_year'])
 
-#
-#
-# MO_cols = {
-#     # barcode: 'barcode',
-#     recordedBy:'recordedBy',
-#     AddCol: 'AddCol',
-#     ColNum: 'ColNum',
-#     detBy: 'detBy',
-#     DetYear: 'DetYear',
-#     ColYear: 'ColYear',
-#     ColDay: 'ColDay',
-#     ColMonth: 'ColMonth',
-#     country: 'country',
-#     region: 'region',
-#     locality: 'locality',
-#     ddlat: 'ddlat',
-#     ddlong: 'ddlong'}

@@ -63,13 +63,19 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         occs = pd.read_csv(imp, sep = '\t',  dtype = str, na_values=pd.NA, quotechar='"') # read data
         occs = occs[occs['basisOfRecord'] == "PRESERVED_SPECIMEN"] # remove potential iNaturalist data....
         occs = occs[occs['occurrenceStatus'] == 'PRESENT'] # loose absence data from surveys
-        occs['references'] = occs['references'].fillna(occs['bibliographicCitation'])
+        try:
+            occs['references'] = occs['references'].fillna(occs['bibliographicCitation'])
+        except:
+            try:
+                occs['references'] = occs['references'].fillna('')
+            except:
+                occs['references'] = ''    
         # here we a column species-tobesplit, as there is no single species columns with only epithet
         occs = occs.rename(columns = z_dependencies.gbif_key) # rename
 
         occs = occs[z_dependencies.gbif_subset_cols] # and subset
         #occs = occs.fillna(pd.NA) # problems with this NA
-        occs.source_id = 'gbif'
+        occs['source_id'] = 'gbif'
 
         print(occs.link)
 
@@ -92,7 +98,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
 
         occs = occs[z_dependencies.brahms_cols] # and subset
         #occs = occs.fillna(pd.NA) # problems with this NA
-        occs.source_id = 'brahms'
+        occs['source_id'] = 'MO_tropicos'
 
 
 
@@ -203,7 +209,8 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # keep the original colnum column
         occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
         #create prefix, extract text before the number
-        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('^([A-Z]+)')
+        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('([A-Z]+\s[A-Z]+)\d+')
+        occs['prefix'] = occs['prefix'].fillna(occs['colnum_full'].astype(str).str.extract('([A-Z]+)\d+'))
         print(occs.prefix)
         ##this code deletes spaces at start or end
         occs['prefix'] = occs['prefix'].str.strip()
@@ -404,10 +411,10 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # and sufix for trailing characters
 
         #occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
-        try:
-            occs.colnum_full = occs.colnum_full.replace('s.n.', pd.NA) # keep s.n. for later?
-        except:
-            logging.info('No plain s.n. values found in the full collection number fields.')
+        #try:
+        #    occs.colnum_full = occs.colnum_full.replace('s.n.', pd.NA) # keep s.n. for later?
+        #except:
+        #    logging.info('No plain s.n. values found in the full collection number fields.')
 
         #occs.colnum_full.replace("s. n.", pd.NA, inplace=True)
         

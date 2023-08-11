@@ -69,7 +69,15 @@ def get_HUH_names(recordedBy, colyear, country, orig_recby, verbose=True, debugg
     else:
         print(recordedBy)
     logging.info(f'HUH name checker checking the botanist {recordedBy}')
-    recby_length = len(recordedBy.split())
+    try:
+        recby_length = len(recordedBy.split())
+    except:
+        name = pd.NA
+        geo_col = pd.NA
+        wiki_url = pd.NA
+        logging.info(f'HUH name checker of {recordedBy} results in unrecoverable problems')
+        return name, geo_col, wiki_url # and return vars of interest.
+
     if debugging:
         print(recby_length)
         logging.debug(f'HUH names l75: Recby_length {recby_length}')
