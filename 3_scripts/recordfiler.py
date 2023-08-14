@@ -399,4 +399,8 @@ if __name__ == "__main__":
     logging.info(f'------------------------------------------------\n#> {len(deduplid)} Records filed away into master database.\n')
     
 
+
+    #upload = False
+
+
 # needs more finetuning.

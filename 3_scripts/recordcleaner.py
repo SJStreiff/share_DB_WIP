@@ -95,7 +95,7 @@ if __name__ == "__main__":
     # Data preprocessing: Column standardisation 
     # Step A1: Standardise selection  and subset columns....
     tmp_occs = stepA.column_standardiser(args.input_file, args.data_type, verbose = True, debugging = False) # verbose by default true
-
+    
     #-----------------------------------------------
     logging.info('\n#> A2: Column cleaning\n')
     # Step A2: Clean colunms and first step of standardising data (barcodes, event dates, ...)

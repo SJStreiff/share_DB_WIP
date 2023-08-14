@@ -82,7 +82,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
     elif(data_source_type == 'BRAHMS'):
         # for data from BRAHMS extracts
         logging.info('data type BRAHMS')
-        occs = pd.read_csv(imp, sep = ',',  dtype = str, na_values=pd.NA, quotechar='"') # read data
+        occs = pd.read_csv(imp, sep = ';',  dtype = str, na_values=pd.NA, quotechar='"') # read data
         occs = occs.rename(columns = z_dependencies.brahms_key) # rename
         occs = occs[z_dependencies.brahms_cols] # and subset
         print('READ3',occs.columns)
@@ -177,16 +177,23 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs.drop(['det_date_2'], axis='columns', inplace=True)
 
         #split colDate_1 on '/' into three new fields (dd/mm/yyyy). Let's just hope no american ever turns up in that data
-        occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,)
-        occs[['det_day', 'det_month', 'det_year']] = occs.det_date_1.str.split("/", expand=True,)
-        # change datatype to pd Int64 (integer that can handle NAs)
-        occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']] = occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(float).astype(pd.Int64Dtype())
+        # occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,)
+        # occs[['det_day', 'det_month', 'det_year']] = occs.det_date_1.str.split("/", expand=True,)
+        # occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']]  = occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype('<NA>', 0)
+        # print(occs.col_date_1)
+        # # change datatype to pd Int64 (integer that can handle NAs)
+        # occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']] = occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(pd.Int64Dtype())
 
 
         #split colDate_1 on '/' into three new fields
-        occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,)
-        occs[['det_day', 'det_month', 'det_year']] = occs.det_date_1.str.split("/", expand=True,)
-        occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(float)
+        occs.col_date_1 = occs.col_date_1.replace('<NA>', '0/0/0')
+        occs.det_date_1 = occs.det_date_1.replace('<NA>', '0/0/0')
+
+        occs[['col_day', 'col_month', 'col_year']] = occs.col_date_1.str.split("/", expand=True,).astype(pd.Int64Dtype())
+        occs[['det_day', 'det_month', 'det_year']] = occs.det_date_1.str.split("/", expand=True,).astype(pd.Int64Dtype())
+        #occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']] = occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(str).replace('<NA>', '0')
+        #occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(pd.Int64Dtype())
+        print('HERHEREHEEREREREFEE:', occs.dtypes)
         #occs[['col_day', 'col_month', 'col_year', 'det_day', 'det_month', 'det_year']].astype(pd.Int64Dtype())
 
 
@@ -207,13 +214,24 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # COLLECTION NUMBERS
 
         # keep the original colnum column
-        occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
+        #occs.rename(columns={'colnum': 'colnum_full'}, inplace=True)
         #create prefix, extract text before the number
-        occs['prefix'] = occs['colnum_full'].astype(str).str.extract('([A-Z]+\s[A-Z]+)\d+')
-        occs['prefix'] = occs['prefix'].fillna(occs['colnum_full'].astype(str).str.extract('([A-Z]+)\d+'))
-        print(occs.prefix)
+        print(occs.colnum_full)
+
+   
+        occs['prefix'] = occs.colnum_full.str.extract('^([a-zA-Z]*)')
         ##this code deletes spaces at start or end
         occs['prefix'] = occs['prefix'].str.strip()
+
+
+        # occs['prefix'] = occs.colnum_full.astype(str).str.extract(r'^([A-Z]+)\d+')
+        # print(sum(pd.isna(occs.prefix)))
+        
+        # tmp_1 = pd.Series(occs.colnum_full.astype(str).str.extract(r'^([A-Z]+)\d+'))
+        # print('TMP', type(tmp_1))
+        # occs.prefix = occs.prefix.fillna(pd.Series(occs.colnum_full.astype(str).str.extract(r'^([A-Z]+)\d+')))
+        print(occs.prefix)
+        ##this code deletes spaces at start or end
         #print(occs.dtypes)
 
         #create sufix , extract text or pattern after the number
@@ -238,17 +256,22 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
             r'(?:\d+\.\d+)', # 00.00
             r'(?:\d+)', # 00000
         ]
-        occs['colnum']  = occs['colnum_full'].astype(str).str.extract('(' + '|'.join(regex_list_digits) + ')')
+        occs['colnum']  = occs.colnum_full.str.extract('(' + '|'.join(regex_list_digits) + ')')
 
         occs['colnum'] = occs['colnum'].str.strip()
 
+
+        print(sum(pd.isna(occs.ddlat)))
+        occs.ddlat[pd.isna(occs.ddlat)] = 0
+        occs.ddlong[pd.isna(occs.ddlong)] = 0
 
         # for completeness we need this
         occs['orig_bc'] = occs['barcode']
         occs = occs.astype(dtype = z_dependencies.final_col_type)
 
         logging.debug(f'{occs.dtypes}')
-        occs = occs.replace('nan', pd.NA) # remove NAs that aren't proper
+
+        occs = occs.replace({'nan': pd.NA}, regex=False) # remove NAs that aren't proper
 
         #print(occs.head(5))
 
@@ -274,7 +297,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         logging.debug(f'{occs.dtypes}')
 
-        occs = occs.replace('nan', pd.NA)
+        occs = occs.replace({'nan': pd.NA}, regex=False)
         logging.debug(occs.det_year)
 
 
@@ -882,7 +905,8 @@ def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, 
     
     re_occs = re_occs.drop(['to_check', 'to_check_det'], axis = 1)
     re_occs.sort_index(inplace=True)
-    re_occs = re_occs.replace('NaN', pd.NA)
+    re_occs = re_occs.replace({'NaN': pd.NA}, regex=False)
+    
     
     logging.debug(f'Reordered read data: {re_occs.recorded_by}')
     frame_to_be_better.sort_index(inplace=True)
