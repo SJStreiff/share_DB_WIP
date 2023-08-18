@@ -25,6 +25,7 @@ import codecs
 import os
 import regex as re
 import logging
+from tqdm import tqdm 
 
 #custom dependencies
 import z_dependencies
@@ -70,7 +71,13 @@ def duplicated_barcodes(master_db, new_occs, verbose=True, debugging=False):
 
     # then iterate through all barcodes of the new occurrences
     # for every row
-    for i in range(len(new_occs)):
+    total_iterations = len(new_occs)
+    print('Crosschecking barcodes.')
+    for i in tqdm(range(total_iterations), desc = 'Processing', unit= 'iteration'):
+        # the tqdm should in theory have a progress bar...
+        
+    
+    #for i in range(len(new_occs)):
         # print(bc_dupli_split.loc[i])
         # print(i, len(new_occs))
         barcode = list(bc_dupli_split.loc[i].astype(str))

@@ -60,7 +60,7 @@ def duplicate_stats(occs, working_directory, prefix, out=True, verbose=True, deb
     #-------------------------------------------------------------------------------
     # MISSING collector information and number
     # remove empty collector and coll num
-    occs1 = occs.dropna(how='all', subset = ['recorded_by']) # no collector information is impossible.
+    occs1 = occs #.dropna(how='all', subset = ['recorded_by']) # no collector information is impossible.
     #occs1 = occs1[occs1.recorded_by != 'nan']
     logging.debug(f'Deleted {len(occs.index) - len(occs1.index)} rows with no collector and no number; {len(occs1.index)} records left')
     
@@ -143,12 +143,10 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     #-------------------------------------------------------------------------------
    # Housekeeping. Clean up problematic types and values...
 
-   # MISSING collector information and number
-    # remove empty collector 
-    occs1 = occs.dropna(how='all', subset = ['recorded_by']) #, 'colnum', 'colnum_full'
+    # occs = occs.str.strip()
+    occs1 = occs.replace(['', ' '], pd.NA)
 
-
-
+    
     #-------------------------------------------------------------------------------
     # find duplicated BARCODES before we do anything
     # this step only takes place in master step.
@@ -208,7 +206,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                     source_id = pd.NamedAgg(column = 'source_id',  aggfunc=lambda x: ', '.join(x)),
                     wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                     expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                    status = pd.NamedAgg(column = 'expert_det', aggfunc = lambda x: 'ACCEPTED'),
+                    status = pd.NamedAgg(column = 'status',  aggfunc = 'first'),
                     accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                     ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                     link =  pd.NamedAgg(column = 'link',  aggfunc=lambda x: ' - '.join(x)),
@@ -441,6 +439,9 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     #print(occs_dup_col.dtypes)
 
 
+    # any empty strings need to be set NA, otherwise sorting gets messed up ('' is at beginning)
+    occs_dup_col = occs_dup_col.replace(['', ' '], pd.NA)
+
     # s.n. needed for deduplication and error reduction. removed later...
     occs_dup_col.colnum_full = occs_dup_col.colnum_full.fillna('s.n.')
     ############################################ Here integrate expert flag
@@ -495,7 +496,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 geo_col = pd.NamedAgg(column = 'geo_col', aggfunc = 'first'),
                 wiki_url = pd.NamedAgg(column = 'wiki_url', aggfunc = 'first'),
                 expert_det = pd.NamedAgg(column = 'expert_det', aggfunc = 'first'),
-                status = pd.NamedAgg(column = 'status', aggfunc=lambda x: 'ACCEPTED'),
+                status = pd.NamedAgg(column = 'status', aggfunc = 'first'),
+                #status = pd.NamedAgg(column = 'status', aggfunc=lambda x: 'ACCEPTED'),
                 accepted_name = pd.NamedAgg(column = 'accepted_name', aggfunc = 'first'),
                 ipni_no =  pd.NamedAgg(column = 'ipni_no', aggfunc = 'first'),
                 ipni_species_author =  pd.NamedAgg(column = 'ipni_species_author', aggfunc = 'first'),

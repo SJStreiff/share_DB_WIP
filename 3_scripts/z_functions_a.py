@@ -925,6 +925,7 @@ def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, 
     logging.info(f'TOTAL {len(occs_merged)} in Prog {len(occs_already_in_program)} reintegrated {len(re_occs)}')
     if len(occs_merged) == len(occs_already_in_program) + len(re_occs):
         logging.info('Data reinserted successfully.')
+        print('Data integrated successfully!')
     else:
         raise Exception("Something weird happened, please check input and code.")
 

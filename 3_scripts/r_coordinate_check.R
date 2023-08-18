@@ -112,8 +112,8 @@ dat[dat == '<NA> nan'] <- ''
 dat[is.na(dat)] <- ''
 
 #path to shapefile
-clines <- rgdal::readOGR(('/Users/fin/Sync/1_Annonaceae/Y_DATA/2_land-map_rasters/ne_50m_coastline/ne_50m_coastline.shp') )
-clines <- clines %>% st_set_crs('WGS84') #double checking, should actually already be
+# clines <- rgdal::readOGR(('/Users/serafin/Sync/1_Annonaceae/Y_DATA/2_land-map_rasters/ne_50m_coastline/ne_50m_coastline.shp') )
+# clines <- clines %>% st_set_crs('WGS84') #double checking, should actually already be
 
 
 # coordinate cleaner 
@@ -123,15 +123,15 @@ flags <- clean_coordinates(x = dat,
                            species = 'scientific_name',
                            countries = "country_iso3",
                            tests = c("capitals", "centroids", "equal","gbif", "institutions", "seas",
-                                     "zeros", "countries" ),
-                           seas_ref = clines)
+                                     "zeros", "countries" ))#,
+                           #seas_ref = clines)
 
 
 ####################################################################################################
 ###--------------------- START of coordinate saving from the seas -------------------------------###
 
 
-clines <- read_sf('/Users/fin/Sync/1_Annonaceae/Y_DATA/2_land-map_rasters/ne_50m_coastline/ne_50m_coastline.shp')
+clines <- read_sf('/Users/serafin/Sync/1_Annonaceae/Y_DATA/2_land-map_rasters/ne_50m_coastline/ne_50m_coastline.shp')
 clines <- clines %>% st_set_crs('WGS84') #double checking, should actually already be
 
 # subset data to correct, and data to flag as incorrect
@@ -144,28 +144,28 @@ dat_sf_tt <- flags_tt %>% st_as_sf(coords = c('ddlong','ddlat')) %>%
   st_set_crs(4326)
 
 
-,
+
 ####################################################################################################
 ###--------------------------------- Visualise problematic values -------------------------------###
-x_max <- round(max(flags_tt$ddlong) + 3)
-x_min <- round(min(flags_tt$ddlong) - 3)
-y_max <- round(max(flags_tt$ddlat) + 3)
-y_min <- round(min(flags_tt$ddlat) - 3)
-
-data("countriesHigh")
-mapdat    <- sf::st_as_sf(countriesHigh)
-p1 <-  ggplot() +
-  geom_sf(data = mapdat) +#, aes(x = long, y = lat)) +
-  geom_sf(data = dat_sf_tt, colour = 'red')+
-  coord_sf(xlim = c(x_min, x_max), ylim = c(y_min, y_max)) +
-  theme(plot.background = element_rect(fill = 'white'),
-        panel.background = element_rect(fill = "lightblue"),
-        panel.grid = element_blank(),
-        line = element_blank(),
-        rect = element_blank(),
-        axis.text.x = element_text(size = 7)) +
-  labs(x='Longitude',y='Latitude')
-p1
+# x_max <- round(max(flags_tt$ddlong) + 3)
+# x_min <- round(min(flags_tt$ddlong) - 3)
+# y_max <- round(max(flags_tt$ddlat) + 3)
+# y_min <- round(min(flags_tt$ddlat) - 3)
+# 
+# data("countriesHigh")
+# mapdat    <- sf::st_as_sf(countriesHigh)
+# p1 <-  ggplot() +
+#   geom_sf(data = mapdat) +#, aes(x = long, y = lat)) +
+#   geom_sf(data = dat_sf_tt, colour = 'red')+
+#   coord_sf(xlim = c(x_min, x_max), ylim = c(y_min, y_max)) +
+#   theme(plot.background = element_rect(fill = 'white'),
+#         panel.background = element_rect(fill = "lightblue"),
+#         panel.grid = element_blank(),
+#         line = element_blank(),
+#         rect = element_blank(),
+#         axis.text.x = element_text(size = 7)) +
+#   labs(x='Longitude',y='Latitude')
+# p1
 ####################################################################################################
 
 
@@ -246,6 +246,15 @@ no_coord_dat$old_ddlat <- rep(NA, length(no_coord_dat$scientific_name))
 
 # add empty coordinates back in. These are sorted later
 geo_issues <- rbind(geo_issues, no_coord_dat)
+
+
+####################################################################################################
+###-------------------- some final issues being resolved from other steps -----------------------###
+
+# remove nomenclatural expert info in indet spp
+geo_issues[geo_issues$specific_epithet == '', "accepted_name"] <- ''
+geo_issues[geo_issues$specific_epithet == '', "status"] <- ''
+geo_issues[geo_issues$specific_epithet == '', "expert_det"] <- ''
 
 
 ####################################################################################################

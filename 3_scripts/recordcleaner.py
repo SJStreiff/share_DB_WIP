@@ -243,7 +243,7 @@ if __name__ == "__main__":
             if args.verbose:
                 logging.info('As you have an EXPERT file i did not crosscheck the taxonomy (some spp. might not yet be on POWO)')
                 logging.info('therefore some columns are missing: I will fill them with <NA>!')
-        
+                print('Expert file. Did not check taxonomy with POWO. Please make sure no NA was present in your determinations!')
         tmp_occs_6 = tmp_occs_5
         # print(tmp_occs_5.dtypes)
 
