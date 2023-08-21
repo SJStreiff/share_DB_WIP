@@ -101,9 +101,21 @@ def country_crossfill(occs, verbose=True):
 
 
     occs.reset_index(drop=True)
-    logging.info(f'Let\'s see if this works {occs.country_id}')
-    occs[['country_id', 'country']] = occs[['country_id', 'country']].replace('0', pd.NA)
-    occs['country_id'] = occs.country_id.fillna(cc.pandas_convert(series = occs.country, to='ISO2'))
+    #logging.info(f'Let\'s see if this works {occs.country_id}')
+    try:
+        occs.country = occs.country.replace('0', pd.NA)
+    except:
+        a=1
+    try:
+        occs.country_id = occs.country_id.replace('0', pd.NA)
+    except:
+        a=1
+        
+
+    try:
+        occs['country_id'] = occs.country_id.fillna(cc.pandas_convert(series = occs.country, to='ISO2'))
+    except:
+        occs['country_id'] = cc.pandas_convert(series=occs.country, to='ISO2')
     occs['country'] = occs.country.fillna(cc.pandas_convert(series = occs.country_id, to='name_short'))
     occs['country_iso3'] = cc.pandas_convert(series = occs.country, to='ISO3') # needed for later in coordinate cleaner
 

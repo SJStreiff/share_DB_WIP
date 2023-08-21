@@ -87,7 +87,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         occs = occs[z_dependencies.brahms_cols] # and subset
         print('READ3',occs.columns)
         #occs = occs.fillna(pd.NA) # problems with this NA
-        occs.source_id = 'brahms'
+        occs['source_id'] = 'brahms'
 
     elif(data_source_type == 'MO'):
         # for data from BRAHMS extracts

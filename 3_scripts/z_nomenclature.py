@@ -22,8 +22,10 @@ CONTAINS:
 
 import pykew.powo as powo
 import pykew.ipni as ipni
-from pykew.powo_terms import Name, Filters
-from pykew.ipni_terms import Name, Filters
+from pykew.powo_terms import Filters as powo_filter
+from pykew.ipni_terms import Filters as ipni_filter
+from pykew.powo_terms import Name as powo_name
+from pykew.ipni_terms import Name as ipni_name
 
 import pandas as pd
 import logging
@@ -47,8 +49,8 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
 
     if pd.notna(gen) and pd.notna(sp):
         # annoying error when no det associated with a record
-        query = {Name.genus: gen, Name.species: sp}
-        res = powo.search(query) #, filters=Filters.specific)  # , filters = [Filters.accepted])
+        query = {ipni_name.genus: gen, ipni_name.species: sp}
+        res = powo.search(query, filters=powo_filter.species) #, filters=Filters.specific)  # , filters = [Filters.accepted])
         logging.info(f'Checking the taxon {gen} {sp}')
             # print('checking distribution', distribution)
         #print(res.size()) # for debugging
@@ -103,10 +105,10 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
         logging.info(f'STATUS: {status}')
         logging.debug(f'{scientificname} {species_author}')
             #print(native_to)
-        query = {Name.genus: gen, Name.species: sp}
+        #query = {ipni_name.genus: gen, ipni_name.species: sp}
         query = gen + ' ' + sp
         #print(query)
-        res = ipni.search(query, filters = Filters.specific) # so we don't get a mess with infraspecific names
+        res = ipni.search(query, filters = ipni_filter.specific) # so we don't get a mess with infraspecific names
         #res = ipni.search(query, filters=Filters.species)  # , filters = [Filters.accepted])
         try:
             for r in res:
