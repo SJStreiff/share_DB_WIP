@@ -202,6 +202,7 @@ if __name__ == "__main__":
     # Step B4: crossfill country names
     logging.info('\n#> B4: Crossfill country values\n')
     tmp_occs_5 = stepB2.country_crossfill(tmp_occs_5, verbose=True)
+    tmp_occs_5 = stepB2.cc_missing(tmp_occs_5, verbose=True)
 
 
     ###------------------------------------------ Step C -------------------------------------------####

@@ -14,3 +14,11 @@
 # 2023-08-09:
     - added 'BRAHMS' flag, allows integration of BRAHMS extract data
         included slight modifications to name standardisation, recurring NA vs NA-string 
+
+# 2023-08-22:
+    - added basic scripts for SQL integration
+    - finalised brahms integration
+
+# 2023-08-23:
+    - merged branch brahms integration
+    - new branch: speed up master merging
