@@ -52,7 +52,7 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         occs = occs.fillna(pd.NA)
         occs = occs.rename(columns = z_dependencies.herbo_key) # rename columns
         occs = occs[z_dependencies.herbo_subset_cols] # subset just required columns
-        occs.source_id = 'P_herbonautes'
+        occs['source_id'] = 'P_herbo'
         # if verbose:
  	    #       print('Just taking the Philippines for now!')
         # occs = occs[occs['country'] == 'Philippines']
