@@ -31,7 +31,7 @@ from getpass import getpass
 
 
 
-def fetch_master_db(database, host, tablename, schema):  #subset????
+def fetch_master_db(database, host): #, tablename, schema):  #subset????
     """ PLEASE PROTECT YOUR SENSITIVE INFORMATION: passwords, ports etc.
     Connects to the master database (GLOBAL) and downloads the database subset
     for comparing the new data later on
@@ -60,69 +60,40 @@ def fetch_master_db(database, host, tablename, schema):  #subset????
     username=input() #'n' # make back to input()
     print('\n ................................\n',
     'Please type the PASSWORD used to connect to the database for user', username)
-    password=getpass() #'n' # make back to input()
+    password=getpass() #'n' # make back to getpass()
     print('\n ................................\n',
     'Please type the PORT required to connect to the database:')
-    port=input() #'n' # make back to input()
-
+    port=getpass() #'n' # make back to input()
+    
     url_obj = URL.create(
         'postgresql',
         username,
         password,
         host,
-        #-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-        #port,
-        database,
-        )
-
+        port,
+        database)
+    print(url_obj)
     engine = create_engine(url_obj)
+    print(engine)
 
     print('Connection successful, the following tables are found on the standard schema:', engine.table_names())
 
     metadata_obj = MetaData()
 
 
-    master_db_test = pd.read_sql_table('philippines_test', engine)
+    master_db_test = pd.read_sql_table('species_collection', engine)
     print(master_db_test.head())
 
     return master_db_test
 
 
-def send_to_sql(data, database, host, tablename, schema):
-    """ send a dataframe to the specified sql databases
-    """
-
-    print('\n ................................\n',
-    'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
-    'Please type the USERNAME used to connect to the database:')
-    username=input() #'n' # make back to input()
-    print('\n ................................\n',
-    'Please type the PASSWORD used to connect to the database for user', username)
-    password=getpass() #'n' # make back to input()
-    # print('\n ................................\n',
-    # 'Please type the PORT required to connect to the database:')
-    #port=input() #'n' # make back to input()
-
-    url_obj = URL.create(
-        'postgresql',
-        username,
-        password,
-        host,
-        #-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
-        #port,
-        database,
-        )
-
-    engine = create_engine(url_obj)
-
-    data.to_csv('loading_table', engine, schema)
-
-    print('Maybe this worked')
-
     #
-# print('Hostname?')
+print('Hostname?')
 # hostname=input()
-# test = fetch_master_db('GLOBAL', hostname, 'phil_test_221209', 'serafin_test')
+test = fetch_master_db('Global_ss', '10.4.91.57')
+
+stop
+
 
 
 #
@@ -151,3 +122,34 @@ def indet_rescuer(occs, indet_backlog, verbose=True, debugging=False):
 
 
 
+
+def send_to_sql(data, database, host, tablename, schema):
+    """ send a dataframe to the specified sql databases
+    """
+
+    print('\n ................................\n',
+    'NOTE that for the GLOBAL database you must be connected to the VPN...\n'
+    'Please type the USERNAME used to connect to the database:')
+    username=input() #'n' # make back to input()
+    print('\n ................................\n',
+    'Please type the PASSWORD used to connect to the database for user', username)
+    password=getpass() #'n' # make back to input()
+    # print('\n ................................\n',
+    # 'Please type the PORT required to connect to the database:')
+    #port=input() #'n' # make back to input()
+
+    url_obj = URL.create(
+        'postgresql',
+        username,
+        password,
+        host,
+        #-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!-!
+        port,
+        database,
+        )
+
+    engine = create_engine(url_obj)
+
+    data.to_csv('loading_table', engine, schema)
+
+    print('Maybe this worked')
