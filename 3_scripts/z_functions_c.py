@@ -105,17 +105,17 @@ def cc_missing(occs, verbose=True):
 
 
 
-# debugging
+# debugging and updating an olde version of db
 
-# cc_debug = pd.read_csv('/Users/serafin/Sync/1_Annonaceae/share_DB_WIP/2a_WIP/cc_nf_debug.csv', sep=';')
+# cc_debug = pd.read_csv('/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/20230824_mdb_for_upload.csv', sep=';')
 
-# #cc_debug = cc_debug.head(n=1)
-# print(cc_debug)
+# # #cc_debug = cc_debug.head(n=1)
+# # print(cc_debug)
 
 # newres = cc_missing(cc_debug)
 # print(newres.country_iso3)
 
-
+# newres.to_csv('/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/C_20230824_mdb_for_upload.csv', sep=';', index=False)
 
 
 

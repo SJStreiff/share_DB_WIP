@@ -96,7 +96,7 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
         except:
             # there are issues when the function is presented the string 'sp.' or 'indet.' etc
             logging.debug(f'The species {gen} {sp} is not registered in POWO...\n I don\'t know what to do with this now, so I will put the status on NA and the accepted species as NA.')
-            status = pd.NA
+            status = 'not found in POWO'
             scientificname = pd.NA
             species_author = pd.NA
             native_to = pd.NA
@@ -121,7 +121,7 @@ def powo_query(gen, sp, distribution=False, verbose=True, debugging=False):
         except:
             ipni_pubYr = pd.NA
     else:
-        status = 'not found in POWO'
+        status = 'not det'
         scientificname = pd.NA
         species_author = pd.NA
         ipni_no = pd.NA

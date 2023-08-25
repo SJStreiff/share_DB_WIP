@@ -96,7 +96,6 @@ if __name__ == "__main__":
 
     logging.basicConfig(filename=args.log_file, encoding='utf-8', level=logging.INFO)
     logging.info('-----------------------------------------------------------\n')
-
     logging.info('#> This is the RECORD FILER step of the pipeline\n')
     logging.info('Arguments supplied are:')
     logging.info(f'INPUT FILE: {args.input_file}')
@@ -107,8 +106,6 @@ if __name__ == "__main__":
     logging.info(f'Table name: {args.tablename}')
     logging.info(f'Schema name: {args.schema}')
     logging.info(f' Working directory: {args.working_directory}')
-    #logging.info(f' Indet backlog location: {args.indets_backlog}')
-    #logging.info(f' No coordinate backlog: {args.no_coords_backlog}')
     logging.info(f' verbose: {args.verbose}')
     logging.info('-----------------------------------------------------------')
 
@@ -159,7 +156,7 @@ if __name__ == "__main__":
     date = date = datetime.datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
     occs['modified'] = username + '_' + date
 
-
+    countries_new = occs.country_iso3.unique()
 
 
     # if just one small group, then do some sort of subsetting
@@ -206,31 +203,44 @@ if __name__ == "__main__":
 
         BL_indets = pd.read_csv(mdb_dir+'/indet_backlog.csv', sep=';', dtype= z_dependencies.final_col_for_import_type, na_values=pd.NA)
         BL_indets = BL_indets.fillna(pd.NA)
-        # for col in BL_indets.columns:
-        #     BL_indets[col] = BL_indets[col].astype(str).str.replace('nan', '<NA>')
+    
+        BL_indets_cc = BL_indets[BL_indets.country_iso3.isin(countries_new)]
+        BL_indets_non = BL_indets[~BL_indets.country_iso3.isin(countries_new)]
+
         logging.info('NA filled!')
         #print(BL_indets)
         try:
             no_coord_bl = pd.read_csv(mdb_dir + '/coord_backlog.csv', sep=';', dtype= z_dependencies.final_col_for_import_type)
             no_coord_bl = no_coord_bl.fillna(pd.NA)
-            # for col in no_coord_bl.columns:
-            #     no_coord_bl[col] = no_coord_bl[col].astype(str).str.replace('nan', '<NA>')
+
+            no_coord_bl_cc = no_coord_bl[no_coord_bl.country_iso3.isin(countries_new)]
+            no_coord_bl_non = no_coord_bl[~no_coord_bl.country_iso3.isin(countries_new)]
+
+
+
 
         except:
             #nothing
             a = 1
         m_DB = pd.read_csv(mdb_dir + '/master_db.csv', sep =';', dtype= z_dependencies.final_col_for_import_type, na_values=pd.NA)
         m_DB = m_DB.fillna(pd.NA)
-        # for col in m_DB.columns:
-        #     m_DB[col] = m_DB[col].astype(str).str.replace('nan', '<NA>')
+           # to make it look like the masterdb I will add all the final columns
+        miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
+        m_DB[miss_col] = '0'
+        m_DB = m_DB.astype(dtype = z_dependencies.final_col_for_import_type)
+ 
+        m_DB_cc = m_DB[m_DB.country_iso3.isin(countries_new)]
+        m_DB_non = m_DB[~m_DB.country_iso3.isin(countries_new)]
 
+    # subset by countries
+    
     ###---------------------- First test against indets backlog --------------------------------###
     logging.info('\n#> INDET consolidation')
     logging.info('------------------------------------------------')
 
 
     # check all occs against indet backlog
-    test_upd_DB = pre_merge.check_premerge(mdb = BL_indets, occs = occs, verbose=True)
+    test_upd_DB = pre_merge.check_premerge(mdb = BL_indets_cc, occs = occs, verbose=True)
 
     test_upd_DB=test_upd_DB.astype(z_dependencies.final_col_for_import_type)
 
@@ -275,13 +285,16 @@ if __name__ == "__main__":
     occs = occs[occs.accepted_name.notna() ] # NOT NA!
     logging.info(f'{occs.accepted_name.notna()}')
 
-
-
+    # merge modified BL with untouched BL
+    indet_to_backlog = pd.concat([indet_to_backlog, BL_indets_non])
+    
     #indet_to_backlog = pd.concat([indet_to_backlog])
     # keep indet_to_backlog and send back into server
     indet_to_backlog.to_csv(mdb_dir + '/indet_backlog.csv', sep=';', index=False)
     logging.info(f'{occs.status}')
     logging.info(f'{occs.accepted_name}')
+
+
     ###---------------------- Then test against coordinate-less data backlog --------------------------------###
     logging.info('\n#> COORDINATE consolidation\n------------------------------------------------')
         # geo_issues is the column name for georeferencing issues
@@ -290,7 +303,7 @@ if __name__ == "__main__":
 
     #no_coord_bl = pd.read_csv('/Users/Serafin/Sync/1_Annonaceae/share_DB_WIP/4_DB_tmp/coord_backlog.csv', sep=';')
     # check all occs against indet backlog
-    no_coord_check = pre_merge.check_premerge(mdb=no_coord_bl, occs=occs, verbose=True)
+    no_coord_check = pre_merge.check_premerge(mdb=no_coord_bl_cc, occs=occs, verbose=True)
 
     #print(no_coord_check.dtypes)
     no_coord_check=no_coord_check.astype(z_dependencies.final_col_for_import_type)
@@ -314,6 +327,8 @@ if __name__ == "__main__":
     no_coords_to_backlog = occs[occs.ddlat.isna() ] # ==NA !!
     occs = occs[occs.ddlat.notna() ] # NOT NA!
     
+    no_coords_to_backlog = pd.concat([no_coords_to_backlog, no_coord_bl_non])
+
     no_coords_to_backlog.to_csv(mdb_dir + 'coord_backlog.csv', sep=';', index=False)
 
   
@@ -331,13 +346,7 @@ if __name__ == "__main__":
 
 
 
-    ###--- Import a local file to make sure it works, GLOBAL is down at the moment
-
-    # to make it look like the masterdb I will add all the final columns
-    miss_col = [i for i in z_dependencies.final_cols_for_import if i not in m_DB.columns]
-    m_DB[miss_col] = '0'
-    m_DB = m_DB.astype(dtype = z_dependencies.final_col_for_import_type)
-    upd_DB = pre_merge.check_premerge(mdb = m_DB, occs = occs, verbose=True)
+    upd_DB = pre_merge.check_premerge(mdb = m_DB_cc, occs = occs, verbose=True)
     # something really weird happening. Should not be as many duplicates as it gives me.
 
     upd_DB=upd_DB.astype(z_dependencies.final_col_for_import_type)
@@ -379,6 +388,9 @@ if __name__ == "__main__":
     BL_indets.to_csv(mdb_dir + '/backups/indet/'+date+'_indet_backlog.csv', sep=';')
     m_DB.to_csv(mdb_dir + '/backups/'+date+'_master_backup.csv', sep = ';', index = False)#, mode='x')
     # the mode=x prevents overwriting an existing file...
+
+    deduplid = pd.concat([deduplid, m_DB_non])
+
 
     for col in deduplid.columns:
         deduplid[col] = deduplid[col].astype(str).str.replace('nan', '')
