@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('expert_file',
                          help = 'Specify if input file is of expert source (i.e. all determinations and coordinates etc. are to have priority over other/previous data)',
                          type = str,
-                         choices = ['EXP', 'NO'] ),
+                         choices = ['EXP', 'NO', 'SMALLEXP'] ),
     parser.add_argument('db_local',
                          choices=['local','remote'],
                         help='Is the database saved locally or on a server??',
@@ -126,7 +126,6 @@ if __name__ == "__main__":
     -reupload data into server.
 
     """
-
 
 
     #---------------------------------------------------------------------------
@@ -234,6 +233,37 @@ if __name__ == "__main__":
 
     # subset by countries
     
+
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO ``
+
+    if args.expert_file == 'SMALL_EXP':
+        logging.info('#> SMALL EXPERT file. separate step')
+        exp_occs = small_exp.read_expert(args.inputfile)
+        #huh
+        exp_occs_2 = huh_query.huh_wrapper(exp_occs, verbose = True, debugging = False)
+        # TODO
+        #ipni
+        exp_occs_3 = small_exp.exp_run_ipni(exp_occs_2)
+        #done
+        exp_occs_3.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
+
+    else:
+
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
+#`
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
+#`
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
+#`
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
+#`
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
+#`
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
+#`
+########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO `
+
+
     ###---------------------- First test against indets backlog --------------------------------###
     logging.info('\n#> INDET consolidation')
     logging.info('------------------------------------------------')
