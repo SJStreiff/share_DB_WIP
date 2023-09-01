@@ -87,7 +87,7 @@ get_closest_coast = function(x, y){
 ###---------------------- Read data and do coordinate check -------------------------------------###
 
 #debugging test dataframe
-dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230808_BRAHMS_Asiacleaned.csv', sep =';', head=T)
+#dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230808_BRAHMS_Asiacleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
@@ -120,7 +120,7 @@ dat[is.na(dat)] <- ''
 flags <- clean_coordinates(x = dat,
                            lon = "ddlong",
                            lat = "ddlat",
-                           species = 'scientific_name',
+                           species = 'accepted_name',
                            countries = "country_iso3",
                            tests = c("capitals", "centroids", "equal","gbif", "institutions", "seas",
                                      "zeros", "countries" ))#,
@@ -139,80 +139,85 @@ flags_tt <- flags[flags$.sea == FALSE,]
 # good data
 flags_no_sea <-flags[flags$.sea == TRUE,]
 
-# spatialise data
-dat_sf_tt <- flags_tt %>% st_as_sf(coords = c('ddlong','ddlat')) %>% 
-  st_set_crs(4326)
+if(length(flags_tt$.sea) > 0){
+
+  # spatialise data
+  dat_sf_tt <- flags_tt %>% st_as_sf(coords = c('ddlong','ddlat')) %>% 
+    st_set_crs(4326)
 
 
 
-####################################################################################################
-###--------------------------------- Visualise problematic values -------------------------------###
-# x_max <- round(max(flags_tt$ddlong) + 3)
-# x_min <- round(min(flags_tt$ddlong) - 3)
-# y_max <- round(max(flags_tt$ddlat) + 3)
-# y_min <- round(min(flags_tt$ddlat) - 3)
-# 
-# data("countriesHigh")
-# mapdat    <- sf::st_as_sf(countriesHigh)
-# p1 <-  ggplot() +
-#   geom_sf(data = mapdat) +#, aes(x = long, y = lat)) +
-#   geom_sf(data = dat_sf_tt, colour = 'red')+
-#   coord_sf(xlim = c(x_min, x_max), ylim = c(y_min, y_max)) +
-#   theme(plot.background = element_rect(fill = 'white'),
-#         panel.background = element_rect(fill = "lightblue"),
-#         panel.grid = element_blank(),
-#         line = element_blank(),
-#         rect = element_blank(),
-#         axis.text.x = element_text(size = 7)) +
-#   labs(x='Longitude',y='Latitude')
-# p1
-####################################################################################################
+  ####################################################################################################
+  ###--------------------------------- Visualise problematic values -------------------------------###
+  # x_max <- round(max(flags_tt$ddlong) + 3)
+  # x_min <- round(min(flags_tt$ddlong) - 3)
+  # y_max <- round(max(flags_tt$ddlat) + 3)
+  # y_min <- round(min(flags_tt$ddlat) - 3)
+  # 
+  # data("countriesHigh")
+  # mapdat    <- sf::st_as_sf(countriesHigh)
+  # p1 <-  ggplot() +
+  #   geom_sf(data = mapdat) +#, aes(x = long, y = lat)) +
+  #   geom_sf(data = dat_sf_tt, colour = 'red')+
+  #   coord_sf(xlim = c(x_min, x_max), ylim = c(y_min, y_max)) +
+  #   theme(plot.background = element_rect(fill = 'white'),
+  #         panel.background = element_rect(fill = "lightblue"),
+  #         panel.grid = element_blank(),
+  #         line = element_blank(),
+  #         rect = element_blank(),
+  #         axis.text.x = element_text(size = 7)) +
+  #   labs(x='Longitude',y='Latitude')
+  # p1
+  ####################################################################################################
 
 
 
-####################################################################################################
-###--------------------------------- Calculate distance and points ------------------------------###
+  ####################################################################################################
+  ###--------------------------------- Calculate distance and points ------------------------------###
 
-# get minimum distance to coastline...
-dat_sf_tt$coast_2 <- as.numeric(get_dist(dat_sf_tt, clines))
+  # get minimum distance to coastline...
+  dat_sf_tt$coast_2 <- as.numeric(get_dist(dat_sf_tt, clines))
 
-print(paste('This many points are in the sea:', length(dat_sf_tt$scientific_name)))
-# error margin, i.e. points less than this from the coast get a new point assigned
-error_margin <- 5000
-dat_tobesaved <- dat_sf_tt[dat_sf_tt$coast_2 <= error_margin,]
-print(paste('This many points were moved to the coastline:', length(dat_tobesaved$scientific_name),
-            ', with the error margin of', error_margin, '[m]'))
+  print(paste('This many points are in the sea:', length(dat_sf_tt$scientific_name)))
+  # error margin, i.e. points less than this from the coast get a new point assigned
+  error_margin <- 5000
+  dat_tobesaved <- dat_sf_tt[dat_sf_tt$coast_2 <= error_margin,]
+  print(paste('This many points were moved to the coastline:', length(dat_tobesaved$scientific_name),
+              ', with the error margin of', error_margin, '[m]'))
 
-# save points closer to coast than <error_margin>
-dat_tobesaved <- get_closest_coast(dat_tobesaved, clines)
-old_coords <- st_coordinates(dat_tobesaved)
-colnames(old_coords) <- c('old_ddlong', 'old_ddlat')
-dat_tobesaved <- cbind(st_drop_geometry(dat_tobesaved), old_coords)
+  # save points closer to coast than <error_margin>
+  dat_tobesaved <- get_closest_coast(dat_tobesaved, clines)
+  old_coords <- st_coordinates(dat_tobesaved)
+  colnames(old_coords) <- c('old_ddlong', 'old_ddlat')
+  dat_tobesaved <- cbind(st_drop_geometry(dat_tobesaved), old_coords)
 
-dat_tobesaved$.sea <- TRUE #update values, no further action needed there later
-dat_inseas <- dat_sf_tt[dat_sf_tt$coast_2 > error_margin,]
-print(paste('The other', length(dat_inseas$genus), 'values remain flagged as problematic coordinates.'))
+  dat_tobesaved$.sea <- TRUE #update values, no further action needed there later
+  dat_inseas <- dat_sf_tt[dat_sf_tt$coast_2 > error_margin,]
+  print(paste('The other', length(dat_inseas$genus), 'values remain flagged as problematic coordinates.'))
 
-# add empty col for the old coordinates
+  # add empty col for the old coordinates
 
-coords <- st_coordinates(dat_inseas)
-colnames(coords) <- c('ddlong', 'ddlat')
-dat_inseas <- cbind(st_drop_geometry(dat_inseas), coords)
-dat_inseas$old_ddlong <- rep(NA, length(dat_inseas$scientific_name))
-dat_inseas$old_ddlat <- rep(NA, length(dat_inseas$scientific_name))
+  coords <- st_coordinates(dat_inseas)
+  colnames(coords) <- c('ddlong', 'ddlat')
+  dat_inseas <- cbind(st_drop_geometry(dat_inseas), coords)
+  dat_inseas$old_ddlong <- rep(NA, length(dat_inseas$scientific_name))
+  dat_inseas$old_ddlat <- rep(NA, length(dat_inseas$scientific_name))
 
-flags_no_sea$old_ddlong <- rep(NA, length(flags_no_sea$scientific_name))
-flags_no_sea$old_ddlat  <- rep(NA, length(flags_no_sea$scientific_name))
+  flags_no_sea$old_ddlong <- rep(NA, length(flags_no_sea$scientific_name))
+  flags_no_sea$old_ddlat  <- rep(NA, length(flags_no_sea$scientific_name))
 
-# merge dataframes again
-dat_to_int <- rbind(dat_tobesaved, dat_inseas)
-col_to_drop <- which(colnames(dat_to_int) %notin% colnames(flags_no_sea))
-#print(colnames(dat_to_int)[col_to_drop])
-dat_to_int <- dat_to_int[,-col_to_drop]
+  # merge dataframes again
+  dat_to_int <- rbind(dat_tobesaved, dat_inseas)
+  col_to_drop <- which(colnames(dat_to_int) %notin% colnames(flags_no_sea))
+  #print(colnames(dat_to_int)[col_to_drop])
+  dat_to_int <- dat_to_int[,-col_to_drop]
 
-# final data from coordinate check
-flags_final <- rbind(flags_no_sea, dat_to_int)
-
+  # final data from coordinate check
+  flags_final <- rbind(flags_no_sea, dat_to_int)
+}
+else{
+  flags_final <- flags_no_sea
+}
 ###--------------------- END of coordinate saving -----------------------------------------------###
 ####################################################################################################
 

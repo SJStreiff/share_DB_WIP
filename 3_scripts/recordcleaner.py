@@ -42,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument('expert_file',
                          help = 'Specify if input file is of expert source (i.e. all determinations and coordinates etc. are to have priority over other/previous data)',
                          type = str,
-                         choices = ['EXP', 'NO', 'SMALL_EXP'] )
+                         choices = ['EXP', 'NO', 'SMALLEXP'] )
     parser.add_argument('working_directory',
                         help = 'the directory in which to deposit all intermediate working files. Files that need reviewing start with "TO_CHECK_"',
                         type = str)
@@ -92,16 +92,18 @@ if __name__ == "__main__":
 
     ###------------------------------------------ Small expert dataset ------------------------------####
 
-    if args.expert_file == 'SMALL_EXP':
+    if args.expert_file == 'SMALLEXP':
+        print('small EXpert setting')
         logging.info('#> SMALL EXPERT file. separate step')
-        exp_occs = small_exp.read_expert(args.inputfile)
+        exp_occs = small_exp.read_expert(args.input_file)
         #huh
         exp_occs_2 = huh_query.huh_wrapper(exp_occs, verbose = True, debugging = False)
-        # TODO
         #ipni
         exp_occs_3 = small_exp.exp_run_ipni(exp_occs_2)
+        exp_occs_4 = stepB2.country_crossfill(exp_occs_3, verbose=True)
+        exp_occs_4 = stepB2.cc_missing(exp_occs_4, verbose=True)
         #done
-        exp_occs_3.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
+        exp_occs_4.to_csv(args.output_directory+args.prefix+'cleaned.csv', index=False, sep=';')
 
     else:
         ###------------------------------------------ Step A -------------------------------------------####

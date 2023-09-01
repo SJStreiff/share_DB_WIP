@@ -290,7 +290,7 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # format det date into separate int values yead-month-day
         occs['tmp_det_date'] = occs['det_date'].str.split('T', expand=True)[0]
         try:
-            occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True,
+            occs[['det_year', 'det_month', 'det_day']] = occs['tmp_det_date'].str.split("-", expand=True)
             occs = occs.drop(['tmp_det_date'], axis='columns')
         except:
             logging.debug('no det dates available...')

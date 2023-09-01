@@ -67,9 +67,9 @@ def read_expert(importfile, verbose=True):
 
 
 
-
-
-
+    exp_dat[['huh_name', 'geo_col', 'wiki_url']] = '0'
+    exp_dat['orig_recby'] = exp_dat['recorded_by']
+    exp_dat['col_year'] = pd.NA
 
     return exp_dat
 
@@ -83,10 +83,13 @@ def read_expert(importfile, verbose=True):
 # deduplication....
 # we will do this by barcodes and or recorded_by + colnum + ??
 
-def deduplicate_experts_minimal(master_db, exp_dat, verbose=True):
+def deduplicate_small_experts(master_db, exp_dat, verbose=True):
     """
-    Find duplicates based on barcode, and collector name, cross-replace everything of value,
-    add expert flag
+    Find duplicates based on barcode, and collector name,
+
+    Any values in these records found are overwritten by 'expert' data. This is assuned to be of (much) better quality.
+
+
     """
 
 
@@ -94,7 +97,7 @@ def deduplicate_experts_minimal(master_db, exp_dat, verbose=True):
     exp_dat.barcode = exp_dat.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
     master_db.barcode = master_db.barcode.apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated barcodes within a cell
 
-    #----- prep barcodes
+    #----- prep barcodes (i.e. split multiple barcodes into seperate values <BC001, BC002> --> <BC001>, <BC002>)
     # split new record barcode fields (just to check if there are multiple barcodes there)
     bc_dupli_split = exp_dat['barcode'].str.split(',', expand = True) # split potential barcodes separated by ','
     bc_dupli_split.columns = [f'bc_{i}' for i in range(bc_dupli_split.shape[1])] # give the columns names..
@@ -177,6 +180,7 @@ def deduplicate_experts_minimal(master_db, exp_dat, verbose=True):
                     master_db.loc[sel_sum, 'ddlong'] = exp_dat.at[i, 'ddlong'] 
                     master_db.loc[sel_sum, 'status'] = 'ACCEPTED'
                     master_db.loc[sel_sum, 'expert_det'] = 'A_expert_det_file'
+                    master_db.loc[sel_sum, 'prefix'] = exp_dat.at[i, 'prefix'] 
 
 # TODO:
     # add more details, prefix etc all better here as handcurated!!
@@ -196,22 +200,38 @@ def deduplicate_experts_minimal(master_db, exp_dat, verbose=True):
                 # at the end of for loop print exceptions to file, let me manually redo it.
 
 
-    print(len(exceptions))
-    if len(exceptions) == 0:
-        return master_db
-    else:
-        exceptions = exceptions.tail(-1) # remove initialising and index creating row...
-        return master_db, exceptions
+
+    return master_db, exceptions
 
 
+def integrate_exp_exceptions(integration_file, exp_dat):
+    """
+    read and concatenate data manually edited, chekc data lengths 
+    """
+    imp = codecs.open(integration_file,'r','utf-8') #open for reading with "universal" type set
+    re_exp = pd.read_csv(imp, sep = ';',  dtype = str, index_col=0) # read the data
+    try:
+        new_exp_dat = pd.concat([re_exp, exp_dat])
+        if len(new_exp_dat) == (len(re_exp) + len(exp_dat)):
+            print('Reintegration successful.')
+            logging.info('reintroduction successful')
+        else:
+            print('reintegration not successful.')
+            logging.info('reintegration unsuccessful')
+    
+    except:
+        new_exp_dat = exp_dat
+        print('reintegration not successful.')
+        logging.info('reintegration unsuccessful')
+
+    return new_exp_dat
 
 
 
 
 def expert_ipni(species_name):
-    ''' This function takes genus species and crosschecks it to POWO. If the name is
-    accepted, it is copied into the output, if it is a synonym, the accepted name is
-    copied into the output. In the end the accepted names are returned.
+    ''' 
+    Check species names against IPNI to get publication year, author name and IPNI link
 
     INPUT: 'genus'{string}, 'specific_epithet'{string} and 'distribution'{bool}
     OUTPUT: 'ipni_no' the IPNI number assigned to the input name
@@ -243,28 +263,38 @@ def expert_ipni(species_name):
 
 
 def exp_run_ipni(exp_data):
+        """
+        wrapper for swifter apply of above function 'expert_ipni()'
+        """
         print(exp_data.columns)
         exp_data[['ipni_species_author', 'ipni_no', 'ipni_pub']] = exp_data.swifter.apply(lambda row: expert_ipni(row['accepted_name']), axis = 1, result_type='expand')
 
         return exp_data
 
-# debug_master = pd.read_csv('/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/debug/smallexp_debug.csv', sep =';')
-debug_exp_file = '/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/debug/exp.csv'
 
-# print(debug_exp_file)
-# print(debug_master)
-# print('---WORKING---')
-debug_exp = read_expert(debug_exp_file)
-print(debug_exp)
+
+
+
+
+# # # # # # # --- DEBUGGING LINES ----- # # # # # # # 
+
+# # debug_master = pd.read_csv('/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/debug/smallexp_debug.csv', sep =';')
+# debug_exp_file = '/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/debug/exp.csv'
+
+# # print(debug_exp_file)
+# # print(debug_master)
+# # print('---WORKING---')
+# debug_exp = read_expert(debug_exp_file)
+# print(debug_exp)
+
+# # print(debug_exp)
+# debug_exp = exp_run_ipni(debug_exp)
 
 # print(debug_exp)
-debug_exp = exp_run_ipni(debug_exp)
+# # final, exception = deduplicate_experts_minimal(debug_master, debug_exp)
 
-print(debug_exp)
-# final, exception = deduplicate_experts_minimal(debug_master, debug_exp)
-
-# print(final.accepted_name)
-# print('EXCEPTIONS', exception)
-spec = 'Cananga odorata'
-test_Y, test_N, testA = expert_ipni(spec)
-print(test_Y, test_N, testA)
+# # print(final.accepted_name)
+# # print('EXCEPTIONS', exception)
+# spec = 'Cananga odorata'
+# test_Y, test_N, testA = expert_ipni(spec)
+    # print(test_Y, test_N, testA)
