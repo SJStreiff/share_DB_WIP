@@ -22,3 +22,9 @@
 # 2023-08-23:
     - merged branch brahms integration
     - new branch: speed up master merging
+
+# 2023-09-13:
+    - new branch deduplication error solving (coordinates);
+        * Coordinates are ok, working correctly
+        * [solved] discovered bug in deduplication leading to data getting lost in groupby (groupby on a column including only NA make data go away)
+        * bug in (pure) colnum not extracting correctly for the format 00-123 or similar...

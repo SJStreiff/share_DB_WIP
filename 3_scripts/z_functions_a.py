@@ -252,12 +252,13 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         # extract only digits without associated stuff, but including some characters (colNam)
         regex_list_digits = [
             r'(?:\d+\-\d+\-\d+)', # of structure 00-00-00
+            r'(?:\d+\-\d+)', # of structure 00-00
             r'(?:\d+\s\d+\s\d+)', # 00 00 00 or so
             r'(?:\d+\.\d+)', # 00.00
             r'(?:\d+)', # 00000
         ]
         occs['colnum']  = occs.colnum_full.str.extract('(' + '|'.join(regex_list_digits) + ')')
-
+        print(occs[['colnum_full', 'colnum']])
         occs['colnum'] = occs['colnum'].str.strip()
 
 
@@ -466,11 +467,15 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
 
         regex_list_digits = [
             r'(?:\d+\-\d+\-\d+)', # of structure 00-00-00
+            r'(?:\d+\-\d+)', # of structure 00-00
             r'(?:\d+\.\d+)', # 00.00
             r'(?:\d+)', # 00000
         ]
         occs['colnum']  = occs['colnum_full'].astype(str).str.extract('(' + '|'.join(regex_list_digits) + ')')
+        print(occs[['colnum_full', 'colnum']])
+
         occs['colnum'] = occs['colnum'].str.strip()
+
         occs['colnum'].replace('nan', pd.NA, inplace=True)
 
         #print(occs)
