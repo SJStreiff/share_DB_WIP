@@ -111,12 +111,12 @@ if __name__ == "__main__":
         # Data preprocessing: Column standardisation 
         # Step A1: Standardise selection  and subset columns....
         tmp_occs = stepA.column_standardiser(args.input_file, args.data_type, verbose = True, debugging = False) # verbose by default true
-        print(tmp_occs.ddlat)
+        print(tmp_occs[['recorded_by','colnum','ddlat']])
         #-----------------------------------------------
         logging.info('\n#> A2: Column cleaning\n')
         # Step A2: Clean colunms and first step of standardising data (barcodes, event dates, ...)
         tmp_occs_2 = stepA.column_cleaning(tmp_occs, args.data_type, args.working_directory, args.prefix, verbose=True, debugging=False)
-        print(tmp_occs_2.ddlat)
+        print(tmp_occs_2[['recorded_by','colnum','ddlat']])
         if args.expert_file == 'EXP': # add expert flag or not
             tmp_occs_2['expert_det'] = 'expert_det_file'
         if args.expert_file == 'NO':
@@ -130,7 +130,7 @@ if __name__ == "__main__":
             # and if yes, the user can reinsert checked non-conforming names into the workflow
         tmp_occs_3, frame_to_check = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=False)
         # should we reinsert the names we could not deal with?
-        print(tmp_occs_3.ddlat)
+        print(tmp_occs_3[['recorded_by','colnum','ddlat']])
         print('\n ................................\n',
         'Would you like to reinsert the collector names I couldn\'t handle?',
         'Please take care of encoding (usually best is UTF-8) when opening (especially in Microsoft Excel!!)',
@@ -197,7 +197,9 @@ if __name__ == "__main__":
         tmp_occs_4 = stepB.duplicate_cleaner(tmp_colnum, dupli = dup_cols, working_directory = args.working_directory, prefix = args.prefix, User='NA', expert_file = args.expert_file, verbose=False, debugging=False)
         logging.info(f'Length of TMP 4:{len(tmp_occs_4)}')
 
-        print(tmp_occs_4.ddlat)
+        print(tmp_occs_4[['recorded_by','colnum','ddlat']])
+
+        
         # Double checking duplication stats, should show 0. (i.e. repeat B1)
         logging.info('\n#> B2: Duplicates - stats after first merge \n')
         stepB.duplicate_stats(tmp_occs_4, args.working_directory, args.prefix, out = False)
@@ -214,7 +216,7 @@ if __name__ == "__main__":
         # now recombine numbered and s.n. data
         tmp_occs_5 = pd.concat([tmp_occs_4, tmp_s_n_1])
 
-        print(tmp_occs_5.ddlat)
+        print(tmp_occs_5[['recorded_by','colnum','ddlat']])
         print('from here good?')
         #-----------------------------------------------
         # Step B4: crossfill country names

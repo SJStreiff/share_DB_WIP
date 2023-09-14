@@ -69,8 +69,13 @@ def duplicate_stats(occs, working_directory, prefix, out=True, verbose=True, deb
     # these are removed, and added later after processing(?)
     subset_col = ['colnum_full']
 
-    occs_colNum = occs1.dropna(how='all', subset=subset_col)
-    occs_nocolNum = occs1[occs1['colnum_full'].isna()]
+    occs1 = occs1.replace({'NaN': pd.NA}, regex=False)
+    occs1 = occs1.replace({'nan': pd.NA}, regex=False)
+
+    occs_colNum = occs1.dropna(how='all', subset=['colnum'])
+    print('I dropped', len(occs1)-len(occs_colNum), 'NA colnum records')
+    occs_nocolNum = occs1[occs1['colnum'].isna()]
+    print(occs1.colnum.dtypes, occs1['colnum'].isna())
 
     occs_colNum.ddlong.astype(float)
     occs_nocolNum['ddlong'].astype(float)
@@ -358,7 +363,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         # fo r smaller differences, take the mean value...
         occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlat'].transform('mean')
         occs_dup_col['ddlong'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlong'].transform('mean')
-        #print(occs_dup_col.shape)
+        logging.info(f'after coordinate consolidation:{occs_dup_col.shape}')
 
 
     #---------------------------------
@@ -400,12 +405,16 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         #print('HERE', occs_dup_col)
 
         
-
+#####_--------------------------------------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING
+# FOR SOME REASON ALL DATA GETS LOST HERE, PROBABLY DUE TO SORTING AND SOMETHING...?????
 
 
     else:
+        logging.info(f'test1 {occs_dup_col.shape}')
+        logging.info(f'occs_dup_col.specific_epithet')
         occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('sp.', '')
         occs_dup_col['specific_epithet'] = occs_dup_col['specific_epithet'].str.replace('indet.', '') 
+        logging.info(f'test2 {occs_dup_col.shape}')
 
         dups_diff_species = occs_dup_col[occs_dup_col.duplicated(['col_year','colnum_full', 'country'],keep=False)&~occs_dup_col.duplicated(['recorded_by','colnum_full','specific_epithet','genus'],keep=False)]
         dups_diff_species = dups_diff_species.sort_values(['col_year','colnum_full'], ascending = (True, True))
@@ -415,9 +424,28 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         # backup the old dets
         occs_dup_col['genus_old'] = occs_dup_col['genus']
         occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
+        logging.info(f'test3 {occs_dup_col.shape}')
+        
+        
+        occs_dup_col['det_year'].replace(0, pd.NA, inplace=True)
+        print(occs_dup_col.det_year)
+        print(occs_dup_col[['recorded_by', 'colnum']])
 
-        #groupby col and num, and sort more recent det #swifter apply should do the apply as efficiently as possible based on the resources available on your machine.
-        occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+        occs_dup_col.sufix = occs_dup_col.sufix.fillna(-9999) #HERE
+       
+        occs_dup_col1 = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+        print('PROBLEM HERE GONE?')
+        print(occs_dup_col1)
+        logging.info(f'test4 {occs_dup_col1.shape}')
+
+
+        print(occs_dup_col1.sufix)
+        occs_dup_col1['sufix'].replace(-9999, 0, inplace =True)
+        occs_dup_col1['sufix'].replace(0, np.nan, inplace =True)
+        occs_dup_col.sufix.fillna(pd.NA, inplace=True)
+#        occs_dup_col1.sufix = occs_dup_col1.sufix.replace({'NaN', pd.NA}, regex=False)
+        print(occs_dup_col1.sufix.isna())
+        print(occs_dup_col1.sufix)
 
 
         occs_dup_col.reset_index(drop=True, inplace=True)
@@ -425,6 +453,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         ###### HERE no data left in sn step... TODO
         #print('HERE', occs_dup_col)
         occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
+        logging.info(f'test5 {occs_dup_col.shape}')
 
         #save a csv with all duplicates beside each other but otherwise cleaned, allegedly.
         if debugging:
@@ -433,12 +462,11 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
     #-------------------------------------------------------------------------------
     # DE-DUPLICATE AND THEN MERGE
-
     # check type (again)
     occs_dup_col = occs_dup_col.astype(z_dependencies.final_col_type)
     #print(occs_dup_col.dtypes)
 
-
+#####_--------------------------------------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING
     # any empty strings need to be set NA, otherwise sorting gets messed up ('' is at beginning)
     occs_dup_col = occs_dup_col.replace(['', ' '], pd.NA)
 
@@ -733,7 +761,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
         # not master
         occs_dup_col = occs_dup_col.sort_values(['expert_det'], ascending = True)
-
+        logging.info(occs_dup_col[['recorded_by', 'colnum', 'ddlat']])
         occs_merged = occs_dup_col.groupby(dup_cols, as_index = False).agg(
             scientific_name = pd.NamedAgg(column = 'scientific_name', aggfunc = 'first'),
             genus = pd.NamedAgg(column = 'genus', aggfunc =  'first'),
