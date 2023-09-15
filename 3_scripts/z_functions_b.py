@@ -28,6 +28,7 @@ import datetime
 import logging
 
 import z_dependencies
+import z_functions_c as cc_functions
 
 
 
@@ -330,9 +331,19 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
     else:
         # no expert file, so just do as normal....
+        occs_dup_col = occs_dup_col.reset_index(drop = True)
+
+########-------------------------------------------------------------------------------------- DEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUG
+        print('PROBLEM:\n', occs_dup_col[dup_cols])
+        occs_dup_col[dup_cols] = occs_dup_col[dup_cols].fillna(-9999)
+        print('PROBLEM:\n', occs_dup_col[dup_cols], occs_dup_col.ddlat)
+        
         test = occs_dup_col.groupby(dup_cols, as_index = False).agg(
             ddlong = pd.NamedAgg(column = 'ddlong', aggfunc='var'),
             ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'))
+        
+        print('DEBUG\n', test )
+
 
         # if this variance is above 0.1 degrees
         if len(test)>0:
@@ -344,14 +355,63 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 
             # filter by large variance.
             true = test[(test["long bigger than 0.1"] == 'True') | (test["lat bigger than 0.1"] == 'True')]
+            print('true', true)
+            print(true.columns)
+            if len(true)>0:
+                tmp_test = pd.concat([true, occs_dup_col])
+                print(tmp_test.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)) # TODO: DROP ALL DUPLICATES HERE, write (append) to problem file and drop from data for later manual checking
+                print(tmp_test)
+                
+                debug_duplic_coords_wonky = tmp_test[tmp_test.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)]
 
-            # write these records to csv for correcting or discarding.
-            if debugging:
-                true.to_csv(working_directory + 'TO_CHECK_'+prefix+'_coordinates_to_combine.csv', index = False, sep = ';')
-                logging.debug('Wrote a dataframe of coordinate duplicates to check., ending "_coordinates_to_combine.csv". ')
+        # now check for coordinate - country
+                debug_duplic_coords_wonky['coordinate_country'] = debug_duplic_coords_wonky.apply(lambda row: cc_functions.get_cc(row['ddlat'], row['ddlong']), axis = 1, result_type = 'expand')
+                debug_duplic_coords_wonky['cc_discrepancy'] = (debug_duplic_coords_wonky['country_id'] != debug_duplic_coords_wonky['coordinate_country'])
+                print('DEBUG HERE:\n',debug_duplic_coords_wonky[['cc_discrepancy', 'country_id', 'coordinate_country']])
+
+
+                dupli_cc_match = debug_duplic_coords_wonky[debug_duplic_coords_wonky.cc_discrepancy == False]
+
+# crossfill the coordinates to the other records HEREHERE
+
+                print('the reduced data:', dupli_cc_match)
+                dupli_cc_match_problems = dupli_cc_match[dupli_cc_match.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)]
+                print('prblematic but matched\n', dupli_cc_match_problems )
+
+                dupli_nomatch = debug_duplic_coords_wonky[debug_duplic_coords_wonky.cc_discrepancy == True]
+
+                coord_problems = pd.concat([dupli_cc_match_problems, dupli_nomatch])
+                coord_problems.to_csv(working_directory + '0_'+'coordinate_discrepancy.csv', index = False, sep = ';', mode='a')
+
+    # if one of the duplicates is in country labelled, take that
+    # if both odd or both in country, write and manually check
+            else:
+                print('DEBUG: coordinates are less than 0.1 deg different')
+
+
+
+
+
+            # debug_coords_good = tmp_test[~tmp_test.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)]
+
+
+
+
+
+            # # write these records to csv for correcting or discarding.
+
+            # debug_duplic_coords_wonky.to_csv(working_directory + '0_'+'_coordinate_discrepancy.csv', index = False, sep = ';')
+            # logging.debug('Wrote a dataframe of coordinate duplicates to check., ending "_coordinate_discrepancy.csv". ')
+
+
+            # if debugging:
+                
             # remove the offending rows and spit them out for manual checking or just discarding
+            
             coord_to_check = occs_dup_col[occs_dup_col.index.isin(true.index)]
+            
             occs_dup_col = occs_dup_col[~ occs_dup_col.index.isin(true.index)]
+            print('SOLUTION?\n', occs_dup_col)
             if debugging:
                 coord_to_check.to_csv(working_directory + 'TO_CHECK_'+prefix+'coordinate_issues.csv', index = False, sep = ';')
             #print(occs_dup_col.shape)
@@ -405,8 +465,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         #print('HERE', occs_dup_col)
 
         
-#####_--------------------------------------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING
-# FOR SOME REASON ALL DATA GETS LOST HERE, PROBABLY DUE TO SORTING AND SOMETHING...?????
+
 
 
     else:
@@ -426,39 +485,37 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         occs_dup_col['specific_epithet_old'] = occs_dup_col['specific_epithet']
         logging.info(f'test3 {occs_dup_col.shape}')
         
-        
+        # replace zeroes with NA, better for downstream sorting
         occs_dup_col['det_year'].replace(0, pd.NA, inplace=True)
-        print(occs_dup_col.det_year)
-        print(occs_dup_col[['recorded_by', 'colnum']])
+                # print(occs_dup_col.det_year)
+                # print(occs_dup_col[['recorded_by', 'colnum']])
 
-        occs_dup_col.sufix = occs_dup_col.sufix.fillna(-9999) #HERE
+        # Issues if NA values here in following groupby step
+        occs_dup_col.sufix = occs_dup_col.sufix.fillna(-9999) 
        
-        occs_dup_col1 = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
-        print('PROBLEM HERE GONE?')
-        print(occs_dup_col1)
-        logging.info(f'test4 {occs_dup_col1.shape}')
+       # groupby the deduplication columns,  sort by increasing (low to high) det_year
+        occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values('det_year', ascending=False))
+        # double checking
+        logging.info(f'There used to be errors here,  {occs_dup_col.shape}')
 
-
-        print(occs_dup_col1.sufix)
-        occs_dup_col1['sufix'].replace(-9999, 0, inplace =True)
-        occs_dup_col1['sufix'].replace(0, np.nan, inplace =True)
+        # return the -9999 value to NA
+        occs_dup_col['sufix'].replace(-9999, 0, inplace =True)
+        occs_dup_col['sufix'].replace(0, np.nan, inplace =True)
+        # for some unknown reason, values of NaN are isna()=True, but does not do fillna(pd.NA) (i.e. it remains at NaN...)
         occs_dup_col.sufix.fillna(pd.NA, inplace=True)
-#        occs_dup_col1.sufix = occs_dup_col1.sufix.replace({'NaN', pd.NA}, regex=False)
-        print(occs_dup_col1.sufix.isna())
-        print(occs_dup_col1.sufix)
-
+        #        occs_dup_col.sufix = occs_dup_col.sufix.replace({'NaN', pd.NA}, regex=False) # not working, weird error.
+        # print(occs_dup_col.sufix.isna())
+        # print(occs_dup_col.sufix)
 
         occs_dup_col.reset_index(drop=True, inplace=True)
         occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
-        ###### HERE no data left in sn step... TODO
-        #print('HERE', occs_dup_col)
         occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')
         logging.info(f'test5 {occs_dup_col.shape}')
 
         #save a csv with all duplicates beside each other but otherwise cleaned, allegedly.
-        if debugging:
-            occs_dup_col.to_csv(working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv', index = False, sep = ';')
-            logging.debug(f'\n I have saved a checkpoint file of all cleaned and processed duplicates, nicely beside each other, to: {working_directory}TO_CHECK_{prefix}dupli_dets_cln.csv')
+        
+        occs_dup_col.to_csv(working_directory + 'TO_CHECK_' + prefix + 'dupli_dets_cln.csv', index = False, sep = ';')
+        logging.debug(f'\n I have saved a checkpoint file of all cleaned and processed duplicates, nicely beside each other, to: {working_directory}TO_CHECK_{prefix}dupli_dets_cln.csv')
 
     #-------------------------------------------------------------------------------
     # DE-DUPLICATE AND THEN MERGE
@@ -466,7 +523,6 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
     occs_dup_col = occs_dup_col.astype(z_dependencies.final_col_type)
     #print(occs_dup_col.dtypes)
 
-#####_--------------------------------------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING ----------------------------- DEBUGGING
     # any empty strings need to be set NA, otherwise sorting gets messed up ('' is at beginning)
     occs_dup_col = occs_dup_col.replace(['', ' '], pd.NA)
 

@@ -25,6 +25,6 @@
 
 # 2023-09-13:
     - new branch deduplication error solving (coordinates);
-        * Coordinates are ok, working correctly
         * [solved] discovered bug in deduplication leading to data getting lost in groupby (groupby on a column including only NA make data go away)
-        * bug in (pure) colnum not extracting correctly for the format 00-123 or similar...
+        * [solved]bug in (pure) colnum not extracting correctly for the format 00-123 or similar...
+        * [BUG] coordinate filter (difference between 0.1 mean, otherwise throw out, not working)
