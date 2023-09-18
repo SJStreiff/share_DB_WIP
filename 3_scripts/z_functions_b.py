@@ -338,6 +338,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         occs_dup_col[dup_cols] = occs_dup_col[dup_cols].fillna(-9999)
         print('PROBLEM:\n', occs_dup_col[dup_cols], occs_dup_col.ddlat)
         
+        # create 'test' df, containing aggregated coordinate variance of duplicated records (occs_dup_col)
+        #   -> all duplicates result in one row in test with vraiance of cooridnates...
         test = occs_dup_col.groupby(dup_cols, as_index = False).agg(
             ddlong = pd.NamedAgg(column = 'ddlong', aggfunc='var'),
             ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'))
@@ -345,8 +347,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         print('DEBUG\n', test )
 
 
-        # if this variance is above 0.1 degrees
         if len(test)>0:
+            # if this variance is above 0.1 mark as true an d subset just the values that have large variance
             test.loc[test['ddlong'] >= 0.1, 'long bigger than 0.1'] = 'True'
             test.loc[test['ddlong'] < 0.1, 'long bigger than 0.1'] = 'False'
 
@@ -358,67 +360,41 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
             print('true', true)
             print(true.columns)
             if len(true)>0:
-                tmp_test = pd.concat([true, occs_dup_col])
-                print(tmp_test.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)) # TODO: DROP ALL DUPLICATES HERE, write (append) to problem file and drop from data for later manual checking
-                print(tmp_test)
+                # if we have records with large variance, merge with all duplicates and then subset just problems
                 
-                debug_duplic_coords_wonky = tmp_test[tmp_test.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)]
+                #now get data from occs_dup_col which is in true to do some test and modifications
+               
+                print(occs_dup_col[dup_cols].values == true[dup_cols].values)
+                res_df = pd.DataFrame(occs_dup_col[dup_cols].values == true[dup_cols].values)
+               
+                res_df['sum'] = res_df.apply(lambda row: sum(row), axis=1)
+               
+                res_df['to_subset'] = res_df[res_df.sum == len(dup_cols)]
+                print(res_df)
+                # make df for good and bad coordiantes
+                occs_prob_coords = occs_dup_col[res_df.to_subset]
+                #good
+                occs_dup_col = occs_dup_col[~res_df.to_subset]
 
+                print('NOW GOOD?\n', occs_prob_coords)
         # now check for coordinate - country
-                debug_duplic_coords_wonky['coordinate_country'] = debug_duplic_coords_wonky.apply(lambda row: cc_functions.get_cc(row['ddlat'], row['ddlong']), axis = 1, result_type = 'expand')
-                debug_duplic_coords_wonky['cc_discrepancy'] = (debug_duplic_coords_wonky['country_id'] != debug_duplic_coords_wonky['coordinate_country'])
-                print('DEBUG HERE:\n',debug_duplic_coords_wonky[['cc_discrepancy', 'country_id', 'coordinate_country']])
+                occs_prob_coords['coordinate_country'] = occs_prob_coords.apply(lambda row: cc_functions.get_cc(row['ddlat'], row['ddlong']), axis = 1, result_type = 'expand')
+                occs_prob_coords['cc_discrepancy'] = (occs_prob_coords['country_id'] != occs_prob_coords['coordinate_country'])
+
+                occs_prob_coords_to_save = occs_prob_coords[occs_prob_coords.cc_discrepancy == False]
+                occs_prob_coords = occs_prob_coords[~occs_prob_coords.cc_discrepancy == False]
 
 
-                dupli_cc_match = debug_duplic_coords_wonky[debug_duplic_coords_wonky.cc_discrepancy == False]
+                #print('DEBUG HERE:\n',occs_prob_coords[['cc_discrepancy', 'country_id', 'coordinate_country']])
+                occs_prob_coords.groupby(dup_cols, group_keys=False, sort=False).apply(lambda x: x.sort_values(['cc_discrepancy'], ascending=True))
+                # write problematic coordinate rows into checking csv file
+                occs_prob_coords.to_csv(working_directory + '0_'+'coordinate_discrepancy.csv', index = False, sep = ';', mode='a')
 
-# crossfill the coordinates to the other records HEREHERE
+                # retain records with coordinate in correct country
+                occs_dup_col = pd.concat([occs_dup_col, occs_prob_coords_to_save])
 
-                print('the reduced data:', dupli_cc_match)
-                dupli_cc_match_problems = dupli_cc_match[dupli_cc_match.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)]
-                print('prblematic but matched\n', dupli_cc_match_problems )
-
-                dupli_nomatch = debug_duplic_coords_wonky[debug_duplic_coords_wonky.cc_discrepancy == True]
-
-                coord_problems = pd.concat([dupli_cc_match_problems, dupli_nomatch])
-                coord_problems.to_csv(working_directory + '0_'+'coordinate_discrepancy.csv', index = False, sep = ';', mode='a')
-
-    # if one of the duplicates is in country labelled, take that
-    # if both odd or both in country, write and manually check
-            else:
-                print('DEBUG: coordinates are less than 0.1 deg different')
-
-
-
-
-
-            # debug_coords_good = tmp_test[~tmp_test.duplicated(['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], keep=False)]
-
-
-
-
-
-            # # write these records to csv for correcting or discarding.
-
-            # debug_duplic_coords_wonky.to_csv(working_directory + '0_'+'_coordinate_discrepancy.csv', index = False, sep = ';')
-            # logging.debug('Wrote a dataframe of coordinate duplicates to check., ending "_coordinate_discrepancy.csv". ')
-
-
-            # if debugging:
-                
-            # remove the offending rows and spit them out for manual checking or just discarding
-            
-            coord_to_check = occs_dup_col[occs_dup_col.index.isin(true.index)]
-            
-            occs_dup_col = occs_dup_col[~ occs_dup_col.index.isin(true.index)]
-            print('SOLUTION?\n', occs_dup_col)
-            if debugging:
-                coord_to_check.to_csv(working_directory + 'TO_CHECK_'+prefix+'coordinate_issues.csv', index = False, sep = ';')
-            #print(occs_dup_col.shape)
-
-             # print summary
             logging.info(f'\n Input records: {len(occs1)} \n records with no duplicates (occs_unique): {len(occs_unique)}')
-            logging.info(f'duplicate records with very disparate coordinates removed: {len(coord_to_check)} If you want to check them, I saved them to {working_directory}TO_CHECK_{prefix}coordinate_issues.csv')
+            logging.info(f'duplicate records with very disparate coordinates removed: {len(occs_prob_coords)} If you want to check them, I saved them to {working_directory}TO_CHECK_{prefix}coordinate_issues.csv')
 
         # fo r smaller differences, take the mean value...
         occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlat'].transform('mean')
