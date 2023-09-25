@@ -28,3 +28,6 @@
         * [solved] discovered bug in deduplication leading to data getting lost in groupby (groupby on a column including only NA make data go away)
         * [solved]bug in (pure) colnum not extracting correctly for the format 00-123 or similar...
         * [BUG] coordinate filter (difference between 0.1 mean, otherwise throw out, not working)
+
+# 2023-09-18:
+    - coordinate problems worked out. now coordinates more than 0.1 variance are tested for country-coordinate match and if match then kept...

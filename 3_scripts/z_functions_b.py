@@ -340,61 +340,90 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         
         # create 'test' df, containing aggregated coordinate variance of duplicated records (occs_dup_col)
         #   -> all duplicates result in one row in test with vraiance of cooridnates...
-        test = occs_dup_col.groupby(dup_cols, as_index = False).agg(
-            ddlong = pd.NamedAgg(column = 'ddlong', aggfunc='var'),
-            ddlat = pd.NamedAgg(column = 'ddlat', aggfunc='var'))
-        
-        print('DEBUG\n', test )
+        print(occs_dup_col.shape)
+       
+
+        # calculate variance between grouped objects
+        occs_dup_col['ddlat_var'] = occs_dup_col.groupby(dup_cols)['ddlat'].transform('var')
+        occs_dup_col['ddlong_var'] = occs_dup_col.groupby(dup_cols)['ddlong'].transform('var')
+        print('t1', occs_dup_col['ddlat_var'])
+        print('t2\n', occs_dup_col[occs_dup_col['ddlat_var'] > 0.1])
+
+        # subset problematic large variance!
+        occs_large_var = occs_dup_col[(occs_dup_col['ddlat_var'] > 0.1) | (occs_dup_col['ddlong_var'] > 0.1)]
+
+        print(occs_large_var)
+        # and drop the large variance data here.
+        occs_ok = occs_dup_col[(occs_dup_col['ddlat_var'] <= 0.1) & (occs_dup_col['ddlong_var'] <= 0.1)]
+        print(occs_ok.shape, 'DONE????')
 
 
-        if len(test)>0:
-            # if this variance is above 0.1 mark as true an d subset just the values that have large variance
-            test.loc[test['ddlong'] >= 0.1, 'long bigger than 0.1'] = 'True'
-            test.loc[test['ddlong'] < 0.1, 'long bigger than 0.1'] = 'False'
 
-            test.loc[test['ddlat'] >= 0.1, 'lat bigger than 0.1'] = 'True'
-            test.loc[test['ddlat'] < 0.1, 'lat bigger than 0.1'] = 'False'
+# # CLEASNUP!!!!!
+#         print('DEBUG\n', test )
 
-            # filter by large variance.
-            true = test[(test["long bigger than 0.1"] == 'True') | (test["lat bigger than 0.1"] == 'True')]
-            print('true', true)
-            print(true.columns)
-            if len(true)>0:
-                # if we have records with large variance, merge with all duplicates and then subset just problems
+
+#         if len(test)>0:
+#             # if this variance is above 0.1 mark as true an d subset just the values that have large variance
+#             test.loc[test['ddlong'] >= 0.1, 'long bigger than 0.1'] = 'True'
+#             test.loc[test['ddlong'] < 0.1, 'long bigger than 0.1'] = 'False'
+
+#             test.loc[test['ddlat'] >= 0.1, 'lat bigger than 0.1'] = 'True'
+#             test.loc[test['ddlat'] < 0.1, 'lat bigger than 0.1'] = 'False'
+
+#             # filter by large variance.
+#             true = test[(test["long bigger than 0.1"] == 'True') | (test["lat bigger than 0.1"] == 'True')]
+#             # print('true', true)
+#             # print(true.columns)
+#             if len(true)>0:
+#                 print('true is larger 0', true.shape)
+#                 print(true)
+#                 # if we have records with large variance, merge with all duplicates and then subset just problems
                 
-                #now get data from occs_dup_col which is in true to do some test and modifications
+#                 #now get data from occs_dup_col which is in true to do some test and modifications
+#                 print(true[dup_cols].values)
+#                 print(occs_dup_col[dup_cols].values)
+
+
+#                 # print('# # # TESTING FOR LOOP')
+#                 # for col in dup_cols:
+#                 #     print(col)
+#                 #     print(occs_dup_col[col].values)
+#                 #     print(true[col].values)
+#                 #     print(true[col].values == occs_dup_col[col].values)
+#                 #     col_bool = pd.DataFrame(occs_dup_col[col].values == true[col].values)
+#                 #     print(col_bool)
+
+
+#                 print(np.where(occs_dup_col[dup_cols].values == true[dup_cols].values))
+#                 res_df = pd.DataFrame(occs_dup_col[dup_cols].values == true[dup_cols].values)
+#                # TODO: persisting error here, when true and test are not the same dimensions!
+
+
+
+#                 res_df['sum'] = res_df.apply(lambda row: sum(row), axis=1)
                
-                print(occs_dup_col[dup_cols].values == true[dup_cols].values)
-                res_df = pd.DataFrame(occs_dup_col[dup_cols].values == true[dup_cols].values)
-               
-                res_df['sum'] = res_df.apply(lambda row: sum(row), axis=1)
-               
-                res_df['to_subset'] = res_df[res_df.sum == len(dup_cols)]
-                print(res_df)
-                # make df for good and bad coordiantes
-                occs_prob_coords = occs_dup_col[res_df.to_subset]
-                #good
-                occs_dup_col = occs_dup_col[~res_df.to_subset]
+#                 res_df['to_subset'] = res_df[res_df.sum == len(dup_cols)]
+#                 # print(res_df)
+#                 # make df for good and bad coordiantes
+#                 occs_prob_coords = occs_dup_col[res_df.to_subset]
+#                 #good
+#                 occs_dup_col = occs_dup_col[~res_df.to_subset]
 
-                print('NOW GOOD?\n', occs_prob_coords)
-        # now check for coordinate - country
-                occs_prob_coords['coordinate_country'] = occs_prob_coords.apply(lambda row: cc_functions.get_cc(row['ddlat'], row['ddlong']), axis = 1, result_type = 'expand')
-                occs_prob_coords['cc_discrepancy'] = (occs_prob_coords['country_id'] != occs_prob_coords['coordinate_country'])
-
-                occs_prob_coords_to_save = occs_prob_coords[occs_prob_coords.cc_discrepancy == False]
-                occs_prob_coords = occs_prob_coords[~occs_prob_coords.cc_discrepancy == False]
+#                 print('NOW GOOD?\n', occs_prob_coords)
+#         # now check for coordinate - country
 
 
-                #print('DEBUG HERE:\n',occs_prob_coords[['cc_discrepancy', 'country_id', 'coordinate_country']])
-                occs_prob_coords.groupby(dup_cols, group_keys=False, sort=False).apply(lambda x: x.sort_values(['cc_discrepancy'], ascending=True))
-                # write problematic coordinate rows into checking csv file
-                occs_prob_coords.to_csv(working_directory + '0_'+'coordinate_discrepancy.csv', index = False, sep = ';', mode='a')
+        occs_large_var['coordinate_country'] = occs_large_var.apply(lambda row: cc_functions.get_cc(row['ddlat'], row['ddlong']), axis = 1, result_type = 'expand')
+                #occs_large_var['cc_discrepancy'] = (occs_prob_coords['country_id'] != occs_prob_coords['coordinate_country'])
+
+        occs_large_var.to_csv(working_directory + '0_'+'coordinate_discrepancy.csv', index = False, sep = ';', mode='a')
 
                 # retain records with coordinate in correct country
-                occs_dup_col = pd.concat([occs_dup_col, occs_prob_coords_to_save])
+        occs_dup_col = occs_ok
 
-            logging.info(f'\n Input records: {len(occs1)} \n records with no duplicates (occs_unique): {len(occs_unique)}')
-            logging.info(f'duplicate records with very disparate coordinates removed: {len(occs_prob_coords)} If you want to check them, I saved them to {working_directory}TO_CHECK_{prefix}coordinate_issues.csv')
+            # logging.info(f'\n Input records: {len(occs1)} \n records with no duplicates (occs_unique): {len(occs_unique)}')
+            # logging.info(f'duplicate records with very disparate coordinates removed: {len(occs_prob_coords)} If you want to check them, I saved them to {working_directory}TO_CHECK_{prefix}coordinate_issues.csv')
 
         # fo r smaller differences, take the mean value...
         occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlat'].transform('mean')

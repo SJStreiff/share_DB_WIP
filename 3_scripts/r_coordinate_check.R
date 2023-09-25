@@ -87,7 +87,7 @@ get_closest_coast = function(x, y){
 ###---------------------- Read data and do coordinate check -------------------------------------###
 
 #debugging test dataframe
-#dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230808_BRAHMS_Asiacleaned.csv', sep =';', head=T)
+# dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230810_Phil_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
@@ -214,10 +214,10 @@ if(length(flags_tt$.sea) > 0){
 
   # final data from coordinate check
   flags_final <- rbind(flags_no_sea, dat_to_int)
-}
-else{
+
+  }else{
   flags_final <- flags_no_sea
-}
+  }
 ###--------------------- END of coordinate saving -----------------------------------------------###
 ####################################################################################################
 
