@@ -31,3 +31,6 @@
 
 # 2023-09-18:
     - coordinate problems worked out. now coordinates more than 0.1 variance are tested for country-coordinate match and if match then kept...
+
+# 2023-09-25:
+    - [SOLVED] coordinates now filter eventual duplicates with coordinates with a variance > 0.1
