@@ -334,28 +334,29 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         occs_dup_col = occs_dup_col.reset_index(drop = True)
 
 ########-------------------------------------------------------------------------------------- DEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUGDEBUG DEBUG DEBUG DEBUG
-        print('PROBLEM:\n', occs_dup_col[dup_cols])
+   #     print('PROBLEM:\n', occs_dup_col[dup_cols])
         occs_dup_col[dup_cols] = occs_dup_col[dup_cols].fillna(-9999)
-        print('PROBLEM:\n', occs_dup_col[dup_cols], occs_dup_col.ddlat)
+        # print('PROBLEM:\n', occs_dup_col[dup_cols], occs_dup_col.ddlat)
         
         # create 'test' df, containing aggregated coordinate variance of duplicated records (occs_dup_col)
         #   -> all duplicates result in one row in test with vraiance of cooridnates...
-        print(occs_dup_col.shape)
+  #      print(occs_dup_col.shape)
        
 
         # calculate variance between grouped objects
         occs_dup_col['ddlat_var'] = occs_dup_col.groupby(dup_cols)['ddlat'].transform('var')
         occs_dup_col['ddlong_var'] = occs_dup_col.groupby(dup_cols)['ddlong'].transform('var')
-        print('t1', occs_dup_col['ddlat_var'])
-        print('t2\n', occs_dup_col[occs_dup_col['ddlat_var'] > 0.1])
+        # print('t1', occs_dup_col['ddlat_var'])
+        # print('t2\n', occs_dup_col[occs_dup_col['ddlat_var'] > 0.1])
 
         # subset problematic large variance!
         occs_large_var = occs_dup_col[(occs_dup_col['ddlat_var'] > 0.1) | (occs_dup_col['ddlong_var'] > 0.1)]
 
-        print(occs_large_var)
+ #       print(occs_large_var)
         # and drop the large variance data here.
         occs_ok = occs_dup_col[(occs_dup_col['ddlat_var'] <= 0.1) & (occs_dup_col['ddlong_var'] <= 0.1)]
-        print(occs_ok.shape, 'DONE????')
+
+        #print(occs_ok[occs_ok.ddlat_var > 0.1])
 
 
 
@@ -422,8 +423,8 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
                 # retain records with coordinate in correct country
         occs_dup_col = occs_ok
 
-            # logging.info(f'\n Input records: {len(occs1)} \n records with no duplicates (occs_unique): {len(occs_unique)}')
-            # logging.info(f'duplicate records with very disparate coordinates removed: {len(occs_prob_coords)} If you want to check them, I saved them to {working_directory}TO_CHECK_{prefix}coordinate_issues.csv')
+        logging.info(f'\n Input records: {len(occs1)} \n records with no duplicates (occs_unique): {len(occs_unique)}')
+        logging.info(f'duplicate records with very disparate coordinates removed: {len(occs_large_var)} If you want to check them, I saved them to {working_directory}TO_CHECK_{prefix}coordinate_issues.csv')
 
         # fo r smaller differences, take the mean value...
         occs_dup_col['ddlat'] = occs_dup_col.groupby(['col_year', 'colnum_full'])['ddlat'].transform('mean')
