@@ -34,3 +34,7 @@
 
 # 2023-09-25:
     - [SOLVED] coordinates now filter eventual duplicates with coordinates with a variance > 0.1
+
+# 2023-09-26/27:
+    - cleaned up superfluous files, deprecated scripts...
+    - merging branch coordinate debug into master

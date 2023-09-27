@@ -87,7 +87,7 @@ get_closest_coast = function(x, y){
 ###---------------------- Read data and do coordinate check -------------------------------------###
 
 #debugging test dataframe
-# dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20230810_Phil_cleaned.csv', sep =';', head=T)
+ dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/9_exp_debug_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
@@ -186,25 +186,30 @@ if(length(flags_tt$.sea) > 0){
               ', with the error margin of', error_margin, '[m]'))
 
   # save points closer to coast than <error_margin>
-  dat_tobesaved <- get_closest_coast(dat_tobesaved, clines)
-  old_coords <- st_coordinates(dat_tobesaved)
-  colnames(old_coords) <- c('old_ddlong', 'old_ddlat')
-  dat_tobesaved <- cbind(st_drop_geometry(dat_tobesaved), old_coords)
-
-  dat_tobesaved$.sea <- TRUE #update values, no further action needed there later
+  if(length(dat_tobesaved$recorded_by) > 0){
+    # to avoid errors when no data in sea
+    dat_tobesaved <- get_closest_coast(dat_tobesaved, clines)
+    old_coords <- st_coordinates(dat_tobesaved)
+    colnames(old_coords) <- c('old_ddlong', 'old_ddlat')
+    dat_tobesaved <- cbind(st_drop_geometry(dat_tobesaved), old_coords)
+  
+    dat_tobesaved$.sea <- TRUE #update values, no further action needed there later
+  }else{
+    dat_tobesaved <- st_drop_geometry(dat_tobesaved)
+    }
   dat_inseas <- dat_sf_tt[dat_sf_tt$coast_2 > error_margin,]
-  print(paste('The other', length(dat_inseas$genus), 'values remain flagged as problematic coordinates.'))
+  print(paste('The other', length(dat_inseas$recorded_by), 'values remain flagged as problematic coordinates.'))
 
   # add empty col for the old coordinates
 
   coords <- st_coordinates(dat_inseas)
   colnames(coords) <- c('ddlong', 'ddlat')
   dat_inseas <- cbind(st_drop_geometry(dat_inseas), coords)
-  dat_inseas$old_ddlong <- rep(NA, length(dat_inseas$scientific_name))
-  dat_inseas$old_ddlat <- rep(NA, length(dat_inseas$scientific_name))
+  dat_inseas$old_ddlong <- rep(NA, length(dat_inseas$recorded_by))
+  dat_inseas$old_ddlat <- rep(NA, length(dat_inseas$recorded_by))
 
-  flags_no_sea$old_ddlong <- rep(NA, length(flags_no_sea$scientific_name))
-  flags_no_sea$old_ddlat  <- rep(NA, length(flags_no_sea$scientific_name))
+  flags_no_sea$old_ddlong <- rep(NA, length(flags_no_sea$recorded_by))
+  flags_no_sea$old_ddlat  <- rep(NA, length(flags_no_sea$recorded_by))
 
   # merge dataframes again
   dat_to_int <- rbind(dat_tobesaved, dat_inseas)

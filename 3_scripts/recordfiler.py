@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     # check input data variation: is it just one genus? just one country?
     imp = codecs.open(args.input_file,'r','utf-8') #open for reading with "universal" type set
-    occs = pd.read_csv(imp, sep = ';',  dtype = z_dependencies.final_col_for_import_type) # read the data
+    occs = pd.read_csv(imp, sep = ';',  dtype = z_dependencies.final_col_for_import_type, na_values=pd.NA, quotechar='"') # read the data
     # #print(occs)
     occs = occs.fillna(pd.NA)
     logging.info('NA filled!')
@@ -222,6 +222,9 @@ if __name__ == "__main__":
         except:
             #nothing
             a = 1
+
+
+        #m_DB = pd.read_csv(mdb_dir + '/20230918_master_db.csv', sep =';', dtype= z_dependencies.final_col_for_import_type, na_values=pd.NA)
         m_DB = pd.read_csv(mdb_dir + '/master_db.csv', sep =';', dtype= z_dependencies.final_col_for_import_type, na_values=pd.NA)
         m_DB = m_DB.fillna(pd.NA)
            # to make it look like the masterdb I will add all the final columns
@@ -248,13 +251,14 @@ if __name__ == "__main__":
         exp_occs = occs
 
         master_exp_occs, exceptions = expert.deduplicate_small_experts(masters, exp_occs)
-        # necessary step
+        # by way the exceptions df is created we need the tail(-1)
         exceptions = exceptions.tail(-1)
+        # then go through exceptions manually and reintegrate
         if len(exceptions) > 1:
             #let user modify exceptions
-            exceptions.to_csv(args.output_dir+args.prefix+'expert_exceptions.csv', index=False, sep =';')
+            exceptions.to_csv(args.working_directory+args.prefix+'expert_exceptions.csv', index=False, sep =';')
             print('I have written exceptions to',
-                  args.output_dir+args.prefix+'expert_exceptions.csv', 
+                  args.working_directory+args.prefix+'expert_exceptions.csv', 
                   '\n for you to check. Please do so and save the file for me to read it again once finished.')
             disexceptions = input()
             file=args.output_dir+args.prefix+'expert_exceptions.csv'
@@ -271,28 +275,15 @@ if __name__ == "__main__":
         no_coords_to_backlog = occs[occs.ddlat == args.na_value] # ==NA !!
         deduplid = occs[occs.ddlat != args.na_value] # NOT NA!
     
+        logging.info('SMALLXP handling completed')
+        # final data is written at end
+
 
     else:
-
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
-#`
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
-#`
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
-#`
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
-#`
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
-#`
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO
-#`
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO `
-
-
+        # 'normal' data handling (i.e. expert = EXP / NO)
         ###---------------------- First test against indets backlog --------------------------------###
         logging.info('\n#> INDET consolidation')
         logging.info('------------------------------------------------')
-
 
         # check all occs against indet backlog
         test_upd_DB = pre_merge.check_premerge(mdb = BL_indets_cc, occs = occs, verbose=True)
@@ -300,11 +291,7 @@ if __name__ == "__main__":
         test_upd_DB=test_upd_DB.astype(z_dependencies.final_col_for_import_type)
 
         test_upd_DB.colnum = test_upd_DB.colnum.replace('nan', pd.NA)
-        #test_upd_DB.colnum = pd.to_numeric(test_upd_DB.colnum, errors='coerce').astype(pd.Int64Dtype())
-        #print(test_upd_DB.colnum)
-        #print(test_upd_DB.colnum.isna())
-        # TODO s.n. not recognised properly...
-        
+
         # separate data with colNum and no colNum
         occs_s_n = test_upd_DB[test_upd_DB.colnum.isna()]
         occs_num = test_upd_DB.dropna(how='all', subset=['colnum'])
@@ -363,7 +350,7 @@ if __name__ == "__main__":
         #print(no_coord_check.dtypes)
         no_coord_check=no_coord_check.astype(z_dependencies.final_col_for_import_type)
         #print(no_coord_check.dtypes)
-
+        no_coord_check = no_coord_check.reset_index(drop=True)
 
         occs_s_n = no_coord_check[no_coord_check['colnum_full'].isna()]
         occs_num = no_coord_check.dropna(how='all', subset=['colnum_full'])

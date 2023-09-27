@@ -149,9 +149,10 @@ if __name__ == "__main__":
                 logging.info('\n#> Reintegrating data\n')
                 tmp_occs_3 = stepA.reinsertion(tmp_occs_3, frame_to_check, reinsert, debugging=False)
                 logging.info('Reintegration successful!')
+                
             except:
                 logging.error('ERROR: I couldn\'t read the file from the path you provided. Try again.')
-                
+                print('Integration anomalous, check log and confirm all working as expected.')
                 #tmp_occs_3 = stepA.collector_names(tmp_occs_2, args.working_directory, args.prefix, verbose=False, debugging=True)
                 # should we reinsert the names we threw out?
         logging.info('\n ................................\n')

@@ -4,22 +4,23 @@
 
 # Recordcleaner and Filer
 
-This pipeline consists (at the moment) of two more or less independent steps:
-* RECORDCLEANER: This step takes raw occurrence records and cleans them to a somewhat acceptable standard. The main feature here is that we merge duplicate collections, while retaining all the information of the different iso-specimens.
+This pipeline consists (at the moment) of two independent but complementary steps:
+* RECORDCLEANER:  takes raw occurrence records and cleans them to standardised format. The main feature here is that we merge duplicate collections, while retaining all the information of the different iso-specimens.
 * RECORD-FILER: This step integrates the data cleaned in RECORDCLEANER into a specified database (might at some point be automatically into a postgres/SQL database).
 
 ## Installation
 
-In your terminal window navigate to your folder with the enclosed *'environment.yml'* file. Once there, execute the command *conda env create -f environment.yml*.
+You need the following prerequisites for using these scripts: python3 and conda. To install the required python-dependencies, 
+in your terminal window navigate to your folder with the enclosed *'environment.yml'* file. Once there, execute the command *conda env create -f environment.yml*.
 
-More details to come.
 
-## The/A PIPELINE for standardising occurrence records: RECORDCLEANER
+## Standardising occurrence records: RECORDCLEANER
 
 <!-- ![There would be a funny picture here normally](TMP_titleimage.png "") -->
 
 
-To launch recordcleaner, you can use the useful bash launcher, in terminal in your directory:
+To launch recordcleaner, you can use the useful bash launcher, in terminal in your directory: (if you haven't already, make the
+bash file executable -> uncomment first line below)
 
 ```
 # chmod +x launch.sh
@@ -54,17 +55,21 @@ If it doesn't work, or you would like to chat, feel free to contact serafin.stre
 
 ### Input files
 
-So far, the pipeline only takes input file in either the "darwin core format", as for example found in GBIF data, or the format used at P for their herbonautes metadata collection projects.
-GBIF raw data downloads are in tab-separated tables (csv), and herbonautes data is separated by semicolons ';'. For advanced users, or maybe for me further down the line, one might change the columns to subset. These are specified in the file "./3_scripts/z_dependencies.py". **It is crucial that both the columns and their associated datatype are correctly specified there.** Failure to do so will create problems when working with the data.
-
-**more to come**
+In it's present form, the pipeline only takes input file in either the "darwin core format", as for example found in GBIF data, or
+the format used at P for their herbonautes metadata collection projects, the BRAHMS database format used at Naturalis or data
+extracted from Tropicos. Specially reduced expert data can be integrated using the 'SMALLEXP' flag in the expert_file parameter.
+GBIF raw data downloads are in tab-separated tables (csv), and herbonautes data is separated by semicolons ';'. 
 
 ### Working directory
 
-The working directory is specified, as some data might be non-conforming to the standardisation steps, and therefore not filterable with some steps of the pipeline. However, a lot of this might be still useable. Therefore it is written into the working directory for manual editing of the steps that cannot be done automatically. In this case, I will try to implement an automatic pause in the program that allows the user to edit the problematic data manually and then reinsert it into the pipeline.
+The working directory is specified, as some data might be non-conforming to the standardisation steps, and therefore not filterable with some steps of the pipeline. However, a lot of this might be still useable. Therefore it is written into the working directory for manual editing of the steps that cannot be done automatically.
 
 For example, when standardising collector names (which is crucial for detecting duplicates in subsequent steps), I cannot handle names that are not in the format of some firstname, any middle names and some surname. E.g. if collections are filed under a program name (i.e. in SE-Asia, herbarium specimens are frequently labelled and numbered as something similar to "Forest Research Institute (FRI)", which I haven't so far been able to cleanly filter). Therefore it is faster to manually cross check these for consistency within dataset, and then I  reinsert them with no problem).
-During the name standardisation step I output the concerned records to a temporary file, and after this step I plan to let the user know than one can edit the records before reinserting them and continuing...
+During the name standardisation step I output the concerned records to a temporary file, and after this step I plan to let the
+user know than one can edit the records before reinserting them and continuing. 
+
+During deduplication, suspected duplicates with large variation between coordinates are written to a file for manual inspection,
+and not kept in the pipeline.
 
 
 ## What does record cleaner really do?
@@ -76,7 +81,13 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
     Note that as the postgreSQL database columns make all capital letters to small, I have changed this accordingly in the preprocessing
   * A2: Standardise data within some columns, e.g. separate all dates into separate columns day, month and year, make sure all barcodes have the institution leading before the number, have the first collector in a separate column,
   * A3: Standardise collector names to  *Streiff, SJR*, instead of *Serafin J. R. Streiff* in one record and *Streiff, Serafin* in another record
-  * A4:  Standardise collector names even more by querying the Harvard Univ. Herbarium botanists [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the record in that database (and wikipedia links for very famous botanists...). Names that are not found in that database are returned in the same format as the regex names (i.e. *Streiff, SJR*), whereas successfully found names are either returned as full names (*Surname, Firstname Any Middlename*) or abbreviated names (*Surname, F. A. M.*). The HUH database query is performed only with the surname, and results filtered with the original label data provided by the input data.
+  * A4:  Standardise collector names even more by querying the Harvard Univ. Herbarium botanists
+    [https://kiki.huh.harvard.edu/databases/botanist_index.html] database to get full or normalised names with a link to the
+    record in that database (and wikipedia links for very famous botanists...). Names that are not found in that database are
+    returned in the same format as the regex names (i.e. *Streiff, SJR*), whereas successfully found names are either returned as
+    full names (*Surname, Firstname Any Middlename*) or abbreviated names (*Surname, F. A. M.*). The HUH database query is
+    performed only with the surname, and results filtered with the original label data provided by the input data. HUH also
+    returns, if available, information on collection regions of a botanist and wiki links.
 
 * Step B:
   * B1: run some statistics on duplicates in the dataset. Select and remove all records where the collection number is a variation of <<s.n.>>. These are then treated separately to the others with other criteria to find duplicated specimens.
@@ -93,8 +104,6 @@ RECORDCLEANER goes through a few iterative step, which I briefly expain here.
 The resulting data of these cleaning steps are hte following files:
 * FILENAME_cleaned.csv: final output from python processing (up to, including Step C1)
 * FILENAME_spatialvalid.csv: final output with spatialvalid tag from *CoordinateCleaner*. Final data for import into database.
-* FILENAME_indet.csv: final cleaned data with indet at any level. This is later added to the indet section of database.
-* FILENAME_nocoords.csv: final cleaned data without coordinates (or spatial invalid??). This is added to Non-spatialvalid section of database.
 
 RECORD-FILER then goes and takes freshly (or even old) cleaned data and tries to integrate it into a pre-existing database
 
@@ -115,6 +124,12 @@ CAUTION: this setting gives new data more priority than previous data. Therefore
 
 If the EXP=EXP in the config file, then the pipeline expects this dataset to be completely expert determined and curated. The values here are given precedence over duplicates found in the master database. The main utility of using this flag is to integrate this data to update any determinations and georeferencing.
 
+if EXP=SMALLEXP, then records are found with the barcode, and any relevant data is overwritten with the new data. Make sure that
+these datasets are therefore correct!
+
+### SQL/postgres interface
+
+A small script is provided which automatically up/downloads a master database from a postgres server (y_sql_functions.py).
 
 
 
@@ -135,6 +150,25 @@ If the EXP=EXP in the config file, then the pipeline expects this dataset to be 
   * **DONE**  master distribution database for integration.
 
 
+# Common problems / error sources
 
+Some data sources have aspects that can lead to errors in the pipeline. Usually these can be found by checking the error message
+at or near the end of the log file, or in the terminal.
+Common error sources are for example the occurrence of ';' within a cell which is not in quotes, or quote characters that are
+misplaced (e.g. Coordinates in text written as e.g. 22°46'11\"N 104°49'07\"E, where the escape character \" is not correctly
+identified.
+This leads to the message **Error tokenizing data.**, followed by a mention of the problematic line in the input file.  This can
+be solved by manually editing the input.
 
-#
+Also, make sure not to run 2 separate instances of the record-filer step simultaneously, as this might create a chaos between the
+master database files!
+
+# Future updates and modifications possible
+
+For advanced users, one might change the columns to subset, for example to integrate data from other sources. The columns are specified in the
+file "./3_scripts/z_dependencies.py". **It is crucialthat both the columns and their associated datatype are correctly specified
+there.** 
+Failure to do so will create problems when
+working with the data. Details and data-source specific modifications necessary to standardise data can be changed in the script *z_functions_a.py*
+
+**more to come**

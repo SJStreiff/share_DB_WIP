@@ -415,7 +415,7 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
 #         # now check for coordinate - country
 
 
-        occs_large_var['coordinate_country'] = occs_large_var.apply(lambda row: cc_functions.get_cc(row['ddlat'], row['ddlong']), axis = 1, result_type = 'expand')
+        occs_large_var['coordinate_country'] = occs_large_var.apply(lambda row: cc_functions.get_cc(row['ddlat'], row['ddlong']), axis = 1, result_type = 'reduce')
                 #occs_large_var['cc_discrepancy'] = (occs_prob_coords['country_id'] != occs_prob_coords['coordinate_country'])
 
         occs_large_var.to_csv(working_directory + '0_'+'coordinate_discrepancy.csv', index = False, sep = ';', mode='a')
@@ -456,10 +456,11 @@ def duplicate_cleaner(occs, dupli, working_directory, prefix, expert_file, User,
         # needs this to be able to group by and work below
         occs_dup_col[dup_cols] = occs_dup_col[dup_cols].fillna(0)
         #occs_dup_col = occs_dup_col.reset_index(drop = True)
-        #groupby col and num, and sort more recent det 
-
+        
+        #groupby and sort more recent det 
         occs_dup_col = occs_dup_col.groupby(dup_cols, group_keys=False, sort=True).apply(lambda x: x.sort_values(['det_year'], ascending=False))
-        #occs_dup_col.reset_index(drop=True, inplace=True)
+        occs_dup_col.reset_index(drop=True, inplace=True)
+
         occs_dup_col['accepted_name'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['accepted_name'].transform('first')
         occs_dup_col['genus'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['genus'].transform('first')
         occs_dup_col['specific_epithet'] = occs_dup_col.groupby(dup_cols, group_keys=False, sort=False)['specific_epithet'].transform('first')

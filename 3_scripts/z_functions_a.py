@@ -932,8 +932,9 @@ def reinsertion(occs_already_in_program, frame_to_be_better, names_to_reinsert, 
         logging.info('Data reinserted successfully.')
         print('Data integrated successfully!')
     else:
-        raise Exception("Something weird happened, please check input and code.")
-
+        #raise Exception("Something weird happened, please check input and code.")
+        logging.info('data integration anomalous, either error or discrepancy')
+        logging.info('This might for example be if the integrated data is not exactly the same size of the data i wrote in previous steps')
     return occs_merged
 
 

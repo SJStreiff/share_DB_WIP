@@ -7,3 +7,6 @@
 /dataSources/
 /dataSources.local.xml
 /scripts/y_sql_functions.py
+/1_data_raw/
+/1a_to_integrate/
+/2_data_out/
