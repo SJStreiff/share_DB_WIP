@@ -47,7 +47,8 @@ def cleanup(occs, cols_to_clean, verbose = True, debugging = False):
                 print('link cleaning')
 
             else:
-                print('cleaning', col)                       
+                print('cleaning', col)     
+                logging.info(f'col to clean in {col}')                  
                 occs[col] = occs[col].apply(lambda x: ', '.join(set(x.split(', '))))    # this combines all duplicated values within a cell
                 occs[col] = occs[col].str.strip()
                 occs[col] = occs[col].str.strip(',')

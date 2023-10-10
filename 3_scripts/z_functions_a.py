@@ -101,6 +101,18 @@ def column_standardiser(importfile, data_source_type, verbose=True, debugging = 
         occs['source_id'] = 'MO_tropicos'
 
 
+    elif(data_source_type == 'RAINBIO'):
+        # for data from BRAHMS extracts
+        logging.info('data type RAINBIO')
+        occs = pd.read_csv(imp, sep = ';',  dtype = str, na_values=pd.NA, quotechar='"') # read data
+        
+        occs = occs.rename(columns = z_dependencies.rainbio_key) # rename
+
+        occs = occs[z_dependencies.rainbio_cols] # and subset
+        #occs = occs.fillna(pd.NA) # problems with this NA
+        occs['source_id'] = 'RAINBIO'
+
+
 
 
     else:
@@ -523,10 +535,59 @@ def column_cleaning(occs, data_source_type, working_directory, prefix, verbose=T
         occs['orig_bc'] = occs['barcode']
         occs['country_id'] = pd.NA
 
-    #TODO
+    #----------------------------------------------------------------------------------
+    if(data_source_type == 'RAINBIO'):
+        """ things needed:
+         - colnum splitting
+         """
+        # COLLECTION NUMBERS
 
-        #BRAHMS formatting?
+        # keep the original colnum column
+        print(occs.colnum_full)
+   
+        occs['prefix'] = occs.colnum_full.str.extract('^([a-zA-Z]*)')
+        ##this code deletes spaces at start or end
+        occs['prefix'] = occs['prefix'].str.strip()
+        print(occs.prefix)
     
+        # going from most specific to most general regex, this list takes all together in the end
+        regex_list_sufix = [
+          r'(?:[a-zA-Z ]*)$', ## any charcter at the end
+          r'(?:SR_\d{1,})', ## extract 'SR_' followed by 1 to 3 digits
+          r'(?:R_\d{1,})', ## extract 'R_' followed by 1 to 3 digits
+        ]
+
+        occs['sufix'] = occs['colnum_full'].astype(str).str.extract('(' + '|'.join(regex_list_sufix) + ')')
+        occs['sufix'] = occs['sufix'].str.strip()
+
+        # extract only digits without associated stuff, but including some characters (colNam)
+        regex_list_digits = [
+            r'(?:\d+\-\d+\-\d+)', # of structure 00-00-00
+            r'(?:\d+\-\d+)', # of structure 00-00
+            r'(?:\d+\s\d+\s\d+)', # 00 00 00 or so
+            r'(?:\d+\.\d+)', # 00.00
+            r'(?:\d+)', # 00000
+        ]
+        occs['colnum']  = occs.colnum_full.str.extract('(' + '|'.join(regex_list_digits) + ')')
+        print(occs[['colnum_full', 'colnum']])
+        occs['colnum'] = occs['colnum'].str.strip()
+
+        print(sum(pd.isna(occs.ddlat)))
+        occs.ddlat[pd.isna(occs.ddlat)] = 0
+        occs.ddlong[pd.isna(occs.ddlong)] = 0
+
+        occs['orig_bc'] = occs['barcode']
+        occs['country_id'] = pd.NA
+        occs = occs.astype(dtype = z_dependencies.final_col_type)
+
+        logging.debug(f'{occs.dtypes}')
+
+        occs = occs.replace({'nan': pd.NA}, regex=False) # remove NAs that aren't proper
+
+
+
+
+
         #MO split species-tobesplit
 
 

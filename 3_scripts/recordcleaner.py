@@ -38,7 +38,7 @@ if __name__ == "__main__":
                         type = pathlib.Path)
     parser.add_argument('data_type',
                         help = 'File format. So far I can only handle Darwin core (GBIF) or herbonautes (P)',
-                        type = str, choices=['GBIF', 'P', 'BRAHMS', 'MO']) # modify if anything else becomes available.
+                        type = str, choices=['GBIF', 'P', 'BRAHMS', 'MO', 'RAINBIO']) # modify if anything else becomes available.
     parser.add_argument('expert_file',
                          help = 'Specify if input file is of expert source (i.e. all determinations and coordinates etc. are to have priority over other/previous data)',
                          type = str,
@@ -180,6 +180,11 @@ if __name__ == "__main__":
         tmp_occs_3 = huh_query.huh_wrapper(tmp_occs_3, verbose = True, debugging = False)
         tmp_occs_3 = tmp_occs_3.reset_index(drop=True)
         logging.info('\n #> STEP A complete.\n')
+        #-----------------------------------------------
+        # Step B4: crossfill country names
+        logging.info('\n#> B4: Crossfill country values\n')
+        tmp_occs_3 = stepB2.country_crossfill(tmp_occs_3, verbose=True)
+        tmp_occs_3 = stepB2.cc_missing(tmp_occs_3, verbose=True)
 
 
         ###------------------------------------------ Step B -------------------------------------------####
@@ -188,9 +193,9 @@ if __name__ == "__main__":
         logging.info('\n#> B1: Duplication statistics etc\n')
         # Step B1: Duplication (sensitivity) statistics and separating out of << s.n. >> Collection numbers
         tmp_colnum, tmp_s_n = stepB.duplicate_stats(tmp_occs_3, args.working_directory, args.prefix)
-
+#TODO
         # for records with a collection number
-        dup_cols = ['recorded_by', 'colnum', 'sufix', 'col_year'] # the columns by which duplicates are identified
+        dup_cols = ['recorded_by', 'colnum', 'sufix', 'col_year', 'country_id'] # the columns by which duplicates are identified
 
         #-----------------------------------------------
         logging.info('\n#> B2: Duplicates - merge duplicate records \n')
@@ -208,7 +213,7 @@ if __name__ == "__main__":
     
         #-----------------------------------------------
         # only for records with no Collection number
-        dup_cols1 = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'] # the columns by which duplicates are identified
+        dup_cols1 = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet', 'country_id'] # the columns by which duplicates are identified
         logging.info('\n#> B3: Duplicates - merge <s.n.> duplicate records \n')
         # Step B3: s.n. deduplicate
         tmp_s_n_1 = stepB.duplicate_cleaner(tmp_s_n, dupli = dup_cols1, working_directory= args.working_directory, prefix= args.prefix, User='NA', expert_file= args.expert_file, verbose=False, debugging=False)
@@ -219,11 +224,6 @@ if __name__ == "__main__":
 
         print(tmp_occs_5[['recorded_by','colnum','ddlat']])
         print('from here good?')
-        #-----------------------------------------------
-        # Step B4: crossfill country names
-        logging.info('\n#> B4: Crossfill country values\n')
-        tmp_occs_5 = stepB2.country_crossfill(tmp_occs_5, verbose=True)
-        tmp_occs_5 = stepB2.cc_missing(tmp_occs_5, verbose=True)
 
 
         ###------------------------------------------ Step C -------------------------------------------####

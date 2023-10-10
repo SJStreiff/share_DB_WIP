@@ -12,7 +12,7 @@ import z_dependencies
 
 # def connect_test(banana):
 
-inputfile='/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/20230824_mdb_for_upload.csv'
+inputfile='/Users/serafin/Sync/1_Annonaceae/G_GLOBAL_distr_DB/X_GLOBAL/master.csv'
 
 print('password?')
 passw = getpass()
@@ -38,7 +38,7 @@ occs = pd.read_csv(inputfile, sep = ';',  dtype = z_dependencies.final_col_for_i
 #data = pd.read_csv()
 print(occs)
 
-occs.to_sql('Asia_v1_20230824', engine, schema)
+occs.to_sql('Africa_v1_20231006', engine, schema)
 
 
 

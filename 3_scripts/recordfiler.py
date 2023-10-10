@@ -243,8 +243,7 @@ if __name__ == "__main__":
     # subset by countries
     
 
-########################### TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO # TODO ``
-
+    ###---------------------- Small/minimal expert datasets for integration --------------------------------###
     if args.expert_file == 'SMALLEXP':
         logging.info('#> SMALL EXPERT file. separate step')
 
@@ -297,10 +296,10 @@ if __name__ == "__main__":
         occs_num = test_upd_DB.dropna(how='all', subset=['colnum'])
         
         # deduplicate (x2)
-        occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
+        occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year', 'country_id'], 
                                         working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                         expert_file = args.expert_file, verbose=True, debugging=False)
-        occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], 
+        occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'accepted_name', 'country_id'], 
                                     working_directory =  args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                     expert_file = args.expert_file, verbose=True, debugging=False)
         # recombine data 
@@ -356,10 +355,10 @@ if __name__ == "__main__":
         occs_num = no_coord_check.dropna(how='all', subset=['colnum_full'])
 
         # deduplicate (x2)
-        occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
+        occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year', 'country_id'], 
                                         working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                     expert_file = args.expert_file, verbose=True, debugging=False)
-        occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], 
+        occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'accepted_name', 'country_id'], 
                                         working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                     expert_file = args.expert_file, verbose=True, debugging=False)
         # recombine data 
@@ -399,13 +398,13 @@ if __name__ == "__main__":
         
         
         # deduplicate (x2)
-        occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year'], 
+        occs_num_dd = dupli.duplicate_cleaner(occs_num, dupli = ['recorded_by', 'colnum', 'sufix', 'col_year', 'country_id'], 
                                     working_directory =  args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                     expert_file = args.expert_file, verbose=True, debugging=False)
         
         
         if len(occs_s_n) != 0:
-            occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'genus', 'specific_epithet'], 
+            occs_s_n_dd = dupli.duplicate_cleaner(occs_s_n, dupli = ['recorded_by', 'col_year', 'col_month', 'col_day', 'accepted_name', 'country_id'], 
                                                 working_directory = args.working_directory, prefix = 'Integrating_', User = username, step='Master',
                                                 expert_file = args.expert_file, verbose=True, debugging=False)
         
@@ -430,8 +429,12 @@ if __name__ == "__main__":
 
 
         for col in deduplid.columns:
-            deduplid[col] = deduplid[col].astype(str).str.replace('nan', '')
-            deduplid[col] = deduplid[col].fillna('')
+            #deduplid[col] = deduplid[col].astype(str).str.replace('nan', '')
+            # try:
+            #     deduplid[col] = deduplid[col].fillna('')
+            #     #deduplid[col] = deduplid[col].fillna('nan')
+            # except:
+            deduplid[col] = deduplid[col].fillna(args.na_value)
 
     no_coord_bl.to_csv(mdb_dir + '/backups/coord/'+date+'_coord_backlog.csv', sep=';')
     BL_indets.to_csv(mdb_dir + '/backups/indet/'+date+'_indet_backlog.csv', sep=';')

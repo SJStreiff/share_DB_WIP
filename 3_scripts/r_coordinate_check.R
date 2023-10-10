@@ -87,7 +87,7 @@ get_closest_coast = function(x, y){
 ###---------------------- Read data and do coordinate check -------------------------------------###
 
 #debugging test dataframe
- dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/9_exp_debug_cleaned.csv', sep =';', head=T)
+ dat <- read.csv('~/Sync/1_Annonaceae/G_GLOBAL_distr_DB/2_final_data/20231009_rainbio_cleaned.csv', sep =';', head=T)
 
 # read the csv data
 dat <- read.csv(inputfile, header = TRUE, sep = ';')
@@ -115,6 +115,13 @@ dat[is.na(dat)] <- ''
 # clines <- rgdal::readOGR(('/Users/serafin/Sync/1_Annonaceae/Y_DATA/2_land-map_rasters/ne_50m_coastline/ne_50m_coastline.shp') )
 # clines <- clines %>% st_set_crs('WGS84') #double checking, should actually already be
 
+
+test_coords <- clean_coordinates(x = dat,
+                                 lon = "ddlong",
+                                 lat = "ddlat",
+                                 species = 'accepted_name',
+                                 countries = "country_iso3",
+                                 tests = c('equal', 'zeros'))
 
 # coordinate cleaner 
 flags <- clean_coordinates(x = dat,

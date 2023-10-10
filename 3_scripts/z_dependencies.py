@@ -314,6 +314,47 @@ brahms_cols =([#'source_id',
     'recorded_by',
     'link'])
 
+# RAINBIO HAS PROBLEMS FOR NOW....
+rainbio_key = {
+    'tax_gen': 'genus',
+    'tax_esp': 'specific_epithet',
+    'country': 'country',
+    'maj_area_original': 'region',
+    'loc_notes':'locality',
+    'ddlat': 'ddlat',
+    'ddlon': 'ddlong',
+    'cold':'col_day',
+    'colm':'col_month',
+    'coly':'col_year',
+    'detd':'det_day',
+    'detm':'det_month',
+    'dety':'det_year',
+    'BARCODE':'barcode',
+    'detnam':'det_by',
+    'colnam':'recorded_by',
+    'scientificName':'scientific_name',
+    'colnum_full':'colnum_full'
+}
+
+rainbio_cols =([#'source_id',
+    'genus',
+    'specific_epithet',
+    'country',
+    'region',
+    'locality',
+    'ddlat',
+    'ddlong',
+    'col_day',
+    'col_month',
+    'col_year',
+    'det_day',
+    'det_month',
+    'det_year',
+    'barcode',
+    'det_by',
+    'recorded_by',
+    'colnum_full'
+    ])
 
 MO_key = {
     'DeterminationFullNameNoAuthors':'species-tobesplit',
